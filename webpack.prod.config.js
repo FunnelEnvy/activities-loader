@@ -31,6 +31,7 @@ module.exports = {
 		extensions: ['.ts', '.mjs', '.js', '.css'],
 	},
 	plugins: [
+		new MiniCssExtractPlugin(),
 		new WrapperPlugin({
 			header: function(filename) {
 				return `
