@@ -49,6 +49,7 @@ module.exports = {
 						"use strict";\n
 						const reusable = require('./reusable');
 						window.feFunctions = reusable;
+						feProjectId = '${filename}';
 						await window.feFunctions.sendEvent('${filename}');
 				`;
 			},
