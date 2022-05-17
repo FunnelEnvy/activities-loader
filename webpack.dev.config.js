@@ -17,8 +17,32 @@ module.exports = {
 	}, {}),
 	output: {
 		path: path.resolve(__dirname, 'dist'),
-		filename: "[name].js",
+		filename: "[name].dev.js",
 	},
+	resolve: {
+		extensions: ['.ts', '.mjs', '.js', '.css'],
+	},
+	plugins: [
+		new WrapperPlugin({
+			test: /\.js$/,
+			header: function(filename) {
+				return `
+					(function () {
+						"use strict";\n
+						const reusable = require('./reusable');
+						window.feFunctions = reusable;
+						const feProjectId = '${filename}';
+						await window.feFunctions.sendEvent('${filename}');
+				`;
+			},
+			footer: function(filename) {
+				return `
+						await window.feFunctions.sendEvent('${filename}');
+					\n})();
+				`;
+			},
+		}),
+	],
 	module: {
 		rules: [
 			{
@@ -38,27 +62,4 @@ module.exports = {
 			},
 		],
 	},
-	resolve: {
-		extensions: ['.ts', '.mjs', '.js', '.css'],
-	},
-	plugins: [
-		new WrapperPlugin({
-			header: function(filename) {
-				return `
-					(function () {
-						"use strict";\n
-						const reusable = require('./reusable');
-						window.feFunctions = reusable;
-						feProjectId = '${filename}';
-						await window.feFunctions.sendEvent('${filename}');
-				`;
-			},
-			footer: function(filename) {
-				return `
-						await window.feFunctions.sendEvent('${filename}');
-					\n})();
-				`;
-			},
-		}),
-	],
 };

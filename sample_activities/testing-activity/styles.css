@@ -1,0 +1,5 @@
+.testing {
+	> div {
+		background-color: purple;
+	}
+}
