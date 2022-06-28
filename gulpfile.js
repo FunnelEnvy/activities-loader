@@ -34,12 +34,12 @@ const clear = () => {
 };
 
 const ts = () => {
-	return src('./src/activities/**/*.ts', './src/activities/**/*.js')
+	return src(['./src/activities/**/*.ts', './src/activities/**/*.js'])
 		// .pipe(concat('index.ts'))
 		.pipe(rename(path => {
 			path.basename = 'fe_activities_' + path.dirname;
 			path.dirname = '';
-			path.extname = '.ts';
+			// path.extname = '.ts';
 		}))
 		.pipe(wrap({
 			wrapper: function(content, file) {
