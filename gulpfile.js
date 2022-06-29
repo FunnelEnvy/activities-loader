@@ -1,13 +1,17 @@
-const { src, dest, parallel, series, watch } = require('gulp');
-const clean = require('gulp-clean');
-// const concat = require('gulp-concat');
-const rename = require('gulp-rename');
-const minify = require('gulp-minify');
-const wrap = require('gulp-wrap-file');
+var fs = require('fs');
+var path = require('path');
+const { task, src, dest, parallel, series, watch } = require('gulp');
 const babel = require('gulp-babel');
-// const typescript = require('gulp-tsc');
+const cleanCSS = require('gulp-clean-css');
+const clean = require('gulp-clean');
+const concat = require('gulp-concat');
+const filter = require('gulp-filter');
+const include = require('gulp-include');
+const minify = require('gulp-minify');
+// const rename = require('gulp-rename');
+const wrap = require('gulp-wrap-file');
 
-// const tsProject = typescript.createProject('tsconfig.json');
+var scriptsPath = 'src/activities';
 
 const fileWrap = (content, file) => {
 	return `
@@ -33,37 +37,60 @@ const clear = () => {
 		.pipe(clean());
 };
 
-const ts = () => {
-	return src(['./src/activities/**/*.ts', './src/activities/**/*.js'])
-		// .pipe(concat('index.ts'))
-		.pipe(rename(path => {
-			path.basename = 'fe_activities_' + path.dirname;
-			path.dirname = '';
-			// path.extname = '.ts';
-		}))
-		.pipe(wrap({
-			wrapper: function(content, file) {
-				return fileWrap(content, file);
-			},
-		}))
-		// .pipe(typescript())
-		.pipe(babel({
-			presets: [
-				'@babel/env',
-				'@babel/typescript',
-			],
-		}))
-		.pipe(minify({
-			ext: {
-				src: '.js',
-				min: '.min.js',
-			},
-		}))
-		.pipe(dest('./dist'));
-};
+function getFolders(dir) {
+	return fs.readdirSync(dir)
+		.filter(function(file) {
+			return fs.statSync(path.join(dir, file)).isDirectory();
+		});
+}
+
+task('activities', (cb) => {
+	var folders = getFolders(scriptsPath);
+
+	var tasks = folders.map(folder => {
+		const filterJS = filter(['**/*.ts', '**/*.js'], { restore: true });
+		const filterCSS = filter(['**/*.css'], { restore: true });
+		const basePath = path.join(scriptsPath, folder);
+		return src([
+			basePath + '/*.ts',
+			basePath + '/*.js',
+			basePath + '/*.css',
+		])
+			.pipe(filterCSS)
+			.pipe(cleanCSS)
+			.pipe(filterCSS.restore)
+			.pipe(filterJS)
+			.pipe(concat('fe_activities_' + folder + '.ts'))
+			.pipe(include())
+				.on('error', console.log)
+			.pipe(wrap({
+				wrapper: function(content, file) {
+					return fileWrap(content, file);
+				},
+			}))
+			.pipe(babel({
+				presets: [
+					'@babel/env',
+					'@babel/typescript',
+				],
+			}))
+			.pipe(minify({
+				ext: {
+					src: '.js',
+					min: '.min.js',
+				},
+			}))
+			.pipe(filterJS.restore)
+			.pipe(dest('./dist'));
+	});
+
+	// return parallel(tasks);
+	cb();
+});
+const activities = task('activities');
 
 const css = () => {
 	return src();
 };
 
-exports.default = series(clear, parallel(ts /* , css */));
+exports.default = series(clear, parallel(activities /* , css */));
