@@ -1,8 +1,9 @@
 var fs = require('fs');
 var path = require('path');
-const { task, src, dest, parallel, series, watch } = require('gulp');
+const { task, src, dest, parallel, series, /* watch */ } = require('gulp');
 const babel = require('gulp-babel');
 const cleanCSS = require('gulp-clean-css');
+const css2js = require('gulp-css2js');
 const clean = require('gulp-clean');
 const concat = require('gulp-concat');
 const filter = require('gulp-filter');
@@ -17,7 +18,7 @@ const fileWrap = (content, file) => {
 	return `
 		(function() {
 			try {
-				const feProjectId = '${file.modName}';
+				const feProjectId = '${file.modName.split('/').pop()}';
 				// @ts-ignore
 				window.feReusableFnB2B.sendTrackEvent(feProjectId);
 				${content}
@@ -57,7 +58,11 @@ task('activities', (cb) => {
 			basePath + '/*.css',
 		])
 			.pipe(filterCSS)
-			.pipe(cleanCSS)
+			.pipe(cleanCSS({}))
+			.pipe(css2js({
+				prefix: "var strMinifiedCss = \"",
+        suffix: "\";\n",
+			}))
 			.pipe(filterCSS.restore)
 			.pipe(filterJS)
 			.pipe(concat('fe_activities_' + folder + '.ts'))
@@ -89,8 +94,4 @@ task('activities', (cb) => {
 });
 const activities = task('activities');
 
-const css = () => {
-	return src();
-};
-
-exports.default = series(clear, parallel(activities /* , css */));
+exports.default = series(clear, parallel(activities));
