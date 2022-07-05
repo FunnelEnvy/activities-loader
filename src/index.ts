@@ -43,6 +43,36 @@
 			return JSON.parse(JSON.stringify(obj))
 		},
 
+		sendTrackEvent(eventName: string, attributes: any) {
+			try {
+			var routerURL = "https://router.funnelenvy.com";
+			var xhr = new XMLHttpRequest();
+			xhr.open("POST", routerURL + '/track', true);
+			xhr.setRequestHeader('Content-Type', 'application/json');
+
+			xhr.send(JSON.stringify({
+				orgId: 'd27c9d78-5e89-4bde-8cec-67315aa23700',
+				version: '2020-11-01',
+				action: 'updateAttributes',
+				identities: [
+					{
+						source: "individual",
+						identifier: attributes.email || window.hpmmd.user.id || '',
+						event: {
+							name: eventName,
+							attributes: Object.assign(attributes, {
+								url: window.location.href || '',
+							}),
+						},
+					},
+				],
+			}));
+		} catch (err) {}
+		},
+
+		sendErrorEvent() {
+		},
+
 		// waitfor jQuery
 		doWhenJqueryLoaded: function (todoWhenLoaded) {
 			var waitForjQuery = setInterval(

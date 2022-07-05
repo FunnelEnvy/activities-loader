@@ -9,7 +9,7 @@ const concat = require('gulp-concat');
 const filter = require('gulp-filter');
 const include = require('gulp-include');
 const minify = require('gulp-minify');
-// const rename = require('gulp-rename');
+const rename = require('gulp-rename');
 const wrap = require('gulp-wrap-file');
 
 var scriptsPath = 'src/activities';
@@ -36,6 +36,26 @@ const clear = () => {
 		read: false,
 	})
 		.pipe(clean());
+};
+
+const reusable = () => {
+	return src('./src/index.ts')
+		.pipe(rename(path => {
+			path.basename = 'feReusableFnB2B';
+		}))
+		.pipe(babel({
+			presets: [
+				'@babel/env',
+				'@babel/typescript',
+			],
+		}))
+		.pipe(minify({
+			ext: {
+				src: '.js',
+				min: '.min.js',
+			},
+		}))
+		.pipe(dest('./dist'));
 };
 
 function getFolders(dir) {
@@ -94,4 +114,4 @@ task('activities', (cb) => {
 });
 const activities = task('activities');
 
-exports.default = series(clear, parallel(activities));
+exports.default = series(clear, parallel(reusable, activities));

@@ -1,6 +1,8 @@
 export {};
 
 declare global {
+	var strMinifiedCss: string;
+	var feProjectId: string;
 	interface hpmmd {
 		page: {
 			name: string,
@@ -21,6 +23,11 @@ declare global {
 						quoteId?: string;
 					};
 				};
+			};
+		};
+		hpmmd: {
+			user: {
+				id: string;
 			};
 		};
 		headerData?: {
