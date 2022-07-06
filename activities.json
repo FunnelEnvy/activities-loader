@@ -1,0 +1,234 @@
+{
+	"sites": [
+		{
+			"name": "ARUBA",
+			"url_has": "buy.hpe.com/aruba"
+		},
+		{
+			"name": "B2B",
+			"url_has": "b2b.hpe.com"
+		},
+		{
+			"name": "B2BH",
+			"url_has": "buy.hpe.com/b2b",
+			"url_missing": "uatc.buy.hpe.com/b2b"
+		},
+		{
+			"name": "B2BH",
+			"url_has": "buy.hpe.com/shop",
+			"url_missing": "uatc.buy.hpe.com/"
+		},
+		{
+			"name": "B2B-H-UATC",
+			"url_has": "uatc.buy.hpe.com/b2b"
+		}
+	],
+	"activities": [
+		{
+			"projectId": "000-test",
+			"js": [
+				"000-test/poc.js"
+			],
+			"env": [
+				"DEV"
+			],
+			"sites": [
+				"B2B",
+				"B2BH"
+			]
+		},
+		{
+			"projectId": "550-hpe-elite-generate-emailed-pdf-matinfo",
+			"js": [
+				"550-hpe-elite-generate-emailed-pdf-matinfo/quote.js"
+			],
+			"env": [
+				"DEV",
+				"QA",
+				"PROD"
+			],
+			"url_has": [
+				"quote"
+			],
+			"sites": [
+				"B2B",
+				"B2BH"
+			]
+		},
+		{
+			"projectId": "hpe-product-comparison",
+			"js": [
+				"hpe-product-comparison/variation.js"
+			],
+			"env": [
+				"DEV",
+				"QA",
+				"PROD"
+			],
+			"sites": [
+				"B2B",
+				"B2BH"
+			]
+		},
+		{
+			"projectId": "hpe-elite-matinfo-hide-quote-links",
+			"js": [
+				"hpe-elite-matinfo-hide-quote-links/variation.js"
+			],
+			"css": [
+				"hpe-elite-matinfo-hide-quote-links/variation.css"
+			],
+			"env": [
+				"DEV",
+				"QA",
+				"PROD"
+			],
+			"url_has": [
+				"createQuote",
+				"quoteSaveCopy",
+				"quoteCheckout",
+				"rest/v1/quoteSave",
+				"quoteCopy",
+				"reviseQuote",
+				"rest/v1/quoteSave"
+			],
+			"sites": [
+				"B2B",
+				"B2BH"
+			]
+		},
+		{
+			"projectId": "hpe-elite-matinfo-quote-confirmation-message",
+			"js": [
+				"hpe-elite-matinfo-quote-confirmation-message/variation.js"
+			],
+			"env": [
+				"DEV",
+				"QA",
+				"PROD"
+			],
+			"url_has": [
+				"quoteSaveCopy",
+				"rest/v1/quoteSave"
+			],
+			"sites": [
+				"B2B",
+				"B2BH"
+			]
+		},
+		{
+			"projectId": "hpe-elite-matinfo-home-changes",
+			"js": [
+				"hpe-elite-matinfo-home-changes/variation.js"
+			],
+			"env": [
+				"DEV",
+				"QA",
+				"PROD"
+			],
+			"sites": [
+				"B2B",
+				"B2BH"
+			]
+		},
+		{
+			"projectId": "hpe-elite-occ-configurator-export-to-be-hidden",
+			"js": [
+				"hpe-elite-occ-configurator-export-to-be-hidden/variation.js"
+			],
+			"env": [
+				"DEV",
+				"QA",
+				"PROD"
+			],
+			"url_has": [
+				"customizeCTO"
+			],
+			"sites": [
+				"B2B",
+				"B2BH"
+			]
+		},
+		{
+			"projectId": "hpe-elite-matinfo-config-description-change",
+			"js": [
+				"hpe-elite-matinfo-config-description-change/variation.js"
+			],
+			"env": [
+				"DEV",
+				"QA",
+				"PROD"
+			],
+			"sites": [
+				"B2B",
+				"B2BH"
+			]
+		},
+		{
+			"projectId": "hpe-elite-matinfo-banner-needed",
+			"css": [
+				"hpe-elite-matinfo-banner-needed/variation.css"
+			],
+			"js": [
+				"hpe-elite-matinfo-banner-needed/variation.js"
+			],
+			"env": [
+				"DEV",
+				"QA",
+				"PROD"
+			],
+			"sites": [
+				"B2B",
+				"B2BH"
+			]
+		},
+		{
+			"projectId": "hpe-elite-matinfo-rfp-ngc-carbon-footprints",
+			"js": [
+				"hpe-elite-matinfo-rfp-ngc-carbon-footprints/variation.js"
+			],
+			"env": [
+				"DEV",
+				"QA",
+				"PROD"
+			],
+			"url_has": [
+				"/ngc-maui/MauiServlet"
+			],
+			"sites": [
+				"B2B",
+				"B2BH"
+			]
+		},
+		{
+			"projectId": "hpe-elite-QA-matinfo-portal-includes-carbon-footprint",
+			"js": [
+				"hpe-elite-QA-matinfo-portal-includes-carbon-footprint/variation.js"
+			],
+			"env": [
+				"DEV",
+				"QA",
+				"PROD"
+			],
+			"sites": [
+				"B2B",
+				"B2BH"
+			]
+		},
+		{
+			"projectId": "hpe-elite-support-info",
+			"js": [
+				"hpe-elite-support-info/variation.js"
+			],
+			"env": [
+				"DEV",
+				"QA",
+				"PROD"
+			],
+			"sites": [
+				"B2B",
+				"B2BH"
+			]
+		}
+	]
+}

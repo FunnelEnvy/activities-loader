@@ -70,9 +70,6 @@
 		} catch (err) {}
 		},
 
-		sendErrorEvent() {
-		},
-
 		// waitfor jQuery
 		doWhenJqueryLoaded: function (todoWhenLoaded) {
 			var waitForjQuery = setInterval(

@@ -1,33 +1,39 @@
 {
-  "name": "activities-loader",
-  "version": "1.0.0",
-  "description": "Loader for company activities",
-  "main": "index.js",
-  "author": "Connor O'Brien <cobrien.js@gmail.com>",
-  "license": "MIT",
-  "private": false,
-  "scripts": {
-    "gulp": "gulp",
-    "test": "jest --passWithNoTests"
-  },
-  "devDependencies": {
-    "@babel/core": "^7.18.6",
-    "@babel/preset-env": "^7.18.6",
-    "@babel/preset-typescript": "^7.18.6",
-    "@types/jquery": "^3.5.14",
-    "gulp": "^4.0.2",
-    "gulp-babel": "^8.0.0",
-    "gulp-clean": "^0.4.0",
-    "gulp-clean-css": "^4.3.0",
-    "gulp-concat": "^2.6.1",
-    "gulp-css2js": "^1.2.1",
-    "gulp-filter": "^7.0.0",
-    "gulp-include": "^2.4.1",
-    "gulp-minify": "^3.1.0",
-    "gulp-rename": "^2.0.0",
-    "gulp-wrap-file": "^0.1.2",
-    "jest": "^28.1.0",
-    "typescript": "^4.7.3"
-  },
-  "dependencies": {}
+	"name": "activities-loader",
+	"version": "1.0.0",
+	"description": "Loader for company activities",
+	"main": "index.js",
+	"author": "Connor O'Brien <cobrien.js@gmail.com>",
+	"license": "MIT",
+	"private": false,
+	"jest": {
+		"verbose": true
+	},
+	"scripts": {
+		"build": "gulp",
+		"test": "jest --passWithNoTests",
+		"deploy:dev": "",
+		"deploy:prod": ""
+	},
+	"devDependencies": {
+		"@babel/core": "^7.18.6",
+		"@babel/preset-env": "^7.18.6",
+		"@babel/preset-typescript": "^7.18.6",
+		"@types/jquery": "^3.5.14",
+		"gulp": "^4.0.2",
+		"gulp-babel": "^8.0.0",
+		"gulp-clean": "^0.4.0",
+		"gulp-clean-css": "^4.3.0",
+		"gulp-concat": "^2.6.1",
+		"gulp-css2js": "^1.2.1",
+		"gulp-env": "^0.4.0",
+		"gulp-filter": "^7.0.0",
+		"gulp-include": "^2.4.1",
+		"gulp-minify": "^3.1.0",
+		"gulp-rename": "^2.0.0",
+		"gulp-wrap-file": "^0.1.2",
+		"jest": "^28.1.0",
+		"typescript": "^4.7.3"
+	},
+	"dependencies": {}
 }

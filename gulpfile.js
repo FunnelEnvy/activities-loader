@@ -1,6 +1,7 @@
 var fs = require('fs');
 var path = require('path');
 const { task, src, dest, parallel, series, /* watch */ } = require('gulp');
+const env = require('gulp-env');
 const babel = require('gulp-babel');
 const cleanCSS = require('gulp-clean-css');
 const css2js = require('gulp-css2js');
@@ -12,21 +13,62 @@ const minify = require('gulp-minify');
 const rename = require('gulp-rename');
 const wrap = require('gulp-wrap-file');
 
+// TODO: fetch activities from an API
+const activitiesJSON = require('./activities.json');
+
 var scriptsPath = 'src/activities';
 
 const fileWrap = (content, file) => {
 	return `
 		(function() {
+			const feProjectId = '${file.modName.split('/').pop()}';
 			try {
-				const feProjectId = '${file.modName.split('/').pop()}';
 				// @ts-ignore
-				window.feReusableFnB2B.sendTrackEvent(feProjectId);
+				window.feReusableFnB2B.sendTrackEvent("start-activity", { productId: feProjectId });
 				${content}
+				window.feReusableFnB2B.sendTrackEvent("end-activity", { productId: feProjectId });
 			} catch(err) {
 				// @ts-ignore
-				window.feReusableFnB2B.sendErrorEvent();
+				window.feReusableFnB2B.sendTrackEvent("activity-error", { productId: feProjectId });
+				console.error('ERROR:', err);
 			}
 		}())
+	`;
+}
+
+const fileWrapResusable = (content) => {
+	return `
+		${content}
+		(function() {
+			//if (window.location.href.indexOf('//uat.buy.hpe.com/') >= 0) return;
+			if (window.location.href.indexOf('itgh.buy.hpe.com') >= 0) return;
+			var whenLibLoaded= function ( todoWhenLoaded) {
+				var waitFor = setInterval(
+					function () {
+						if (typeof window.jQuery != 'undefined') {
+							if (typeof window.feReusableFnB2B != 'undefined' ) {
+								clearInterval(waitFor);
+								todoWhenLoaded();
+							}
+						}
+					}, 500);
+				setTimeout(function () {
+					clearInterval(waitFor);
+				}, 10000);
+			}
+			function loadActivities(){
+				window.feReusableFnB2B.setSites(${JSON.stringify(activitiesJSON.sites)});
+				window.feReusableFnB2B.setActivities(${JSON.stringify(activitiesJSON.activities)});
+				var acts = window.feReusableFnB2B.detectActivitiesToActivate();
+				var env = window.feReusableFnB2B.detectTypeOfEnvironment();
+				var salt = window.feReusableFnB2B.salt(60 * 2);
+				acts.map(function(activity) {
+					window.feReusableFnB2B.sendTrackEvent("load-activity", { productId: 'fe_activity_'+activity.productId });
+					window.feReusableFnB2B.attachJsFile('${process.env.AWS_S3_BUCKET}'+'fe_activity_'+activity.projectId+(env==="PROD"?'.min':'')+'.js');
+				});
+			}
+			whenLibLoaded( loadActivities);
+		}());
 	`;
 }
 
@@ -40,8 +82,17 @@ const clear = () => {
 
 const reusable = () => {
 	return src('./src/index.ts')
+		.pipe(env({
+			file: '.env',
+			type: 'ini',
+		}))
 		.pipe(rename(path => {
-			path.basename = 'feReusableFnB2B';
+			path.basename = 'fe_prod';
+		}))
+		.pipe(wrap({
+			wrapper: function(content) {
+				return fileWrapResusable(content);
+			},
 		}))
 		.pipe(babel({
 			presets: [
@@ -85,7 +136,7 @@ task('activities', (cb) => {
 			}))
 			.pipe(filterCSS.restore)
 			.pipe(filterJS)
-			.pipe(concat('fe_activities_' + folder + '.ts'))
+			.pipe(concat('fe_activity_' + folder + '.ts'))
 			.pipe(include())
 				.on('error', console.log)
 			.pipe(wrap({
@@ -109,7 +160,6 @@ task('activities', (cb) => {
 			.pipe(dest('./dist'));
 	});
 
-	// return parallel(tasks);
 	cb();
 });
 const activities = task('activities');
