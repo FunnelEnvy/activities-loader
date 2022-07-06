@@ -12,14 +12,16 @@
 	"scripts": {
 		"build": "gulp",
 		"test": "jest --passWithNoTests",
-		"deploy:dev": "",
-		"deploy:prod": ""
+		"deploy:dev": "yarn build && node -e 'require(\"./deploy\").UploadDevFiles()'",
+		"deploy:prod": "yarn build && node -e 'require(\"./deploy\").UploadProdFiles()'",
+		"deploy:all": "yarn build && node -e 'require(\"./deploy\").UploadAllFiles()'"
 	},
 	"devDependencies": {
 		"@babel/core": "^7.18.6",
 		"@babel/preset-env": "^7.18.6",
 		"@babel/preset-typescript": "^7.18.6",
 		"@types/jquery": "^3.5.14",
+		"aws-sdk": "^2.1168.0",
 		"gulp": "^4.0.2",
 		"gulp-babel": "^8.0.0",
 		"gulp-clean": "^0.4.0",
