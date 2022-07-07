@@ -14,7 +14,7 @@ const rename = require('gulp-rename');
 const wrap = require('gulp-wrap-file');
 
 // TODO: fetch activities from an API
-const activitiesJSON = require('./activities.json');
+const activitiesJSON = require('./src/activities.json');
 
 var scriptsPath = 'src/activities';
 
