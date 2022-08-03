@@ -2815,14 +2815,6 @@ gulp-css2js@^1.2.1:
     replace-ext "^1.0.0"
     through2 "*"
 
-gulp-env@^0.4.0:
-  version "0.4.0"
-  resolved "https://registry.yarnpkg.com/gulp-env/-/gulp-env-0.4.0.tgz#8370646949a32493dc06dad94a0643296faadbe8"
-  integrity sha512-zSPvvkU5Cn+UWMkNlrCNDwrCazNfmlvQsDPmv0mxt3r78cln2Ja19iYPXAByDenkyi3t0dzwbGkMdGvE5tQnrw==
-  dependencies:
-    ini "^1.3.4"
-    through2 "^2.0.0"
-
 gulp-filter@^7.0.0:
   version "7.0.0"
   resolved "https://registry.yarnpkg.com/gulp-filter/-/gulp-filter-7.0.0.tgz#e0712f3e57b5d647f802a1880255cafb54abf158"

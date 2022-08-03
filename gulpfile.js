@@ -1,7 +1,6 @@
 var fs = require('fs');
 var path = require('path');
 const { task, src, dest, parallel, series, /* watch */ } = require('gulp');
-const env = require('gulp-env');
 const babel = require('gulp-babel');
 const cleanCSS = require('gulp-clean-css');
 const css2js = require('gulp-css2js');
@@ -82,10 +81,6 @@ const clear = () => {
 
 const reusable = () => {
 	return src('./src/index.ts')
-		.pipe(env({
-			file: '.env',
-			type: 'ini',
-		}))
 		.pipe(rename(path => {
 			path.basename = 'fe_prod';
 		}))
