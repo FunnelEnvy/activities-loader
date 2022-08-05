@@ -9,6 +9,7 @@ const concat = require('gulp-concat');
 const filter = require('gulp-filter');
 const include = require('gulp-include');
 const minify = require('gulp-minify');
+const uglify = require('gulp-uglify');
 const rename = require('gulp-rename');
 const wrap = require('gulp-wrap-file');
 
@@ -80,9 +81,9 @@ const clear = () => {
 };
 
 const reusable = () => {
-	return src('./src/index.ts')
+	let buildPipeline = src('./src/index.ts')
 		.pipe(rename(path => {
-			path.basename = 'fe_prod';
+			path.basename = process.env.ENV === 'production' ? 'fe_prod' : 'fe_dev';
 		}))
 		.pipe(wrap({
 			wrapper: function(content) {
@@ -94,14 +95,13 @@ const reusable = () => {
 				'@babel/env',
 				'@babel/typescript',
 			],
-		}))
-		.pipe(minify({
-			ext: {
-				src: '.js',
-				min: '.min.js',
-			},
-		}))
-		.pipe(dest('./dist'));
+		}));
+
+	if (process.env.ENV === 'production') {
+		buildPipeline = buildPipeline.pipe(uglify());
+	}
+
+	return buildPipeline.pipe(dest('./dist'));
 };
 
 function getFolders(dir) {
@@ -117,8 +117,9 @@ task('activities', (cb) => {
 	var tasks = folders.map(folder => {
 		const filterJS = filter(['**/*.ts', '**/*.js'], { restore: true });
 		const filterCSS = filter(['**/*.css'], { restore: true });
+		const filterMin = filter(['**/*.min.js']);
 		const basePath = path.join(scriptsPath, folder);
-		return src([
+		let activitiesPipeline = src([
 			basePath + '/*.ts',
 			basePath + '/*.js',
 			basePath + '/*.css',
@@ -144,13 +145,20 @@ task('activities', (cb) => {
 					'@babel/env',
 					'@babel/typescript',
 				],
-			}))
-			.pipe(minify({
-				ext: {
-					src: '.js',
-					min: '.min.js',
-				},
-			}))
+			}));
+
+		if (process.env.ENV === 'production') {
+			activitiesPipeline = activitiesPipeline
+				.pipe(minify({
+					ext: {
+						src: '.js',
+						min: '.min.js',
+					},
+				}))
+				.pipe(filterMin);
+		}
+
+		return activitiesPipeline
 			.pipe(filterJS.restore)
 			.pipe(dest('./dist'));
 	});

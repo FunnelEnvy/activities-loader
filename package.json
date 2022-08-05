@@ -10,6 +10,8 @@
 		"verbose": true
 	},
 	"scripts": {
+		"build:dev": "ENV=dev gulp",
+		"build:prod": "ENV=production gulp",
 		"build": "gulp",
 		"test": "jest --passWithNoTests",
 		"deploy:dev": "yarn build && node -e 'require(\"./deploy\").UploadDevFiles()'",
@@ -32,6 +34,7 @@
 		"gulp-include": "^2.4.1",
 		"gulp-minify": "^3.1.0",
 		"gulp-rename": "^2.0.0",
+		"gulp-uglify": "^3.0.2",
 		"gulp-wrap-file": "^0.1.2",
 		"jest": "^28.1.0",
 		"lodash": "^4.17.21",
