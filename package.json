@@ -6,9 +6,6 @@
 	"author": "Connor O'Brien <cobrien.js@gmail.com>",
 	"license": "MIT",
 	"private": false,
-	"jest": {
-		"verbose": true
-	},
 	"scripts": {
 		"build:dev": "ENV=dev gulp",
 		"build:prod": "ENV=production gulp",
@@ -22,6 +19,7 @@
 		"@babel/core": "^7.18.6",
 		"@babel/preset-env": "^7.18.6",
 		"@babel/preset-typescript": "^7.18.6",
+		"@types/jest": "^28.1.6",
 		"@types/jquery": "^3.5.14",
 		"aws-sdk": "^2.1168.0",
 		"gulp": "^4.0.2",
@@ -37,7 +35,9 @@
 		"gulp-uglify": "^3.0.2",
 		"gulp-wrap-file": "^0.1.2",
 		"jest": "^28.1.0",
+		"jest-environment-jsdom": "^28.1.3",
 		"lodash": "^4.17.21",
+		"ts-jest": "^28.0.7",
 		"typescript": "^4.7.3"
 	},
 	"dependencies": {}
