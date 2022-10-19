@@ -81,7 +81,7 @@ const clear = () => {
 };
 
 const reusable = () => {
-	let buildPipeline = src('./src/index.ts')
+	let buildPipeline = src(activitiesJSON.reusable)
 		.pipe(rename(path => {
 			path.basename = process.env.ENV === 'production' ? 'fe_prod' : 'fe_dev';
 		}))
