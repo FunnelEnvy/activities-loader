@@ -15,7 +15,6 @@ const wrap = require('gulp-wrap-file');
 
 // TODO: fetch activities from an API
 const activitiesJSON = require('./src/activities.json');
-
 var scriptsPath = 'src/activities';
 
 const fileWrap = (content, file) => {
@@ -128,7 +127,13 @@ task('activities', (cb) => {
 			.pipe(cleanCSS({}))
 			.pipe(css2js({
 				prefix: "var strMinifiedCss = \"",
-        suffix: "\";\n",
+				suffix: `\";\n
+					(function() {
+						if (window.feReusableFnB2B && window.feReusableFnB2B.injectCss) {
+							window.feReusableFnB2B.injectCss(strMinifiedCss, feProjectId);
+						}
+					}());
+				`,
 			}))
 			.pipe(filterCSS.restore)
 			.pipe(filterJS)
@@ -165,6 +170,7 @@ task('activities', (cb) => {
 
 	cb();
 });
+
 const activities = task('activities');
 
 exports.default = series(clear, parallel(reusable, activities));
