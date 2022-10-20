@@ -20,7 +20,7 @@ var scriptsPath = 'src/activities';
 const fileWrap = (content, file) => {
 	return `
 		(function() {
-			const feProjectId = '${file.modName.split('/').pop()}';
+			const feProjectId = 'fe_activity_${file.modName.split('/').pop()}';
 			try {
 				// @ts-ignore
 				window.feReusableFnB2B.sendTrackEvent("start-activity", { projectId: feProjectId });
@@ -41,7 +41,7 @@ const fileWrapResusable = (content) => {
 		(function() {
 			//if (window.location.href.indexOf('//uat.buy.hpe.com/') >= 0) return;
 			if (window.location.href.indexOf('itgh.buy.hpe.com') >= 0) return;
-			var whenLibLoaded= function ( todoWhenLoaded) {
+			var whenLibLoaded = function (todoWhenLoaded) {
 				var waitFor = setInterval(
 					function () {
 						if (typeof window.jQuery != 'undefined') {
@@ -55,7 +55,7 @@ const fileWrapResusable = (content) => {
 					clearInterval(waitFor);
 				}, 10000);
 			}
-			function loadActivities(){
+			var loadActivities = () => {
 				window.feReusableFnB2B.setSites(${JSON.stringify(activitiesJSON.sites)});
 				window.feReusableFnB2B.setActivities(${JSON.stringify(activitiesJSON.activities)});
 				var acts = window.feReusableFnB2B.detectActivitiesToActivate();
