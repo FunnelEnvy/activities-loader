@@ -63,7 +63,7 @@ const fileWrapResusable = (content) => {
 				var salt = window.feReusableFnB2B.salt(60 * 2);
 				acts.map(function(activity) {
 					window.feReusableFnB2B.sendTrackEvent("load-activity", { projectId: 'fe_activity_'+activity.activity });
-					window.feReusableFnB2B.attachJsFile('${process.env.AWS_S3_BUCKET}'+'/fe_activity_'+activity.activity+(env==="PROD"?'.min':'')+'.js');
+					window.feReusableFnB2B.attachJsFile('${process.env.AWS_S3_BUCKET}'+'/fe_activity_'+activity.activity+${process.env.ENV === 'production' ? '.min.js' : '.js'});
 				});
 			}
 			whenLibLoaded( loadActivities);
