@@ -1,6 +1,6 @@
 var fs = require('fs');
 var path = require('path');
-const { task, src, dest, parallel, series, /* watch */ } = require('gulp');
+const { task, src, dest, parallel, series } = require('gulp');
 const babel = require('gulp-babel');
 const cleanCSS = require('gulp-clean-css');
 const css2js = require('gulp-css2js');
@@ -101,12 +101,6 @@ const reusable = () => {
 		}))
 		.pipe(uglify())
 		.pipe(dest('./dist'));
-
-	// if (process.env.ENV === 'production') {
-	// 	buildPipeline = buildPipeline.pipe(uglify());
-	// }
-
-	// return buildPipeline.pipe(dest('./dist'));
 };
 
 function getFolders(dir) {
@@ -119,11 +113,11 @@ function getFolders(dir) {
 task('activities', (cb) => {
 	var folders = getFolders(scriptsPath);
 
-	var tasks = folders.map(folder => {
+	folders.map(folder => {
 		const filterJS = filter(['**/*.ts', '**/*.js'], { restore: true });
 		const filterCSS = filter(['**/*.css'], { restore: true });
 		const basePath = path.join(scriptsPath, folder);
-		let activitiesPipeline = src([
+		return src([
 			basePath + '/*.ts',
 			basePath + '/*.js',
 			basePath + '/*.css',
@@ -161,9 +155,7 @@ task('activities', (cb) => {
 					src: '.js',
 					min: '.min.js',
 				},
-			}));
-
-		return activitiesPipeline
+			}))
 			.pipe(filterJS.restore)
 			.pipe(dest('./dist'));
 	});
