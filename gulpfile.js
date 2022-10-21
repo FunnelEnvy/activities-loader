@@ -82,7 +82,7 @@ const clear = () => {
 const reusable = () => {
 	let buildPipeline = src(`${scriptsPath}/${activitiesJSON.reusable}`)
 		.pipe(rename(path => {
-			path.basename = process.env.ENV === 'production' ? 'fe_prod' : 'fe_dev';
+			path.basename = 'fe_prod';
 		}))
 		.pipe(wrap({
 			wrapper: function(content) {
@@ -96,9 +96,9 @@ const reusable = () => {
 			],
 		}));
 
-	if (process.env.ENV === 'production') {
-		buildPipeline = buildPipeline.pipe(uglify());
-	}
+	// if (process.env.ENV === 'production') {
+	// 	buildPipeline = buildPipeline.pipe(uglify());
+	// }
 
 	return buildPipeline.pipe(dest('./dist'));
 };
