@@ -7,8 +7,6 @@
 	"license": "MIT",
 	"private": false,
 	"scripts": {
-		"build:dev": "ENV=dev gulp",
-		"build:prod": "ENV=production gulp",
 		"build": "gulp",
 		"test": "jest --passWithNoTests",
 		"deploy:dev": "yarn build && node -e 'require(\"./deploy\").UploadDevFiles()'",

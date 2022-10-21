@@ -116,7 +116,6 @@ task('activities', (cb) => {
 	var tasks = folders.map(folder => {
 		const filterJS = filter(['**/*.ts', '**/*.js'], { restore: true });
 		const filterCSS = filter(['**/*.css'], { restore: true });
-		const filterMin = filter(['**/*.min.js']);
 		const basePath = path.join(scriptsPath, folder);
 		let activitiesPipeline = src([
 			basePath + '/*.ts',
@@ -150,18 +149,13 @@ task('activities', (cb) => {
 					'@babel/env',
 					'@babel/typescript',
 				],
+			}))
+			.pipe(minify({
+				ext: {
+					src: '.js',
+					min: '.min.js',
+				},
 			}));
-
-		if (process.env.ENV === 'production') {
-			activitiesPipeline = activitiesPipeline
-				.pipe(minify({
-					ext: {
-						src: '.js',
-						min: '.min.js',
-					},
-				}))
-				.pipe(filterMin);
-		}
 
 		return activitiesPipeline
 			.pipe(filterJS.restore)
