@@ -80,9 +80,9 @@ const clear = () => {
 };
 
 const reusable = () => {
-	let buildPipeline = src(`${scriptsPath}/${activitiesJSON.reusable}`)
+	return src(`${scriptsPath}/${activitiesJSON.reusable}`)
 		.pipe(rename(path => {
-			path.basename = 'fe_prod';
+			path.basename = 'fe_dev';
 		}))
 		.pipe(wrap({
 			wrapper: function(content) {
@@ -94,13 +94,19 @@ const reusable = () => {
 				'@babel/env',
 				'@babel/typescript',
 			],
-		}));
+		}))
+		.pipe(dest('./dist'))
+		.pipe(rename(path => {
+			path.basename = 'fe_prod';
+		}))
+		.pipe(uglify())
+		.pipe(dest('./dist'));
 
 	// if (process.env.ENV === 'production') {
 	// 	buildPipeline = buildPipeline.pipe(uglify());
 	// }
 
-	return buildPipeline.pipe(dest('./dist'));
+	// return buildPipeline.pipe(dest('./dist'));
 };
 
 function getFolders(dir) {
