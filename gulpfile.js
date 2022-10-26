@@ -128,8 +128,10 @@ task('activities', (cb) => {
 				prefix: "var strMinifiedCss = \"",
 				suffix: `\";\n
 					(function() {
-						if (window.feReusableFnB2B && window.feReusableFnB2B.injectCss) {
-							window.feReusableFnB2B.injectCss(strMinifiedCss, feProjectId);
+						if(window.headerData && window.headerData.user && window.headerData.user.rootorg_id === 'MATI20210608085950') {
+							if (window.feReusableFnB2B && window.feReusableFnB2B.injectCss) {
+								window.feReusableFnB2B.injectCss(strMinifiedCss, feProjectId);
+							}
 						}
 					}());
 				`,
