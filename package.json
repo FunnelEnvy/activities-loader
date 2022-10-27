@@ -8,10 +8,7 @@
 	"private": false,
 	"scripts": {
 		"build": "gulp",
-		"test": "jest --passWithNoTests",
-		"deploy:dev": "yarn build && node -e 'require(\"./deploy\").UploadDevFiles()'",
-		"deploy:prod": "yarn build && node -e 'require(\"./deploy\").UploadProdFiles()'",
-		"deploy:all": "yarn build && node -e 'require(\"./deploy\").UploadAllFiles()'"
+		"test": "jest --passWithNoTests"
 	},
 	"devDependencies": {
 		"@babel/core": "^7.18.6",

@@ -117,6 +117,7 @@ task('activities', (cb) => {
 		const filterJS = filter(['**/*.ts', '**/*.js'], { restore: true });
 		const filterCSS = filter(['**/*.css'], { restore: true });
 		const basePath = path.join(scriptsPath, folder);
+		const activity = activitiesJSON.activities.find(a => a.activity === folder) || null;
 		return src([
 			basePath + '/*.ts',
 			basePath + '/*.js',
@@ -128,11 +129,11 @@ task('activities', (cb) => {
 				prefix: "var strMinifiedCss = \"",
 				suffix: `\";\n
 					(function() {
-						if(window.headerData && window.headerData.user && window.headerData.user.rootorg_id === 'MATI20210608085950') {
+						${activity?.cssRestriction ? 'if(' + activity?.cssRestriction + ') {' : ''}
 							if (window.feReusableFnB2B && window.feReusableFnB2B.injectCss) {
 								window.feReusableFnB2B.injectCss(strMinifiedCss, feProjectId);
 							}
-						}
+						${activity?.cssRestriction ? '}' : ''}
 					}());
 				`,
 			}))
