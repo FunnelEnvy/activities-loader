@@ -17,21 +17,21 @@ const wrap = require('gulp-wrap-file');
 const activitiesJSON = require('./src/activities.json');
 var scriptsPath = 'src/activities';
 
-const fileWrap = (content, file) => {
+const fileWrap = (content, activity) => {
 	return `
 		(function() {
-			const feProjectId = 'fe_activity_${file.modName.split('/').pop()}';
+			const feProjectId = 'fe_activity_${activity ?? ""}';
 			try {
 				// @ts-ignore
-				window.feReusableFnB2B.sendTrackEvent("start-activity", { projectId: feProjectId });
+				window.feReusableFn.sendTrackEvent("start-activity", { projectId: feProjectId });
 				${content}
-				window.feReusableFnB2B.sendTrackEvent("executed-activity", { projectId: feProjectId });
+				window.feReusableFn.sendTrackEvent("executed-activity", { projectId: feProjectId });
 			} catch(err) {
 				// @ts-ignore
-				window.feReusableFnB2B.sendTrackEvent("activity-error", { projectId: feProjectId });
+				window.feReusableFn.sendTrackEvent("activity-error", { projectId: feProjectId });
 				console.error('ERROR:', err);
 			}
-		}())
+		}());
 	`;
 }
 
@@ -45,7 +45,7 @@ const fileWrapResusable = (content) => {
 				var waitFor = setInterval(
 					function () {
 						if (typeof window.jQuery != 'undefined') {
-							if (typeof window.feReusableFnB2B != 'undefined' ) {
+							if (typeof window.feReusableFn != 'undefined' ) {
 								clearInterval(waitFor);
 								todoWhenLoaded();
 							}
@@ -56,14 +56,14 @@ const fileWrapResusable = (content) => {
 				}, 10000);
 			}
 			var loadActivities = () => {
-				window.feReusableFnB2B.setSites(${JSON.stringify(activitiesJSON.sites)});
-				window.feReusableFnB2B.setActivities(${JSON.stringify(activitiesJSON.activities)});
-				var acts = window.feReusableFnB2B.detectActivitiesToActivate();
-				var env = window.feReusableFnB2B.detectTypeOfEnvironment();
-				var salt = window.feReusableFnB2B.salt(60 * 2);
+				window.feReusableFn.setSites(${JSON.stringify(activitiesJSON.sites)});
+				window.feReusableFn.setActivities(${JSON.stringify(activitiesJSON.activities)});
+				var acts = window.feReusableFn.detectActivitiesToActivate();
+				var env = window.feReusableFn.detectTypeOfEnvironment();
+				var salt = window.feReusableFn.salt(60 * 2);
 				acts.map(function(activity) {
-					window.feReusableFnB2B.sendTrackEvent("load-activity", { projectId: 'fe_activity_'+activity.activity });
-					window.feReusableFnB2B.attachJsFile('${process.env.AWS_S3_BUCKET}'+'/fe_activity_'+activity.activity+(env === "PROD" ? '.min' : '')+'.js');
+					window.feReusableFn.sendTrackEvent("load-activity", { projectId: 'fe_activity_'+activity.activity });
+					window.feReusableFn.attachJsFile('${process.env.AWS_S3_BUCKET}'+'/fe_activity_'+activity.activity+(env === "PROD" ? '.min' : '')+'.js');
 				});
 			}
 			whenLibLoaded( loadActivities);
@@ -130,8 +130,8 @@ task('activities', (cb) => {
 				suffix: `\";\n
 					(function() {
 						${activity?.cssRestriction ? 'if(' + activity?.cssRestriction + ') {' : ''}
-							if (window.feReusableFnB2B && window.feReusableFnB2B.injectCss) {
-								window.feReusableFnB2B.injectCss(strMinifiedCss, feProjectId);
+							if (window.feReusableFn && window.feReusableFn.injectCss) {
+								window.feReusableFn.injectCss(strMinifiedCss, feProjectId);
 							}
 						${activity?.cssRestriction ? '}' : ''}
 					}());
@@ -143,8 +143,8 @@ task('activities', (cb) => {
 			.pipe(include())
 				.on('error', console.log)
 			.pipe(wrap({
-				wrapper: function(content, file) {
-					return fileWrap(content, file);
+				wrapper: function(content) {
+					return fileWrap(content, activity?.activity);
 				},
 			}))
 			.pipe(babel({
