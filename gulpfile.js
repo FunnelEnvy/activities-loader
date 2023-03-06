@@ -20,7 +20,7 @@ var scriptsPath = 'src/activities';
 const fileWrap = (content, activity) => {
 	return `
 		(function() {
-			const feProjectId = 'fe_activity_${activity ?? ""}';
+			const feProjectId = 'fe_activity_${activity ?? ""}_b2bh';
 			try {
 				// @ts-ignore
 				window.feReusableFn.sendTrackEvent("start-activity", { projectId: feProjectId });
@@ -62,8 +62,8 @@ const fileWrapResusable = (content) => {
 				var env = window.feReusableFn.detectTypeOfEnvironment();
 				var salt = window.feReusableFn.salt(60 * 2);
 				acts.map(function(activity) {
-					window.feReusableFn.sendTrackEvent("load-activity", { projectId: 'fe_activity_'+activity.activity });
-					window.feReusableFn.attachJsFile('${process.env.AWS_S3_BUCKET}'+'/fe_activity_'+activity.activity+(env === "PROD" ? '.min' : '')+'.js');
+					window.feReusableFn.sendTrackEvent("load-activity", { projectId: 'fe_activity_'+activity.activity+'_b2bh' });
+					window.feReusableFn.attachJsFile('${process.env.AWS_S3_BUCKET}'+'/fe_activity_'+activity.activity+'_b2bh'+(env === "PROD" ? '.min' : '')+'.js');
 				});
 			}
 			whenLibLoaded( loadActivities);
@@ -82,7 +82,7 @@ const clear = () => {
 const reusable = () => {
 	return src(`${scriptsPath}/${activitiesJSON.reusable}`)
 		.pipe(rename(path => {
-			path.basename = 'fe_dev';
+			path.basename = 'fe_dev_b2bh';
 		}))
 		.pipe(wrap({
 			wrapper: function(content) {
@@ -97,7 +97,7 @@ const reusable = () => {
 		}))
 		.pipe(dest('./dist'))
 		.pipe(rename(path => {
-			path.basename = 'fe_prod';
+			path.basename = 'fe_prod_b2bh';
 		}))
 		.pipe(uglify())
 		.pipe(dest('./dist'));
@@ -139,7 +139,7 @@ task('activities', (cb) => {
 			}))
 			.pipe(filterCSS.restore)
 			.pipe(filterJS)
-			.pipe(concat('fe_activity_' + folder + '.ts'))
+			.pipe(concat('fe_activity_' + folder + '_b2bh.ts'))
 			.pipe(include())
 				.on('error', console.log)
 			.pipe(wrap({
