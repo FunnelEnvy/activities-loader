@@ -128,13 +128,11 @@ task('activities', (cb) => {
 			.pipe(css2js({
 				prefix: "var strMinifiedCss = \"",
 				suffix: `\";\n
-					(function() {
-						${activity?.cssRestriction ? 'if(' + activity?.cssRestriction + ') {' : ''}
-							if (window.feReusableFnB2B && window.feReusableFnB2B.injectCss) {
-								window.feReusableFnB2B.injectCss(strMinifiedCss, feProjectId);
-							}
-						${activity?.cssRestriction ? '}' : ''}
-					}());
+					function addCss() {
+						// ${activity?.cssRestriction ? 'if(' + activity?.cssRestriction + ') {' : ''}
+						window.feReusableFnB2B.injectCss(strMinifiedCss, feProjectId);
+					};
+					${activity?.cssRestriction ? "window.feReusableFnB2B.doWhenElementLoaded('" + activity?.cssRestriction + "', addCss);" : "addCss();"}
 				`,
 			}))
 			.pipe(filterCSS.restore)
