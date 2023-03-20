@@ -128,8 +128,8 @@ task('activities', (cb) => {
 			.pipe(css2js({
 				prefix: "var strMinifiedCss = \"",
 				suffix: `\";\n
-					function addCss() {
-						// ${activity?.cssRestriction ? 'if(' + activity?.cssRestriction + ') {' : ''}
+					const addCss = () => {
+						window.feReusableFnB2B.sendTrackEvent("css-loaded", { projectId: feProjectId });
 						window.feReusableFnB2B.injectCss(strMinifiedCss, feProjectId);
 					};
 					${activity?.cssRestriction ? "window.feReusableFnB2B.doWhenElementLoaded('" + activity?.cssRestriction + "', addCss);" : "addCss();"}
