@@ -129,10 +129,14 @@ task('activities', (cb) => {
 				prefix: "var strMinifiedCss = \"",
 				suffix: `\";\n
 					const addCss = () => {
-						window.feReusableFnB2B.sendTrackEvent("css-loaded", { projectId: feProjectId });
-						window.feReusableFnB2B.injectCss(strMinifiedCss, feProjectId);
+						if (window.feReusableFnB2B && window.feReusableFnB2B.injectCss && window.feReusableFnB2B.sendTrackEvent) {
+							${activity?.cssRestriction ? "if(" + activity.cssRestriction + ") {" : ""}
+							window.feReusableFnB2B.sendTrackEvent("css-loaded", { projectId: feProjectId });
+							window.feReusableFnB2B.injectCss(strMinifiedCss, feProjectId);
+							${activity?.cssRestriction ? "}" : ""}
+						}
 					};
-					${activity?.cssRestriction ? "window.feReusableFnB2B.doWhenElementLoaded('" + activity?.cssRestriction + "', addCss);" : "addCss();"}
+					window.feReusableFnB2B.waitForAudience(addCss);
 				`,
 			}))
 			.pipe(filterCSS.restore)
