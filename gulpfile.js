@@ -63,7 +63,7 @@ const fileWrapResusable = (content) => {
 				var salt = window.feReusableFnB2B.salt(60 * 2);
 				acts.map(function(activity) {
 					window.feReusableFnB2B.sendTrackEvent("load-activity", { projectId: 'fe_activity_'+activity.activity });
-					window.feReusableFnB2B.attachJsFile('${process.env.AWS_S3_BUCKET}'+'/fe_activity_'+activity.activity+(env === "PROD" ? '.min' : '')+'.js');
+					window.feReusableFnB2B.attachJsFile('${process.env.AWS_S3_BUCKET}'+'/fe_activity_'+activity.activity+(env === "PROD" ? '.min' : '')+'.js',activity.js_type);
 				});
 			}
 			whenLibLoaded( loadActivities);
@@ -128,13 +128,15 @@ task('activities', (cb) => {
 			.pipe(css2js({
 				prefix: "var strMinifiedCss = \"",
 				suffix: `\";\n
-					(function() {
-						${activity?.cssRestriction ? 'if(' + activity?.cssRestriction + ') {' : ''}
-							if (window.feReusableFnB2B && window.feReusableFnB2B.injectCss) {
-								window.feReusableFnB2B.injectCss(strMinifiedCss, feProjectId);
-							}
-						${activity?.cssRestriction ? '}' : ''}
-					}());
+					const addCss = () => {
+						if (window.feReusableFnB2B && window.feReusableFnB2B.injectCss && window.feReusableFnB2B.sendTrackEvent) {
+							${activity?.cssRestriction ? "if(" + activity.cssRestriction + ") {" : ""}
+							window.feReusableFnB2B.sendTrackEvent("css-loaded", { projectId: feProjectId });
+							window.feReusableFnB2B.injectCss(strMinifiedCss, feProjectId);
+							${activity?.cssRestriction ? "}" : ""}
+						}
+					};
+					window.feReusableFnB2B.waitForAudience(addCss);
 				`,
 			}))
 			.pipe(filterCSS.restore)
