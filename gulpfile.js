@@ -103,7 +103,7 @@ const reusable = () => {
 };
 
 task('activities', (cb) => {
-	activitiesJSON.activities.map(activity => {
+	activitiesJSON.activities.filter(a => a.enabled === true).map(activity => {
 		const filterJS = filter(["**/*.js", "**/*.ts"], { restore: true });
 		const filterCSS = filter(["**/*.css"], { restore: true });
 		const scripts = (activity?.scripts ?? []).map(file => path.join(scriptsPath, activity.activity, file));
