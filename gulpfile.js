@@ -56,7 +56,7 @@ const fileWrapResusable = (content) => {
 			}
 			var loadActivities = () => {
 				window.feReusableFnB2B.setSites(${JSON.stringify(activitiesJSON.sites)});
-				window.feReusableFnB2B.setActivities(${JSON.stringify(activitiesJSON.activities.filter(a => a.enabled))});
+				window.feReusableFnB2B.setActivities(${JSON.stringify(activitiesJSON.activities.filter(a => a.enable))});
 				var acts = window.feReusableFnB2B.detectActivitiesToActivate();
 				var env = window.feReusableFnB2B.detectTypeOfEnvironment();
 				var salt = window.feReusableFnB2B.salt(60 * 2);
@@ -103,7 +103,7 @@ const reusable = () => {
 };
 
 task('activities', (cb) => {
-	activitiesJSON.activities.filter(a => a.enabled === true).map(activity => {
+	activitiesJSON.activities.filter(a => a.enable === true).map(activity => {
 		const filterJS = filter(["**/*.js", "**/*.ts"], { restore: true });
 		const filterCSS = filter(["**/*.css"], { restore: true });
 		const scripts = (activity?.scripts ?? []).map(file => path.join(scriptsPath, activity.activity, file));
