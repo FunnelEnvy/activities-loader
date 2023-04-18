@@ -56,7 +56,7 @@ const fileWrapResusable = (content) => {
 			}
 			var loadActivities = () => {
 				window.feReusableFn.setSites(${JSON.stringify(activitiesJSON.sites)});
-				window.feReusableFn.setActivities(${JSON.stringify(activitiesJSON.activities.filter(a => a.enabled))});
+				window.feReusableFn.setActivities(${JSON.stringify(activitiesJSON.activities.filter(a => a.enable))});
 				var acts = window.feReusableFn.detectActivitiesToActivate();
 				var env = window.feReusableFn.detectTypeOfEnvironment();
 				var salt = window.feReusableFn.salt(60 * 2);
@@ -110,7 +110,7 @@ function getFolders(dir) {
 }
 
 task('activities', (cb) => {
-	activitiesJSON.activities.filter(a => a.enabled === true).map(activity => {
+	activitiesJSON.activities.filter(a => a.enable === true).map(activity => {
 		const filterJS = filter(['**/*.ts', '**/*.js'], { restore: true });
 		const filterCSS = filter(['**/*.css'], { restore: true });
 		const scripts = (activity?.scripts ?? []).map(file => path.join(scriptsPath, activity.activity, file));
