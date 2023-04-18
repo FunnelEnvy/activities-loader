@@ -56,7 +56,7 @@ const fileWrapResusable = (content) => {
 			}
 			var loadActivities = () => {
 				window.feReusableFn.setSites(${JSON.stringify(activitiesJSON.sites)});
-				window.feReusableFn.setActivities(${JSON.stringify(activitiesJSON.activities)});
+				window.feReusableFn.setActivities(${JSON.stringify(activitiesJSON.activities.filter(a => a.enabled))});
 				var acts = window.feReusableFn.detectActivitiesToActivate();
 				var env = window.feReusableFn.detectTypeOfEnvironment();
 				var salt = window.feReusableFn.salt(60 * 2);
