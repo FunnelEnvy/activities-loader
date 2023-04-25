@@ -1,4 +1,5 @@
-const path = require('path');
+var fs = require('fs');
+var path = require('path');
 const { task, src, dest, parallel, series } = require('gulp');
 const babel = require('gulp-babel');
 const cleanCSS = require('gulp-clean-css');
@@ -19,7 +20,7 @@ var scriptsPath = 'src/activities';
 const fileWrap = (content, file) => {
 	return `
 		(function() {
-			const feProjectId = '${file.modName.split('/').pop()}';
+			const feProjectId = 'fe_activity_${file.modName.split('/').pop()}';
 			try {
 				// @ts-ignore
 				window.feReusableFnB2B.sendTrackEvent("start-activity", { projectId: feProjectId });
@@ -56,7 +57,7 @@ const fileWrapResusable = (content) => {
 			}
 			var loadActivities = () => {
 				window.feReusableFnB2B.setSites(${JSON.stringify(activitiesJSON.sites)});
-				window.feReusableFnB2B.setActivities(${JSON.stringify(activitiesJSON.activities.filter(a => a.enable))});
+				window.feReusableFnB2B.setActivities(${JSON.stringify(activitiesJSON.activities)});
 				var acts = window.feReusableFnB2B.detectActivitiesToActivate();
 				var env = window.feReusableFnB2B.detectTypeOfEnvironment();
 				var salt = window.feReusableFnB2B.salt(60 * 2);
@@ -102,15 +103,27 @@ const reusable = () => {
 		.pipe(dest('./dist'));
 };
 
+function getFolders(dir) {
+	return fs.readdirSync(dir)
+		.filter(function(file) {
+			return fs.statSync(path.join(dir, file)).isDirectory();
+		});
+}
+
 task('activities', (cb) => {
-	activitiesJSON.activities.filter(a => a.enable === true).map(activity => {
-		const filterJS = filter(["**/*.js", "**/*.ts"], { restore: true });
-		const filterCSS = filter(["**/*.css"], { restore: true });
-		const scripts = (activity?.scripts ?? []).map(file => path.join(scriptsPath, activity.activity, file));
-		const styles = (activity?.styles ?? []).map(file => path.join(scriptsPath, activity.activity, file));
-		return src([].concat(scripts, styles), { allowEmpty: true })
+	var folders = getFolders(scriptsPath);
+
+	folders.map(folder => {
+		const filterJS = filter(['**/*.ts', '**/*.js'], { restore: true });
+		const filterCSS = filter(['**/*.css'], { restore: true });
+		const basePath = path.join(scriptsPath, folder);
+		const activity = activitiesJSON.activities.find(a => a.activity === folder) || null;
+		return src([
+			basePath + '/*.ts',
+			basePath + '/*.js',
+			basePath + '/*.css',
+		])
 			.pipe(filterCSS)
-			.pipe(concat('all.css'))
 			.pipe(cleanCSS({}))
 			.pipe(css2js({
 				prefix: "var strMinifiedCss = \"",
@@ -128,7 +141,7 @@ task('activities', (cb) => {
 			}))
 			.pipe(filterCSS.restore)
 			.pipe(filterJS)
-			.pipe(concat('fe_activity_' + activity.activity + '.ts'))
+			.pipe(concat('fe_activity_' + folder + '.ts'))
 			.pipe(include())
 				.on('error', console.log)
 			.pipe(wrap({
