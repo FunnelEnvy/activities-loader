@@ -1,3 +1,4 @@
+var fs = require('fs');
 var path = require('path');
 const { task, src, dest, parallel, series } = require('gulp');
 const babel = require('gulp-babel');
@@ -56,7 +57,7 @@ const fileWrapResusable = (content) => {
 			}
 			var loadActivities = () => {
 				window.feReusableFn.setSites(${JSON.stringify(activitiesJSON.sites)});
-				window.feReusableFn.setActivities(${JSON.stringify(activitiesJSON.activities.filter(a => a.enable))});
+				window.feReusableFn.setActivities(${JSON.stringify(activitiesJSON.activities)});
 				var acts = window.feReusableFn.detectActivitiesToActivate();
 				var env = window.feReusableFn.detectTypeOfEnvironment();
 				var salt = window.feReusableFn.salt(60 * 2);
@@ -110,12 +111,18 @@ function getFolders(dir) {
 }
 
 task('activities', (cb) => {
-	activitiesJSON.activities.filter(a => a.enable === true).map(activity => {
+	var folders = getFolders(scriptsPath);
+
+	folders.map(folder => {
 		const filterJS = filter(['**/*.ts', '**/*.js'], { restore: true });
 		const filterCSS = filter(['**/*.css'], { restore: true });
-		const scripts = (activity?.scripts ?? []).map(file => path.join(scriptsPath, activity.activity, file));
-		const styles = (activity?.styles ?? []).map(file => path.join(scriptsPath, activity.activity, file));
-		return src([].concat(scripts, styles), { allowEmpty: true})
+		const basePath = path.join(scriptsPath, folder);
+		const activity = activitiesJSON.activities.find(a => a.activity === folder) || null;
+		return src([
+			basePath + '/*.ts',
+			basePath + '/*.js',
+			basePath + '/*.css',
+		])
 			.pipe(filterCSS)
 			.pipe(cleanCSS({}))
 			.pipe(css2js({
@@ -132,7 +139,7 @@ task('activities', (cb) => {
 			}))
 			.pipe(filterCSS.restore)
 			.pipe(filterJS)
-			.pipe(concat('fe_activity_' + activity.activity + '_b2bh.ts'))
+			.pipe(concat('fe_activity_' + folder + '_b2bh.ts'))
 			.pipe(include())
 				.on('error', console.log)
 			.pipe(wrap({
