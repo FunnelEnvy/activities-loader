@@ -136,7 +136,7 @@ task('activities', (cb) => {
 							${activity?.cssRestriction ? "}" : ""}
 						}
 					};
-					window.feReusableFnB2B.waitForAudience(addCss);
+					${activity?.cssRestriction ? 'window.feReusableFnB2B.waitForAudience(addCss);' : 'addCss()'}
 				`,
 			}))
 			.pipe(filterCSS.restore)
