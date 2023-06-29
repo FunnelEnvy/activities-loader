@@ -21,13 +21,8 @@ const fileWrap = (content, activity) => {
 		(function() {
 			const feProjectId = 'fe_activity_${activity ?? ""}_b2bh';
 			try {
-				// @ts-ignore
-				window.feReusableFn.sendTrackEvent("start-activity", { projectId: feProjectId });
 				${content}
-				window.feReusableFn.sendTrackEvent("executed-activity", { projectId: feProjectId });
 			} catch(err) {
-				// @ts-ignore
-				window.feReusableFn.sendTrackEvent("activity-error", { projectId: feProjectId });
 				console.error('ERROR:', err);
 			}
 		}());
@@ -61,7 +56,6 @@ const fileWrapResusable = (content) => {
 				var env = window.feReusableFn.detectTypeOfEnvironment();
 				var salt = window.feReusableFn.salt(60 * 2);
 				acts.map(function(activity) {
-					window.feReusableFn.sendTrackEvent("load-activity", { projectId: 'fe_activity_'+activity.activity+'_b2bh' });
 					window.feReusableFn.attachJsFile('${process.env.AWS_S3_BUCKET}'+'/fe_activity_'+activity.activity+'_b2bh'+(env === "PROD" ? '.min' : '')+'.js');
 				});
 			}
