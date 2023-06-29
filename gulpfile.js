@@ -22,13 +22,8 @@ const fileWrap = (content, file) => {
 		(function() {
 			const feProjectId = 'fe_activity_${file.modName.split('/').pop()}';
 			try {
-				// @ts-ignore
-				window.feReusableFnB2B.sendTrackEvent("start-activity", { projectId: feProjectId });
 				${content}
-				window.feReusableFnB2B.sendTrackEvent("executed-activity", { projectId: feProjectId });
 			} catch(err) {
-				// @ts-ignore
-				window.feReusableFnB2B.sendTrackEvent("activity-error", { projectId: feProjectId });
 				console.error('ERROR:', err);
 			}
 		}())
@@ -62,7 +57,6 @@ const fileWrapResusable = (content) => {
 				var env = window.feReusableFnB2B.detectTypeOfEnvironment();
 				var salt = window.feReusableFnB2B.salt(60 * 2);
 				acts.map(function(activity) {
-					window.feReusableFnB2B.sendTrackEvent("load-activity", { projectId: 'fe_activity_'+activity.activity });
 					window.feReusableFnB2B.attachJsFile('${process.env.AWS_S3_BUCKET}'+'/fe_activity_'+activity.activity+(env === "PROD" ? '.min' : '')+'.js');
 				});
 			}
@@ -129,9 +123,8 @@ task('activities', (cb) => {
 				prefix: "var strMinifiedCss = \"",
 				suffix: `\";\n
 					const addCss = () => {
-						if (window.feReusableFnB2B && window.feReusableFnB2B.injectCss && window.feReusableFnB2B.sendTrackEvent) {
+						if (window.feReusableFnB2B && window.feReusableFnB2B.injectCss) {
 							${activity?.cssRestriction ? "if(" + activity.cssRestriction + ") {" : ""}
-							window.feReusableFnB2B.sendTrackEvent("css-loaded", { projectId: feProjectId });
 							window.feReusableFnB2B.injectCss(strMinifiedCss, feProjectId);
 							${activity?.cssRestriction ? "}" : ""}
 						}
