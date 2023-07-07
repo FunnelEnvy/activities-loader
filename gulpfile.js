@@ -17,18 +17,13 @@ const wrap = require('gulp-wrap-file');
 const activitiesJSON = require('./src/activities.json');
 var scriptsPath = 'src/activities';
 
-const fileWrap = (content, file) => {
+const fileWrap = (content, activity) => {
 	return `
 		(function() {
-			const feProjectId = 'fe_activity_${file.modName.split('/').pop()}';
+			const feProjectId = 'fe_activity_${activity ?? ''}${process.env.PROJECT_SUFFIX ? '_' + process.env.PROJECT_SUFFIX : ''}';
 			try {
-				// @ts-ignore
-				window.feReusableFnB2B.sendTrackEvent("start-activity", { projectId: feProjectId });
 				${content}
-				window.feReusableFnB2B.sendTrackEvent("executed-activity", { projectId: feProjectId });
 			} catch(err) {
-				// @ts-ignore
-				window.feReusableFnB2B.sendTrackEvent("activity-error", { projectId: feProjectId });
 				console.error('ERROR:', err);
 			}
 		}())
@@ -62,7 +57,6 @@ const fileWrapResusable = (content) => {
 				var env = window.feReusableFnB2B.detectTypeOfEnvironment();
 				var salt = window.feReusableFnB2B.salt(60 * 2);
 				acts.map(function(activity) {
-					window.feReusableFnB2B.sendTrackEvent("load-activity", { projectId: 'fe_activity_'+activity.activity });
 					window.feReusableFnB2B.attachJsFile('${process.env.AWS_S3_BUCKET}'+'/fe_activity_'+activity.activity+(env === "PROD" ? '.min' : '')+'.js');
 				});
 			}
@@ -111,42 +105,34 @@ function getFolders(dir) {
 }
 
 task('activities', (cb) => {
-	var folders = getFolders(scriptsPath);
-
-	folders.map(folder => {
+	activitiesJSON.activities.filter(a => a.enable === true).map(activity => {
 		const filterJS = filter(['**/*.ts', '**/*.js'], { restore: true });
 		const filterCSS = filter(['**/*.css'], { restore: true });
-		const basePath = path.join(scriptsPath, folder);
-		const activity = activitiesJSON.activities.find(a => a.activity === folder) || null;
-		return src([
-			basePath + '/*.ts',
-			basePath + '/*.js',
-			basePath + '/*.css',
-		])
+		const scripts = (activity?.scripts ?? []).map(file => path.join(scriptsPath, activity.activity, file));
+		const styles = (activity?.styles ?? []).map(file => path.join(scriptsPath, activity.activity, file));
+		return src([].concat(scripts, styles), { allowEmpty: true })
 			.pipe(filterCSS)
 			.pipe(cleanCSS({}))
 			.pipe(css2js({
 				prefix: "var strMinifiedCss = \"",
 				suffix: `\";\n
-					const addCss = () => {
-						if (window.feReusableFnB2B && window.feReusableFnB2B.injectCss && window.feReusableFnB2B.sendTrackEvent) {
-							${activity?.cssRestriction ? "if(" + activity.cssRestriction + ") {" : ""}
-							window.feReusableFnB2B.sendTrackEvent("css-loaded", { projectId: feProjectId });
-							window.feReusableFnB2B.injectCss(strMinifiedCss, feProjectId);
-							${activity?.cssRestriction ? "}" : ""}
-						}
-					};
-					window.feReusableFnB2B.waitForAudience(addCss);
+					(function() {
+						${activity?.cssRestriction ? 'if(' + activity?.cssRestriction + ') {' : ''}
+							if (window.feReusableFn && window.feReusableFn.injectCss) {
+								window.feReusableFn.injectCss(strMinifiedCss, feProjectId);
+							}
+						${activity?.cssRestriction ? '}' : ''}
+					}());
 				`,
 			}))
 			.pipe(filterCSS.restore)
 			.pipe(filterJS)
-			.pipe(concat('fe_activity_' + folder + '.ts'))
+			.pipe(concat(`fe_activity_${activity.activity}${process.env.PROJECT_SUFFIX ? '_' + process.env.PROJECT_SUFFIX : ''}.ts`))
 			.pipe(include())
 				.on('error', console.log)
 			.pipe(wrap({
-				wrapper: function(content, file) {
-					return fileWrap(content, file);
+				wrapper: function(content) {
+					return fileWrap(content, activity.activity);
 				},
 			}))
 			.pipe(babel({
