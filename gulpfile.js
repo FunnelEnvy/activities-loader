@@ -40,7 +40,7 @@ const fileWrapResusable = (content) => {
 				var waitFor = setInterval(
 					function () {
 						if (typeof window.jQuery != 'undefined') {
-							if (typeof window.feReusableFnB2B != 'undefined' ) {
+							if (typeof window.${process.env.REUSABLE_FN} != 'undefined' ) {
 								clearInterval(waitFor);
 								todoWhenLoaded();
 							}
@@ -51,13 +51,13 @@ const fileWrapResusable = (content) => {
 				}, 10000);
 			}
 			var loadActivities = () => {
-				window.feReusableFnB2B.setSites(${JSON.stringify(activitiesJSON.sites)});
-				window.feReusableFnB2B.setActivities(${JSON.stringify(activitiesJSON.activities)});
-				var acts = window.feReusableFnB2B.detectActivitiesToActivate();
-				var env = window.feReusableFnB2B.detectTypeOfEnvironment();
-				var salt = window.feReusableFnB2B.salt(60 * 2);
+				window.${process.env.REUSABLE_FN}.setSites(${JSON.stringify(activitiesJSON.sites)});
+				window.${process.env.REUSABLE_FN}.setActivities(${JSON.stringify(activitiesJSON.activities)});
+				var acts = window.${process.env.REUSABLE_FN}.detectActivitiesToActivate();
+				var env = window.${process.env.REUSABLE_FN}.detectTypeOfEnvironment();
+				var salt = window.${process.env.REUSABLE_FN}.salt(60 * 2);
 				acts.map(function(activity) {
-					window.feReusableFnB2B.attachJsFile('${process.env.AWS_S3_BUCKET}'+'/fe_activity_'+activity.activity+(env === "PROD" ? '.min' : '')+'.js');
+					window.${process.env.REUSABLE_FN}.attachJsFile('${process.env.AWS_S3_BUCKET}'+'/fe_activity_'+activity.activity+(env === "PROD" ? '.min' : '')+'.js');
 				});
 			}
 			whenLibLoaded( loadActivities);
@@ -118,8 +118,8 @@ task('activities', (cb) => {
 				suffix: `\";\n
 					(function() {
 						${activity?.cssRestriction ? 'if(' + activity?.cssRestriction + ') {' : ''}
-							if (window.feReusableFn && window.feReusableFn.injectCss) {
-								window.feReusableFn.injectCss(strMinifiedCss, feProjectId);
+							if (window.${process.env.REUSABLE_FN} && window.${process.env.REUSABLE_FN}.injectCss) {
+								window.${process.env.REUSABLE_FN}.injectCss(strMinifiedCss, feProjectId);
 							}
 						${activity?.cssRestriction ? '}' : ''}
 					}());
