@@ -20,7 +20,7 @@ var scriptsPath = 'src/activities';
 const fileWrap = (content, activity) => {
 	return `
 		(function() {
-			const feProjectId = 'fe_activity_${activity ?? ''}${process.env.PROJECT_SUFFIX ? '_' + process.env.PROJECT_SUFFIX : ''}';
+			const feProjectId = 'fe_activity_${activity}';
 			try {
 				${content}
 			} catch(err) {
@@ -127,7 +127,7 @@ task('activities', (cb) => {
 			}))
 			.pipe(filterCSS.restore)
 			.pipe(filterJS)
-			.pipe(concat(`fe_activity_${activity.activity}${process.env.PROJECT_SUFFIX ? '_' + process.env.PROJECT_SUFFIX : ''}.ts`))
+			.pipe(concat(`fe_activity_${activity.activity}.ts`))
 			.pipe(include())
 				.on('error', console.log)
 			.pipe(wrap({
