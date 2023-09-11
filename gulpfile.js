@@ -79,10 +79,8 @@ const clear = () => {
 };
 
 const reusable = () => {
-	return src(`${scriptsPath}/${activitiesJSON.reusable}`)
-		.pipe(rename(path => {
-			path.basename = 'fe_dev_b2bh';
-		}))
+	return src(activitiesJSON.reusable.map(file => path.join(scriptsPath, file)), { allowEmpty: true })
+		.pipe(concat(`fe_dev_b2bh.ts`))
 		.pipe(wrap({
 			wrapper: function(content) {
 				return fileWrapResusable(content);
