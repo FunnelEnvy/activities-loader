@@ -34,8 +34,17 @@ const fileWrapResusable = (content) => {
 	return `
 		${content}
 		(function() {
-			//if (window.location.href.indexOf('//uat.buy.hpe.com/') >= 0) return;
 			if (window.location.href.indexOf('itgh.buy.hpe.com') >= 0) return;
+
+			${fs.readFileSync(path.resolve(__dirname, 'load-activities.js'), 'utf8')}
+
+			window.${process.env.REUSABLE_FN}.getActivities = getActivities;
+			window.${process.env.REUSABLE_FN}.getActivityById = getActivityById;
+			window.${process.env.REUSABLE_FN}.getSelectorsDictionaryById = getSelectorsDictionaryById;
+			window.${process.env.REUSABLE_FN}.getSites = getSites;
+			window.${process.env.REUSABLE_FN}.getCookie = getCookie;
+			window.${process.env.REUSABLE_FN}.setCookie = setCookie;
+
 			var whenLibLoaded = function (todoWhenLoaded) {
 				var waitFor = setInterval(
 					function () {
@@ -50,17 +59,19 @@ const fileWrapResusable = (content) => {
 					clearInterval(waitFor);
 				}, 10000);
 			}
+
 			var loadActivities = () => {
-				window.${process.env.REUSABLE_FN}.setSites(${JSON.stringify(activitiesJSON.sites)});
-				window.${process.env.REUSABLE_FN}.setActivities(${JSON.stringify(activitiesJSON.activities)});
-				var acts = window.${process.env.REUSABLE_FN}.detectActivitiesToActivate();
-				var env = window.${process.env.REUSABLE_FN}.detectTypeOfEnvironment();
-				var salt = window.${process.env.REUSABLE_FN}.salt(60 * 2);
+				setSites(${JSON.stringify(activitiesJSON.sites)});
+				setActivities(${JSON.stringify(activitiesJSON.activities)});
+				var acts = detectActivitiesToActivate();
+				var env = detectTypeOfEnvironment();
+				var salt = salt(60 * 2);
 				acts.map(function(activity) {
-					window.${process.env.REUSABLE_FN}.attachJsFile('${process.env.AWS_S3_BUCKET}'+'/fe_activity_'+activity.activity+(env === "PROD" ? '.min' : '')+'.js');
+					attachJsFile('${process.env.AWS_S3_BUCKET}'+'/fe_activity_'+activity.activity+(env === "PROD" ? '.min' : '')+'.js');
 				});
 			}
-			whenLibLoaded( loadActivities);
+
+			whenLibLoaded(loadActivities);
 		}());
 	`;
 }
@@ -94,13 +105,6 @@ const reusable = () => {
 		.pipe(uglify())
 		.pipe(dest('./dist'));
 };
-
-function getFolders(dir) {
-	return fs.readdirSync(dir)
-		.filter(function(file) {
-			return fs.statSync(path.join(dir, file)).isDirectory();
-		});
-}
 
 task('activities', (cb) => {
 	activitiesJSON.activities.filter(a => a.enable === true).map(activity => {
