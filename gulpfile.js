@@ -38,13 +38,25 @@ const fileWrapResusable = (content) => {
 	return `
 		${content}
 		(function() {
-			//if (window.location.href.indexOf('//uat.buy.hpe.com/') >= 0) return;
 			if (window.location.href.indexOf('itgh.buy.hpe.com') >= 0) return;
+
+			var environments = ${JSON.stringify(activitiesJSON.environments)};
+
+			${fs.readFileSync(path.resolve(__dirname, 'load-activities.js'), 'utf8')}
+
+			window.${process.env.REUSABLE_FN}.getActivities = getActivities;
+			window.${process.env.REUSABLE_FN}.setActivities = setActivities;
+			window.${process.env.REUSABLE_FN}.getSites = getSites;
+			window.${process.env.REUSABLE_FN}.setSites = setSites;
+			window.${process.env.REUSABLE_FN}.detectTypeOfSite = detectTypeOfSite;
+			window.${process.env.REUSABLE_FN}.detectTypeOfEnvironment = detectTypeOfEnvironment;
+			window.${process.env.REUSABLE_FN}.detectActivitiesToActivate = detectActivitiesToActivate;
+
 			var whenLibLoaded = function (todoWhenLoaded) {
 				var waitFor = setInterval(
 					function () {
 						if (typeof window.jQuery != 'undefined') {
-							if (typeof window.feReusableFn != 'undefined' ) {
+							if (typeof window.${process.env.REUSABLE_FN} != 'undefined' ) {
 								clearInterval(waitFor);
 								todoWhenLoaded();
 							}
@@ -54,18 +66,18 @@ const fileWrapResusable = (content) => {
 					clearInterval(waitFor);
 				}, 10000);
 			}
+
 			var loadActivities = () => {
-				window.feReusableFn.setSites(${JSON.stringify(activitiesJSON.sites)});
-				window.feReusableFn.setActivities(${JSON.stringify(activitiesJSON.activities.filter(a => a.enable))});
-				var acts = window.feReusableFn.detectActivitiesToActivate();
-				var env = window.feReusableFn.detectTypeOfEnvironment();
-				var salt = window.feReusableFn.salt(60 * 2);
+				setSites(${JSON.stringify(activitiesJSON.sites)});
+				setActivities(${JSON.stringify(activitiesJSON.activities)});
+				const acts = detectActivitiesToActivate();
+				const env = detectTypeOfEnvironment();
 				acts.map(function(activity) {
-					window.feReusableFn.sendTrackEvent("load-activity", { projectId: 'fe_activity_'+activity.activity+'_b2bh' });
-					window.feReusableFn.attachJsFile('${process.env.AWS_S3_BUCKET}'+'/fe_activity_'+activity.activity+'_b2bh'+(env === "PROD" ? '.min' : '')+'.js');
+					attachJsFile('${process.env.AWS_S3_BUCKET}'+'/fe_activity_'+activity.activity+(env === "PROD" ? '.min' : '')+'.js');
 				});
 			}
-			whenLibLoaded( loadActivities);
+
+			whenLibLoaded(loadActivities);
 		}());
 	`;
 }
