@@ -36,14 +36,17 @@ const fileWrapResusable = (content) => {
 		(function() {
 			if (window.location.href.indexOf('itgh.buy.hpe.com') >= 0) return;
 
+			var environments = ${JSON.stringify(activitiesJSON.environments)};
+
 			${fs.readFileSync(path.resolve(__dirname, 'load-activities.js'), 'utf8')}
 
 			window.${process.env.REUSABLE_FN}.getActivities = getActivities;
-			window.${process.env.REUSABLE_FN}.getActivityById = getActivityById;
-			window.${process.env.REUSABLE_FN}.getSelectorsDictionaryById = getSelectorsDictionaryById;
+			window.${process.env.REUSABLE_FN}.setActivities = setActivities;
 			window.${process.env.REUSABLE_FN}.getSites = getSites;
-			window.${process.env.REUSABLE_FN}.getCookie = getCookie;
-			window.${process.env.REUSABLE_FN}.setCookie = setCookie;
+			window.${process.env.REUSABLE_FN}.setSites = setSites;
+			window.${process.env.REUSABLE_FN}.detectTypeOfSite = detectTypeOfSite;
+			window.${process.env.REUSABLE_FN}.detectTypeOfEnvironment = detectTypeOfEnvironment;
+			window.${process.env.REUSABLE_FN}.detectActivitiesToActivate = detectActivitiesToActivate;
 
 			var whenLibLoaded = function (todoWhenLoaded) {
 				var waitFor = setInterval(
@@ -63,9 +66,8 @@ const fileWrapResusable = (content) => {
 			var loadActivities = () => {
 				setSites(${JSON.stringify(activitiesJSON.sites)});
 				setActivities(${JSON.stringify(activitiesJSON.activities)});
-				var acts = detectActivitiesToActivate();
-				var env = detectTypeOfEnvironment();
-				var salt = salt(60 * 2);
+				const acts = detectActivitiesToActivate();
+				const env = detectTypeOfEnvironment();
 				acts.map(function(activity) {
 					attachJsFile('${process.env.AWS_S3_BUCKET}'+'/fe_activity_'+activity.activity+(env === "PROD" ? '.min' : '')+'.js');
 				});

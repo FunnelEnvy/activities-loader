@@ -1,23 +1,13 @@
-const activities = [];
-const sites = [];
+let activities = [];
+let sites = [];
 
 function getActivities() {
+	console.log('testing that new code is loaded');
 	return activities;
 }
 
 function setActivities(newActivities) {
 	activities = newActivities;
-}
-
-function getActivityById(id) {
-	return activities.find((activity) => {
-		return activity && activity.projectId === id;
-	});
-}
-
-function getSelectorsDictionaryById(id) {
-	getActivityById(id);
-	return f && f.selectorsDictionary ? f.selectorsDictionary : null;
 }
 
 function getSites() {
@@ -103,18 +93,18 @@ function detectTypeOfEnvironment() {
 	}
 
 	//otherwise try normal way
-	var urlFragsDev = ["QA_test=DACL", "FE_LOADER=DEV", "itg."];
+	var urlFlagsDev = environments.DEV.urlFlags;
 	var isDev = false;
-	var urlFragsQa = ["FE_LOADER=QA", "uat."];
+	var urlFlagsQa = environments.QA.urlFlags;
 	var isQa = false;
 
-	urlFragsDev.map(function (uf) {
+	urlFlagsDev.map(function (uf) {
 		if (window.location.href.indexOf(uf) >= 0)
 			isDev = true;
 	});
 	if (isDev) return 'DEV';
 
-	urlFragsQa.map(function (uf) {
+	urlFlagsQa.map(function (uf) {
 		if (window.location.href.indexOf(uf) >= 0)
 			isQa = true;
 	});
@@ -139,11 +129,7 @@ function detectActivitiesToActivate() {
 		.filter((activity) => { //by site
 			var out = false;
 			if (!activity.sites) return false;
-			// TODO: Ask Jason if this is needed
-			// if (activity.block_mtp7 && feReusableFn.detectSlickCarousel())
-			// 	return false; //Activity is to be OFF for MTP7
 			activity.sites.map(function (actSite) {
-				//	console.log('detectActivitiesToActivate actSite', actSite, site)
 				out = out || actSite == site;
 			})
 			return out;
@@ -167,18 +153,18 @@ function detectActivitiesToActivate() {
 		});
 }
 
-function attachJsFile(src) {
-	if (window.FE_LOADER_v2 && window.FE_LOADER_v2.indexOf(src) >= 0) return;
-	window.FE_LOADER_v2.push(src)
-	var salt = salt(60 * 5);//Math.round(Date.now() / 360 / 1000);// 6min
-	var rc = document.getElementsByTagName('head')[0];
-	var sc = document.createElement('script');
-	sc.src = src + "?_t=" + salt;
-	if (rc)
-		rc.appendChild(sc);
-}
-
 function salt(ttlSeconds) {
 	ttlSeconds = ttlSeconds ? ttlSeconds : 60;
 	return Math.round(Date.now() / ttlSeconds / 1000) + '';
+}
+
+function attachJsFile(src) {
+	if (window.FE_LOADER_v2 && window.FE_LOADER_v2.indexOf(src) >= 0) return;
+	window.FE_LOADER_v2.push(src)
+	var s = salt(60 * 5);
+	var rc = document.getElementsByTagName('head')[0];
+	var sc = document.createElement('script');
+	sc.src = src + "?_t=" + s;
+	if (rc)
+		rc.appendChild(sc);
 }
