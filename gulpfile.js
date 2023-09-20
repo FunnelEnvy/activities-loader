@@ -34,8 +34,20 @@ const fileWrapResusable = (content) => {
 	return `
 		${content}
 		(function() {
-			//if (window.location.href.indexOf('//uat.buy.hpe.com/') >= 0) return;
 			if (window.location.href.indexOf('itgh.buy.hpe.com') >= 0) return;
+
+			var environments = ${JSON.stringify(activitiesJSON.environments)};
+
+			${fs.readFileSync(path.resolve(__dirname, 'load-activities.js'), 'utf8')}
+
+			window.FeActivityLoader.getActivities = getActivities;
+			window.FeActivityLoader.setActivities = setActivities;
+			window.FeActivityLoader.getSites = getSites;
+			window.FeActivityLoader.setSites = setSites;
+			window.FeActivityLoader.detectTypeOfSite = detectTypeOfSite;
+			window.FeActivityLoader.detectTypeOfEnvironment = detectTypeOfEnvironment;
+			window.FeActivityLoader.detectActivitiesToActivate = detectActivitiesToActivate;
+
 			var whenLibLoaded = function (todoWhenLoaded) {
 				var waitFor = setInterval(
 					function () {
@@ -50,17 +62,18 @@ const fileWrapResusable = (content) => {
 					clearInterval(waitFor);
 				}, 10000);
 			}
+
 			var loadActivities = () => {
-				window.${process.env.REUSABLE_FN}.setSites(${JSON.stringify(activitiesJSON.sites)});
-				window.${process.env.REUSABLE_FN}.setActivities(${JSON.stringify(activitiesJSON.activities)});
-				var acts = window.${process.env.REUSABLE_FN}.detectActivitiesToActivate();
-				var env = window.${process.env.REUSABLE_FN}.detectTypeOfEnvironment();
-				var salt = window.${process.env.REUSABLE_FN}.salt(60 * 2);
+				setSites(${JSON.stringify(activitiesJSON.sites)});
+				setActivities(${JSON.stringify(activitiesJSON.activities)});
+				const acts = detectActivitiesToActivate();
+				const env = detectTypeOfEnvironment();
 				acts.map(function(activity) {
-					window.${process.env.REUSABLE_FN}.attachJsFile('${process.env.AWS_S3_BUCKET}'+'/fe_activity_'+activity.activity+(env === "PROD" ? '.min' : '')+'.js');
+					attachJsFile('${process.env.AWS_S3_BUCKET}'+'/fe_activity_'+activity.activity+(env === "PROD" ? '.min' : '')+'.js');
 				});
 			}
-			whenLibLoaded( loadActivities);
+
+			whenLibLoaded(loadActivities);
 		}());
 	`;
 }
@@ -94,13 +107,6 @@ const reusable = () => {
 		.pipe(uglify())
 		.pipe(dest('./dist'));
 };
-
-function getFolders(dir) {
-	return fs.readdirSync(dir)
-		.filter(function(file) {
-			return fs.statSync(path.join(dir, file)).isDirectory();
-		});
-}
 
 task('activities', (cb) => {
 	activitiesJSON.activities.filter(a => a.enable === true).map(activity => {
