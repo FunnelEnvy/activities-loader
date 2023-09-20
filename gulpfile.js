@@ -1,3 +1,4 @@
+var fs = require('fs');
 const path = require('path');
 const { task, src, dest, parallel, series } = require('gulp');
 const babel = require('gulp-babel');
