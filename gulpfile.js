@@ -39,13 +39,13 @@ const fileWrapResusable = (content) => {
 
 			${fs.readFileSync(path.resolve(__dirname, 'load-activities.js'), 'utf8')}
 
-			window.${process.env.REUSABLE_FN}.getActivities = getActivities;
-			window.${process.env.REUSABLE_FN}.setActivities = setActivities;
-			window.${process.env.REUSABLE_FN}.getSites = getSites;
-			window.${process.env.REUSABLE_FN}.setSites = setSites;
-			window.${process.env.REUSABLE_FN}.detectTypeOfSite = detectTypeOfSite;
-			window.${process.env.REUSABLE_FN}.detectTypeOfEnvironment = detectTypeOfEnvironment;
-			window.${process.env.REUSABLE_FN}.detectActivitiesToActivate = detectActivitiesToActivate;
+			window.FeActivityLoader.getActivities = getActivities;
+			window.FeActivityLoader.setActivities = setActivities;
+			window.FeActivityLoader.getSites = getSites;
+			window.FeActivityLoader.setSites = setSites;
+			window.FeActivityLoader.detectTypeOfSite = detectTypeOfSite;
+			window.FeActivityLoader.detectTypeOfEnvironment = detectTypeOfEnvironment;
+			window.FeActivityLoader.detectActivitiesToActivate = detectActivitiesToActivate;
 
 			var whenLibLoaded = function (todoWhenLoaded) {
 				var waitFor = setInterval(
