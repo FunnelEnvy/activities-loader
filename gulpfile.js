@@ -6,7 +6,8 @@ const css2js = require('gulp-css2js');
 const clean = require('gulp-clean');
 const concat = require('gulp-concat');
 const filter = require('gulp-filter');
-const include = require('gulp-include');
+const webpack = require('webpack-stream');
+// const include = require('gulp-include');
 const minify = require('gulp-minify');
 const uglify = require('gulp-uglify');
 const rename = require('gulp-rename');
@@ -94,6 +95,67 @@ const reusable = () => {
 		.pipe(dest('./dist'));
 };
 
+task('activities-new', (cb) => {
+	activitiesJSON.activities.filter(a => a.enable === true).map(activity => {
+		const filterJS = filter(["**/*.js", "**/*.ts"], { restore: true });
+		const filterCSS = filter(["**/*.css"], { restore: true });
+		const scripts = (activity?.scripts ?? []).map(file => path.join(scriptsPath, activity.activity, file));
+		const styles = (activity?.styles ?? []).map(file => path.join(scriptsPath, activity.activity, file));
+		return src([].concat(scripts, styles), { allowEmpty: true })
+			.pipe(filterCSS)
+			.pipe(concat('all.css'))
+			.pipe(cleanCSS({}))
+			.pipe(css2js({
+				prefix: "var strMinifiedCss = \"",
+				suffix: `\";\n
+					const addCss = () => {
+						if (window.feReusableFnB2B && window.feReusableFnB2B.injectCss) {
+							${activity?.cssRestriction ? "if(" + activity.cssRestriction + ") {" : ""}
+							window.feReusableFnB2B.injectCss(strMinifiedCss, feProjectId);
+							${activity?.cssRestriction ? "}" : ""}
+						}
+					};
+					${activity?.cssRestriction ? 'window.feReusableFnB2B.waitForAudience(addCss);' : 'addCss()'}
+				`,
+			}))
+			.pipe(filterCSS.restore)
+			.pipe(filterJS)
+			.pipe(wrap({
+				wrapper: function(content, file) {
+					return fileWrap(content, file);
+				},
+			}))
+			.pipe(webpack({
+				watch: false,
+				mode: 'development',
+				module: {
+					rules: [
+						{
+							test: /\.(js|ts)$/,
+							exclude: /node_modules/,
+							use: {
+								loader: 'babel-loader',
+							},
+						},
+					],
+				},
+				output: {
+					filename: 'fe_activity_' + activity.activity + '.js',
+				}
+			}))
+			.pipe(minify({
+				ext: {
+					src: '.js',
+					min: '.min.js',
+				},
+			}))
+			.pipe(filterJS.restore)
+			.pipe(dest('./dist'));
+	});
+
+	cb();
+});
+
 task('activities', (cb) => {
 	activitiesJSON.activities.filter(a => a.enable === true).map(activity => {
 		const filterJS = filter(["**/*.js", "**/*.ts"], { restore: true });
@@ -120,8 +182,6 @@ task('activities', (cb) => {
 			.pipe(filterCSS.restore)
 			.pipe(filterJS)
 			.pipe(concat('fe_activity_' + activity.activity + '.ts'))
-			.pipe(include())
-				.on('error', console.log)
 			.pipe(wrap({
 				wrapper: function(content, file) {
 					return fileWrap(content, file);
