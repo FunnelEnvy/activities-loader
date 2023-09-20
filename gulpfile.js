@@ -40,6 +40,7 @@ const fileWrapResusable = (content) => {
 
 			${fs.readFileSync(path.resolve(__dirname, 'load-activities.js'), 'utf8')}
 
+			window.FeActivityLoader = window.FeActivityLoader || {};
 			window.FeActivityLoader.getActivities = getActivities;
 			window.FeActivityLoader.setActivities = setActivities;
 			window.FeActivityLoader.getSites = getSites;
