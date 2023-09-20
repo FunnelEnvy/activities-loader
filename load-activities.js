@@ -2,7 +2,6 @@ let activities = [];
 let sites = [];
 
 function getActivities() {
-	console.log('testing that new code is loaded');
 	return activities;
 }
 

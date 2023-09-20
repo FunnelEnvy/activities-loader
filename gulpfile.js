@@ -67,6 +67,7 @@ const fileWrapResusable = (content) => {
 			var loadActivities = () => {
 				setSites(${JSON.stringify(activitiesJSON.sites)});
 				setActivities(${JSON.stringify(activitiesJSON.activities)});
+				console.log(getActivities());
 				const acts = detectActivitiesToActivate();
 				const env = detectTypeOfEnvironment();
 				acts.map(function(activity) {
