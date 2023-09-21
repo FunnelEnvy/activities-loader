@@ -128,8 +128,8 @@ task('activities', (cb) => {
 				suffix: `\";\n
 					(function() {
 						${activity?.cssRestriction ? 'if(' + activity?.cssRestriction + ') {' : ''}
-							if (window.feReusableFn && window.feReusableFn.injectCss) {
-								window.feReusableFn.injectCss(strMinifiedCss, feProjectId);
+							if (window.feHPEB2C && window.feHPEB2C.injectCss) {
+								window.feHPEB2C.injectCss(strMinifiedCss, feProjectId);
 							}
 						${activity?.cssRestriction ? '}' : ''}
 					}());
