@@ -53,7 +53,7 @@ const fileWrapResusable = (content) => {
 				var waitFor = setInterval(
 					function () {
 						if (typeof window.jQuery != 'undefined') {
-							if (typeof window.feReusableFnB2B != 'undefined' ) {
+							if (typeof window.feHPEB2BElite != 'undefined' ) {
 								clearInterval(waitFor);
 								todoWhenLoaded();
 							}
