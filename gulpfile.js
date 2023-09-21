@@ -124,7 +124,7 @@ task('activities', (cb) => {
 					const addCss = () => {
 						if (window.${process.env.REUSABLE_FN} && window.${process.env.REUSABLE_FN}.injectCss) {
 							${activity?.cssRestriction ? "if(" + activity.cssRestriction + ") {" : ""}
-							window.${process.env.REUSABLE_FN}.feProjectId);
+							window.${process.env.REUSABLE_FN}.injectCss(strMinifiedCss, feProjectId);
 							${activity?.cssRestriction ? "}" : ""}
 						}
 					};
