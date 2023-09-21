@@ -1,5 +1,5 @@
 var fs = require('fs');
-var path = require('path');
+const path = require('path');
 const { task, src, dest, parallel, series } = require('gulp');
 const babel = require('gulp-babel');
 const cleanCSS = require('gulp-clean-css');
@@ -20,15 +20,10 @@ var scriptsPath = 'src/activities';
 const fileWrap = (content, file) => {
 	return `
 		(function() {
-			const feProjectId = 'fe_activity_${file.modName.split('/').pop()}';
+			const feProjectId = '${file.modName.split('/').pop()}';
 			try {
-				// @ts-ignore
-				window.feReusableFnB2B.sendTrackEvent("start-activity", { projectId: feProjectId });
 				${content}
-				window.feReusableFnB2B.sendTrackEvent("executed-activity", { projectId: feProjectId });
 			} catch(err) {
-				// @ts-ignore
-				window.feReusableFnB2B.sendTrackEvent("activity-error", { projectId: feProjectId });
 				console.error('ERROR:', err);
 			}
 		}())
@@ -39,34 +34,46 @@ const fileWrapResusable = (content) => {
 	return `
 		${content}
 		(function() {
-			//if (window.location.href.indexOf('//uat.buy.hpe.com/') >= 0) return;
 			if (window.location.href.indexOf('itgh.buy.hpe.com') >= 0) return;
+
+			var environments = ${JSON.stringify(activitiesJSON.environments)};
+
+			${fs.readFileSync(path.resolve(__dirname, 'load-activities.js'), 'utf8')}
+
+			window.FeActivityLoader = window.FeActivityLoader || {};
+			window.FeActivityLoader.getActivities = getActivities;
+			window.FeActivityLoader.setActivities = setActivities;
+			window.FeActivityLoader.getSites = getSites;
+			window.FeActivityLoader.setSites = setSites;
+			window.FeActivityLoader.detectTypeOfSite = detectTypeOfSite;
+			window.FeActivityLoader.detectTypeOfEnvironment = detectTypeOfEnvironment;
+			window.FeActivityLoader.detectActivitiesToActivate = detectActivitiesToActivate;
+
 			var whenLibLoaded = function (todoWhenLoaded) {
 				var waitFor = setInterval(
 					function () {
 						if (typeof window.jQuery != 'undefined') {
-							if (typeof window.feReusableFnB2B != 'undefined' ) {
-								clearInterval(waitFor);
-								todoWhenLoaded();
-							}
+							clearInterval(waitFor);
+							todoWhenLoaded();
 						}
 					}, 500);
 				setTimeout(function () {
 					clearInterval(waitFor);
 				}, 10000);
 			}
+
 			var loadActivities = () => {
-				window.feReusableFnB2B.setSites(${JSON.stringify(activitiesJSON.sites)});
-				window.feReusableFnB2B.setActivities(${JSON.stringify(activitiesJSON.activities)});
-				var acts = window.feReusableFnB2B.detectActivitiesToActivate();
-				var env = window.feReusableFnB2B.detectTypeOfEnvironment();
-				var salt = window.feReusableFnB2B.salt(60 * 2);
+				setSites(${JSON.stringify(activitiesJSON.sites)});
+				setActivities(${JSON.stringify(activitiesJSON.activities)});
+				console.log(getActivities());
+				const acts = detectActivitiesToActivate();
+				const env = detectTypeOfEnvironment();
 				acts.map(function(activity) {
-					window.feReusableFnB2B.sendTrackEvent("load-activity", { projectId: 'fe_activity_'+activity.activity });
-					window.feReusableFnB2B.attachJsFile('${process.env.AWS_S3_BUCKET}'+'/fe_activity_'+activity.activity+(env === "PROD" ? '.min' : '')+'.js');
+					attachJsFile('${process.env.AWS_S3_BUCKET}'+'/fe_activity_'+activity.activity+(env === "PROD" ? '.min' : '')+'.js');
 				});
 			}
-			whenLibLoaded( loadActivities);
+
+			whenLibLoaded(loadActivities);
 		}());
 	`;
 }
@@ -80,10 +87,8 @@ const clear = () => {
 };
 
 const reusable = () => {
-	return src(`${scriptsPath}/${activitiesJSON.reusable}`)
-		.pipe(rename(path => {
-			path.basename = 'fe_dev';
-		}))
+	return src(activitiesJSON.reusable.map(file => path.join(scriptsPath, file)), { allowEmpty: true })
+		.pipe(concat('fe_dev.ts'))
 		.pipe(wrap({
 			wrapper: function(content) {
 				return fileWrapResusable(content);
@@ -103,43 +108,32 @@ const reusable = () => {
 		.pipe(dest('./dist'));
 };
 
-function getFolders(dir) {
-	return fs.readdirSync(dir)
-		.filter(function(file) {
-			return fs.statSync(path.join(dir, file)).isDirectory();
-		});
-}
-
 task('activities', (cb) => {
-	var folders = getFolders(scriptsPath);
-
-	folders.map(folder => {
-		const filterJS = filter(['**/*.ts', '**/*.js'], { restore: true });
-		const filterCSS = filter(['**/*.css'], { restore: true });
-		const basePath = path.join(scriptsPath, folder);
-		const activity = activitiesJSON.activities.find(a => a.activity === folder) || null;
-		return src([
-			basePath + '/*.ts',
-			basePath + '/*.js',
-			basePath + '/*.css',
-		])
+	activitiesJSON.activities.filter(a => a.enable === true).map(activity => {
+		const filterJS = filter(["**/*.js", "**/*.ts"], { restore: true });
+		const filterCSS = filter(["**/*.css"], { restore: true });
+		const scripts = (activity?.scripts ?? []).map(file => path.join(scriptsPath, activity.activity, file));
+		const styles = (activity?.styles ?? []).map(file => path.join(scriptsPath, activity.activity, file));
+		return src([].concat(scripts, styles), { allowEmpty: true })
 			.pipe(filterCSS)
+			.pipe(concat('all.css'))
 			.pipe(cleanCSS({}))
 			.pipe(css2js({
 				prefix: "var strMinifiedCss = \"",
 				suffix: `\";\n
-					(function() {
-						${activity?.cssRestriction ? 'if(' + activity?.cssRestriction + ') {' : ''}
-							if (window.feReusableFnB2B && window.feReusableFnB2B.injectCss) {
-								window.feReusableFnB2B.injectCss(strMinifiedCss, feProjectId);
-							}
-						${activity?.cssRestriction ? '}' : ''}
-					}());
+					const addCss = () => {
+						if (window.feReusableFnB2B && window.feReusableFnB2B.injectCss) {
+							${activity?.cssRestriction ? "if(" + activity.cssRestriction + ") {" : ""}
+							window.feReusableFnB2B.injectCss(strMinifiedCss, feProjectId);
+							${activity?.cssRestriction ? "}" : ""}
+						}
+					};
+					${activity?.cssRestriction ? 'window.feReusableFnB2B.waitForAudience(addCss);' : 'addCss()'}
 				`,
 			}))
 			.pipe(filterCSS.restore)
 			.pipe(filterJS)
-			.pipe(concat('fe_activity_' + folder + '.ts'))
+			.pipe(concat('fe_activity_' + activity.activity + '.ts'))
 			.pipe(include())
 				.on('error', console.log)
 			.pipe(wrap({
