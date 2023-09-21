@@ -157,7 +157,7 @@ function salt(ttlSeconds) {
 	return Math.round(Date.now() / ttlSeconds / 1000) + '';
 }
 
-function attachJsFile(src) {
+function attachJsFile(src, js_type) {
 	if (window.FE_LOADER_v2 && window.FE_LOADER_v2.indexOf(src) >= 0) return;
 	window.FE_LOADER_v2.push(src)
 	var s = salt(60 * 5);//Math.round(Date.now() / 360 / 1000);// 6min
