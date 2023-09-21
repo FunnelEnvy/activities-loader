@@ -160,10 +160,15 @@ function salt(ttlSeconds) {
 function attachJsFile(src) {
 	if (window.FE_LOADER_v2 && window.FE_LOADER_v2.indexOf(src) >= 0) return;
 	window.FE_LOADER_v2.push(src)
-	var s = salt(60 * 5);
+	var salt = salt(60 * 5);//Math.round(Date.now() / 360 / 1000);// 6min
 	var rc = document.getElementsByTagName('head')[0];
 	var sc = document.createElement('script');
-	sc.src = src + "?_t=" + s;
+	if (js_type && js_type == 'module')
+		sc.type = 'module';
+	if(src.indexOf('https://')<0)
+		sc.src = "https://fe-hpe-script.s3.us-east-2.amazonaws.com/" + src + "?_t=" + salt;
+	else
+		sc.src = src + "?_t=" + salt;
 	if (rc)
 		rc.appendChild(sc);
 }
