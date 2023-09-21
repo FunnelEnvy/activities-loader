@@ -1,5 +1,8 @@
 let activities = [];
 let sites = [];
+if (window && typeof window.FE_LOADER_v2 === 'undefined') {
+	window.FE_LOADER_v2 = [];
+}
 
 function getActivities() {
 	return activities;
