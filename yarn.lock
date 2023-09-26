@@ -2118,13 +2118,6 @@ resolve@^1.22.1, resolve@^1.5.0:
     path-parse "^1.0.7"
     supports-preserve-symlinks-flag "^1.0.0"
 
-rollup-plugin-concat@^1.0.3:
-  version "1.0.3"
-  resolved "https://registry.yarnpkg.com/rollup-plugin-concat/-/rollup-plugin-concat-1.0.3.tgz#30f5d50c56fae0ad0c032debce95c0c6f0e19767"
-  integrity sha512-StlQBH04LOBUXbUqZsnuH/N35q+3IHUbnDhl99S37l9FkAvfqN++hs7/o+VMrNynAeGeFqiS4WxQfzghabANXA==
-  dependencies:
-    rollup-pluginutils "^2.8.2"
-
 rollup-plugin-polyfill-node@^0.12.0:
   version "0.12.0"
   resolved "https://registry.yarnpkg.com/rollup-plugin-polyfill-node/-/rollup-plugin-polyfill-node-0.12.0.tgz#33d421ddb7fcb69c234461e508ca6d2db6193f1d"
@@ -2165,7 +2158,7 @@ rollup-plugin-terser@^7.0.2:
     serialize-javascript "^4.0.0"
     terser "^5.0.0"
 
-rollup-pluginutils@^2.3.3, rollup-pluginutils@^2.4.1, rollup-pluginutils@^2.8.2:
+rollup-pluginutils@^2.3.3, rollup-pluginutils@^2.4.1:
   version "2.8.2"
   resolved "https://registry.yarnpkg.com/rollup-pluginutils/-/rollup-pluginutils-2.8.2.tgz#72f2af0748b592364dbd3389e600e5a9444a351e"
   integrity sha512-EEp9NhnUkwY8aif6bxgovPHMoMoNr2FulJziTndpt5H9RdwC47GSGuII9XxpSdzVGM0GWrNPHV6ie1LTNJPaLQ==
