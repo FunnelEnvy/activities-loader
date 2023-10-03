@@ -171,7 +171,9 @@ function attachJsFile(src) {
 
 window.FeActivityLoader = window.FeActivityLoader || {};
 window.FeActivityLoader.getActivities = getActivities;
+window.FeActivityLoader.setActivities = setActivities;
 window.FeActivityLoader.getSites = getSites;
+window.FeActivityLoader.setSites = setSites;
 window.FeActivityLoader.detectTypeOfSite = detectTypeOfSite;
 window.FeActivityLoader.detectTypeOfEnvironment = detectTypeOfEnvironment;
 window.FeActivityLoader.detectActivitiesToActivate = detectActivitiesToActivate;
