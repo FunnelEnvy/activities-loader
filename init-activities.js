@@ -20,7 +20,7 @@ function getSites() {
 
 function getCookie(name) {
 	const nameEQ = name + '=';
-	const ca = document.cookie.split(';');
+	let ca = document.cookie.split(';');
 	ca = ca
 		.filter(function (c) {
 			while (c.charAt(0) == ' ')
@@ -53,9 +53,9 @@ function setCookie(name, value, days) {
 }
 
 function detectTypeOfSite() {
-	const out = sites
+	let out = sites
 		.filter(function (site) {
-			const out = true;
+			let out = true;
 			if (typeof site.url_has == 'string') site.url_has = [site.url_has]
 			if (typeof site.url_missing == 'undefined') site.url_missing = []
 			if (typeof site.url_missing == 'string') site.url_missing = [site.url_missing]
@@ -119,7 +119,7 @@ function detectActivitiesToActivate() {
 	return activities
 		.filter((activity) => { //by env
 			if (!activity.enable) return false;
-			const out = false;
+			let out = false;
 			if (!activity.env) return false;
 			activity.env.map(function (actEnv) {
 				out = out || actEnv == env;
@@ -127,7 +127,7 @@ function detectActivitiesToActivate() {
 			return out;
 		})
 		.filter((activity) => { //by site
-			const out = false;
+			let out = false;
 			if (!activity.sites) return false;
 			activity.sites.map(function (actSite) {
 				out = out || actSite == site;
@@ -171,9 +171,7 @@ function attachJsFile(src) {
 
 window.FeActivityLoader = window.FeActivityLoader || {};
 window.FeActivityLoader.getActivities = getActivities;
-window.FeActivityLoader.setActivities = setActivities;
 window.FeActivityLoader.getSites = getSites;
-window.FeActivityLoader.setSites = setSites;
 window.FeActivityLoader.detectTypeOfSite = detectTypeOfSite;
 window.FeActivityLoader.detectTypeOfEnvironment = detectTypeOfEnvironment;
 window.FeActivityLoader.detectActivitiesToActivate = detectActivitiesToActivate;
