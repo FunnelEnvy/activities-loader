@@ -2,11 +2,12 @@
 	"compilerOptions": {
 		"skipLibCheck": true,
 		"outDir": "./dist/",
+		"noEmit": true, // Prevent TypeScript from emitting files
+		"isolatedModules": false,
 		"noImplicitAny": false,
-		"module": "commonjs",
+		"module": "CommonJS",
 		"target": "es5",
 		"allowJs": true,
-		"moduleResolution": "node",
-		"typeRoots": ["./node_modules/@types", "./src/types"]
+		"moduleResolution": "node"
 	}
 }

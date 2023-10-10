@@ -1,6 +1,5 @@
-var fs = require('fs');
 const path = require('path');
-const { task, src, dest, parallel, series } = require('gulp');
+const { task, src, dest, series } = require('gulp');
 const babel = require('gulp-babel');
 const cleanCSS = require('gulp-clean-css');
 const css2js = require('gulp-css2js');
@@ -30,82 +29,12 @@ const fileWrap = (content, file) => {
 	`;
 }
 
-const fileWrapResusable = (content) => {
-	return `
-		${content}
-		(function() {
-			if (window.location.href.indexOf('itgh.buy.hpe.com') >= 0) return;
-
-			var environments = ${JSON.stringify(activitiesJSON.environments)};
-
-			${fs.readFileSync(path.resolve(__dirname, 'load-activities.js'), 'utf8')}
-
-			window.FeActivityLoader = window.FeActivityLoader || {};
-			window.FeActivityLoader.getActivities = getActivities;
-			window.FeActivityLoader.setActivities = setActivities;
-			window.FeActivityLoader.getSites = getSites;
-			window.FeActivityLoader.setSites = setSites;
-			window.FeActivityLoader.detectTypeOfSite = detectTypeOfSite;
-			window.FeActivityLoader.detectTypeOfEnvironment = detectTypeOfEnvironment;
-			window.FeActivityLoader.detectActivitiesToActivate = detectActivitiesToActivate;
-
-			var whenLibLoaded = function (todoWhenLoaded) {
-				var waitFor = setInterval(
-					function () {
-						if (typeof window.jQuery != 'undefined') {
-							clearInterval(waitFor);
-							todoWhenLoaded();
-						}
-					}, 500);
-				setTimeout(function () {
-					clearInterval(waitFor);
-				}, 10000);
-			}
-
-			var loadActivities = () => {
-				setSites(${JSON.stringify(activitiesJSON.sites)});
-				setActivities(${JSON.stringify(activitiesJSON.activities)});
-				console.log(getActivities());
-				const acts = detectActivitiesToActivate();
-				const env = detectTypeOfEnvironment();
-				acts.map(function(activity) {
-					attachJsFile('${process.env.AWS_S3_BUCKET}'+'/fe_activity_'+activity.activity+(env === "PROD" ? '.min' : '')+'.js');
-				});
-			}
-
-			whenLibLoaded(loadActivities);
-		}());
-	`;
-}
-
 // Clean assets
 const clear = () => {
 	return src('./dist/*', {
 		read: false,
 	})
 		.pipe(clean());
-};
-
-const reusable = () => {
-	return src(activitiesJSON.reusable.map(file => path.join(scriptsPath, file)), { allowEmpty: true })
-		.pipe(concat('fe_dev.ts'))
-		.pipe(wrap({
-			wrapper: function(content) {
-				return fileWrapResusable(content);
-			},
-		}))
-		.pipe(babel({
-			presets: [
-				'@babel/env',
-				'@babel/typescript',
-			],
-		}))
-		.pipe(dest('./dist'))
-		.pipe(rename(path => {
-			path.basename = 'fe_prod';
-		}))
-		.pipe(uglify())
-		.pipe(dest('./dist'));
 };
 
 task('activities', (cb) => {
@@ -162,4 +91,5 @@ task('activities', (cb) => {
 
 const activities = task('activities');
 
-exports.default = series(clear, parallel(reusable, activities));
+exports.default = series(clear, activities);
+
