@@ -43,7 +43,7 @@ function getCookie(name) {
 }
 
 function setCookie(name, value, days) {
-	const expires = '';
+	let expires = '';
 	if (days) {
 		const date = new Date();
 		date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
@@ -94,9 +94,9 @@ function detectTypeOfEnvironment() {
 
 	//otherwise try normal way
 	const urlFlagsDev = environments.DEV.urlFlags;
-	const isDev = false;
+	let isDev = false;
 	const urlFlagsQa = environments.QA.urlFlags;
-	const isQa = false;
+	let isQa = false;
 
 	urlFlagsDev.map(function (uf) {
 		if (window.location.href.indexOf(uf) >= 0)
