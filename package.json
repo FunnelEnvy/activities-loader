@@ -7,8 +7,7 @@
 	"license": "MIT",
 	"private": true,
 	"workspaces": [
-		"src/activities/*",
-		"src/activities/libs/*"
+		"src/activities/libs"
 	],
 	"scripts": {
 		"build": "gulp && node build.js"
