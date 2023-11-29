@@ -20,6 +20,23 @@ const fileWrap = (content, file) => {
 	return `
 		(function() {
 			const feProjectId = '${file.modName.split('/').pop()}';
+			const originalFunc = window.feUtils.waitForConditions;
+			window.feUtils.waitForConditions = function (conditions, callback, onError, timeout = 10000, polFeq = 100) {
+				if (onError !== null) return originalFunc(conditions, callback, onError, timeout, polFeq);
+				const errorLogger = (error) => {
+					if (window.FeActivityLoader.detectTypeOfEnvironment() === 'PROD') {
+						fetch(loggingEndpoint, {
+							body: JSON.stringify({
+								error_message: error.message,
+								activity: feProjectId,
+								location: window.href.location,
+								customer: 'hpe',
+							}),
+						});
+					}
+				}
+				return originalFunc(conditions, callback, errorLogger, timeout, polFeq);
+			}
 			try {
 				${content}
 			} catch(err) {
