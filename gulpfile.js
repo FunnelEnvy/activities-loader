@@ -25,11 +25,11 @@ const fileWrap = (content, file) => {
 				if (onError !== null) return originalFunc(conditions, callback, onError, timeout, polFeq);
 				const errorLogger = (error) => {
 					if (window.FeActivityLoader.detectTypeOfEnvironment() === 'PROD') {
-						fetch(loggingEndpoint, {
+						fetch('https://8tim12msn8.execute-api.us-east-1.amazonaws.com/dev/error', {
 							body: JSON.stringify({
 								error_message: error.message,
 								activity: feProjectId,
-								location: window.href.location,
+								location: window.location.href,
 								customer: 'hpe',
 							}),
 						});
