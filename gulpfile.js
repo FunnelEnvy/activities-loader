@@ -11,6 +11,7 @@ const minify = require('gulp-minify');
 const uglify = require('gulp-uglify');
 const rename = require('gulp-rename');
 const wrap = require('gulp-wrap-file');
+const removeUseStrict = require("gulp-remove-use-strict");
 
 // TODO: fetch activities from an API
 const activitiesJSON = require('./src/activities.json');
@@ -83,6 +84,7 @@ task('activities', (cb) => {
 				},
 			}))
 			.pipe(filterJS.restore)
+			.pipe(removeUseStrict({ force: true }))
 			.pipe(dest('./dist'));
 	});
 
