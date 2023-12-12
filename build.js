@@ -26,6 +26,7 @@ const buildLibFiles = async () => {
 		output: {
 			file: 'dist/fe_dev.js',
 			format: 'iife',
+			strict: false,
 		},
 		plugins: [
 			replace({
@@ -60,6 +61,7 @@ const buildLibFiles = async () => {
 		output: {
 			file: 'dist/fe_prod.js',
 			format: 'iife',
+			strict: false,
 		},
 		plugins: [
 			replace({
@@ -93,4 +95,3 @@ const buildLibFiles = async () => {
 }
 
 buildLibFiles();
-
