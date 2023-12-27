@@ -1,12 +1,12 @@
 // build.js
-const rollup = require('rollup');
-const activitiesJSON = require('./src/activities.json');
-const resolve = require('@rollup/plugin-node-resolve');
-const replace = require('@rollup/plugin-replace');
-const commonjs = require('@rollup/plugin-commonjs');
-const babel = require('@rollup/plugin-babel');
-const nodePolyfills = require('rollup-plugin-polyfill-node');
-const { terser } = require('rollup-plugin-terser');
+import * as rollup from 'rollup';
+import activitiesJSON from './src/activities.json' assert { type: 'json' };
+import resolve from '@rollup/plugin-node-resolve';
+import replace from '@rollup/plugin-replace';
+import commonjs from '@rollup/plugin-commonjs';
+import babel from '@rollup/plugin-babel';
+import nodePolyfills from 'rollup-plugin-polyfill-node';
+import { terser } from 'rollup-plugin-terser';
 
 // Function to build a single file
 const buildFile = async (config) => {
@@ -93,4 +93,3 @@ const buildLibFiles = async () => {
 }
 
 buildLibFiles();
-

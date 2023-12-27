@@ -1,5 +1,6 @@
 {
 	"name": "activities-loader",
+	"type": "module",
 	"version": "2.0.0",
 	"description": "Loader for company activities",
 	"main": "index.js",
@@ -13,32 +14,32 @@
 		"build": "gulp && node build.js"
 	},
 	"devDependencies": {
-		"@babel/core": "^7.18.6",
-		"@babel/preset-env": "^7.18.6",
-		"@babel/preset-typescript": "^7.18.6",
+		"@babel/core": "^7.23.6",
+		"@babel/preset-env": "^7.23.6",
+		"@babel/preset-typescript": "^7.23.3",
 		"@rollup/plugin-babel": "^6.0.3",
-		"@rollup/plugin-commonjs": "^25.0.4",
+		"@rollup/plugin-commonjs": "^25.0.7",
 		"@rollup/plugin-node-resolve": "^15.2.1",
-		"@rollup/plugin-replace": "^5.0.2",
+		"@rollup/plugin-replace": "^5.0.5",
 		"gulp": "^4.0.2",
 		"gulp-babel": "^8.0.0",
 		"gulp-clean": "^0.4.0",
 		"gulp-clean-css": "^4.3.0",
 		"gulp-concat": "^2.6.1",
 		"gulp-css2js": "^1.2.1",
-		"gulp-filter": "^7.0.0",
+		"gulp-filter": "^9.0.1",
 		"gulp-include": "^2.4.1",
 		"gulp-minify": "^3.1.0",
 		"gulp-rename": "^2.0.0",
 		"gulp-uglify": "^3.0.2",
 		"gulp-wrap-file": "^0.1.2",
-		"rollup": "^3.29.3",
-		"rollup-plugin-polyfill-node": "^0.12.0",
+		"rollup": "^4.9.1",
+		"rollup-plugin-polyfill-node": "^0.13.0",
 		"rollup-plugin-sass": "^1.12.20",
 		"rollup-plugin-scss": "^4.0.0",
 		"rollup-plugin-string": "^3.0.0",
 		"rollup-plugin-terser": "^7.0.2",
-		"typescript": "^4.7.3"
+		"typescript": "^5.3.3"
 	},
 	"dependencies": {}
 }
