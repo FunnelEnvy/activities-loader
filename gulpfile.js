@@ -1,19 +1,19 @@
-import path from 'path';
-import babel from 'gulp-babel';
-import cleanCSS from 'gulp-clean-css';
-import css2js from 'gulp-css2js';
-import clean from 'gulp-clean';
-import concat from 'gulp-concat';
-import filter from 'gulp-filter';
-import include from 'gulp-include';
-import minify from 'gulp-minify';
-// const uglify = require('gulp-uglify');
-// const rename = require('gulp-rename');
-import wrap from 'gulp-wrap-file';
-import gulp from 'gulp';
-const { task, src, dest, series } = gulp;
+const path = require('path');
+const { task, src, dest, series } = require('gulp');
+const babel = require('gulp-babel');
+const cleanCSS = require('gulp-clean-css');
+const css2js = require('gulp-css2js');
+const clean = require('gulp-clean');
+const concat = require('gulp-concat');
+const filter = require('gulp-filter');
+const include = require('gulp-include');
+const minify = require('gulp-minify');
+const uglify = require('gulp-uglify');
+const rename = require('gulp-rename');
+const wrap = require('gulp-wrap-file');
 
-import activitiesJSON from './src/activities.json' assert { type: "json" };
+// TODO: fetch activities from an API
+const activitiesJSON = require('./src/activities.json');
 var scriptsPath = 'src/activities';
 
 const fileWrap = (content, file) => {
@@ -91,5 +91,5 @@ task('activities', (cb) => {
 
 const activities = task('activities');
 
-export default series(clear, activities);
+exports.default = series(clear, activities);
 
