@@ -117,38 +117,43 @@ function detectActivitiesToActivate() {
 	const site = detectTypeOfSite();
 	const env = detectTypeOfEnvironment();
 	return activities
-		.filter((activity) => { //by env
+		.filter(activity => { // by env
 			if (!activity.enable) return false;
-			let out = false;
 			if (!activity.env) return false;
-			activity.env.map(function (actEnv) {
-				out = out || actEnv == env;
-			})
-			return out;
+			return activity.env.some(actEnv => {
+				actEnv == env;
+			});
 		})
-		.filter((activity) => { //by site
-			let out = false;
+		.filter(activity => { // by site
 			if (!activity.sites) return false;
-			activity.sites.map(function (actSite) {
-				out = out || actSite == site;
-			})
-			return out;
+			return activity.sites.some(actSite => {
+				actSite == site;
+			});
 		})
-		.filter((activity) => { //by url_has
-			if (!activity.url_has || activity.url_has.length < 1) return true;
-			const matches = activity.url_has.filter(
-				function (urlFragment) {
-					return (window.location.href.indexOf(urlFragment) >= 0);
-				});
+		.filter(activity => { // by url_matches
+			if (!activity.url_matches || activity.url_matches.length < 1) return true;
+			if (typeof activity.url_matches === 'string') activity.url_matches = [activity.url_matches]
+			const matches = activity.url_matches.filter(regexString => {
+				// Reconstruct the regex object
+				const regex = new RegExp(regexString);
+				return regex.test(window.location.pathname);
+			});
 			return matches.length > 0;
 		})
-		.filter((activity) => { //by url_missing
+		.filter(activity => { // by url_has
+			if (!activity.url_has || activity.url_has.length < 1) return true;
+			if (typeof activity.url_has === 'string') activity.url_has = [activity.url_has]
+			const matches = activity.url_has.filter(urlFragment => {
+				return (window.location.href.indexOf(urlFragment) >= 0);
+			});
+			return matches.length > 0;
+		})
+		.filter(activity => { // by url_missing
 			if (!activity.url_missing || activity.url_missing.length < 1) return true;
-			if (typeof activity.url_missing == 'string') activity.url_missing = [activity.url_missing]
-			const matches = activity.url_missing.filter(
-				function (urlFragment) {
-					return (window.location.href.indexOf(urlFragment) >= 0);
-				});
+			if (typeof activity.url_missing === 'string') activity.url_missing = [activity.url_missing]
+			const matches = activity.url_missing.filter(urlFragment => {
+				return (window.location.href.indexOf(urlFragment) >= 0);
+			});
 			return matches.length === 0; // if you found one, then 1<>0
 		});
 }
