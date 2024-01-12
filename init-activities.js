@@ -56,15 +56,21 @@ function detectTypeOfSite() {
 	let out = sites
 		.filter(function (site) {
 			let out = true;
-			if (typeof site.url_has == 'string') site.url_has = [site.url_has]
-			if (typeof site.url_missing == 'undefined') site.url_missing = []
-			if (typeof site.url_missing == 'string') site.url_missing = [site.url_missing]
-			site.url_has.map(function (url) {
+			if (typeof site.url_has == 'string') site.url_has = [site.url_has];
+			if (typeof site.url_missing == 'undefined') site.url_missing = [];
+			if (typeof site.url_missing == 'string') site.url_missing = [site.url_missing];
+			if (typeof site.url_matches == 'undefined') site.url_matches = [];
+			if (typeof site.url_matches == 'string') site.url_matches = [site.url_matches];
+			site.url_has.map(url => {
 				if (window.location.href.indexOf(url) < 0) out = false;
-			})
-			site.url_missing.map(function (url) {
+			});
+			site.url_missing.map(url => {
 				if (window.location.href.indexOf(url) >= 0) out = false;
-			})
+			});
+			site.url_matches.map(regexString => {
+				const regex = new RegExp(regexString);
+				if (!regex.test(window.location.pathname)) out = false;
+			});
 			return out;
 		})
 		.shift();
