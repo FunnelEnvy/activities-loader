@@ -6,8 +6,9 @@ import clean from 'gulp-clean';
 import concat from 'gulp-concat';
 import filter from 'gulp-filter';
 import include from 'gulp-include';
-import rename from 'gulp-rename';
-import terser from 'gulp-terser';
+import minify from 'gulp-minify';
+// const uglify = require('gulp-uglify');
+// const rename = require('gulp-rename');
 import wrap from 'gulp-wrap-file';
 import gulp from 'gulp';
 const { task, src, dest, series } = gulp;
@@ -75,10 +76,13 @@ task('activities', (cb) => {
 					'@babel/typescript',
 				],
 			}))
+			.pipe(minify({
+				ext: {
+					src: '.js',
+					min: '.min.js',
+				},
+			}))
 			.pipe(filterJS.restore)
-			.pipe(dest('./dist'))
-			.pipe(rename({ suffix: '.min' }))
-			.pipe(terser())
 			.pipe(dest('./dist'));
 	});
 
