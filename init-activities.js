@@ -56,21 +56,14 @@ function detectTypeOfSite() {
 	let out = sites
 		.filter(function (site) {
 			let out = true;
-			if (typeof site.url_has == 'undefined') site.url_has = [];
-			if (typeof site.url_has == 'string') site.url_has = [site.url_has];
-			if (typeof site.url_missing == 'undefined') site.url_missing = [];
-			if (typeof site.url_missing == 'string') site.url_missing = [site.url_missing];
-			if (typeof site.url_matches == 'undefined') site.url_matches = [];
-			if (typeof site.url_matches == 'string') site.url_matches = [site.url_matches];
-			site.url_has.map(url => {
+			if (typeof site.url_has == 'string') site.url_has = [site.url_has]
+			if (typeof site.url_missing == 'undefined') site.url_missing = []
+			if (typeof site.url_missing == 'string') site.url_missing = [site.url_missing]
+			site.url_has.map(function (url) {
 				if (window.location.href.indexOf(url) < 0) out = false;
 			})
-			site.url_missing.map(url => {
+			site.url_missing.map(function (url) {
 				if (window.location.href.indexOf(url) >= 0) out = false;
-			})
-			out = site.url_matches.some(regexString => {
-				const regexPattern = new RegExp(regexString);
-				return regexPattern.test(window.location.pathname);
 			})
 			return out;
 		})
@@ -124,7 +117,7 @@ function detectActivitiesToActivate() {
 	const site = detectTypeOfSite();
 	const env = detectTypeOfEnvironment();
 	return activities
-		.filter(activity => { // by env
+		.filter((activity) => { //by env
 			if (!activity.enable) return false;
 			let out = false;
 			if (!activity.env) return false;
@@ -133,7 +126,7 @@ function detectActivitiesToActivate() {
 			})
 			return out;
 		})
-		.filter(activity => { // by site
+		.filter((activity) => { //by site
 			let out = false;
 			if (!activity.sites) return false;
 			activity.sites.map(function (actSite) {
@@ -141,7 +134,7 @@ function detectActivitiesToActivate() {
 			})
 			return out;
 		})
-		.filter(activity => { // by url_has
+		.filter((activity) => { //by url_has
 			if (!activity.url_has || activity.url_has.length < 1) return true;
 			const matches = activity.url_has.filter(
 				function (urlFragment) {
@@ -149,7 +142,7 @@ function detectActivitiesToActivate() {
 				});
 			return matches.length > 0;
 		})
-		.filter(activity => { // by url_missing
+		.filter((activity) => { //by url_missing
 			if (!activity.url_missing || activity.url_missing.length < 1) return true;
 			if (typeof activity.url_missing == 'string') activity.url_missing = [activity.url_missing]
 			const matches = activity.url_missing.filter(
@@ -157,15 +150,6 @@ function detectActivitiesToActivate() {
 					return (window.location.href.indexOf(urlFragment) >= 0);
 				});
 			return matches.length === 0; // if you found one, then 1<>0
-		})
-		.filter(activity => { // by url_matches
-			if (!activity.url_matches || activity.url_matches.length < 1) return true;
-			if (typeof activity.url_matches == 'string') activity.url_matches = [activity.url_matches]
-			const matches = activity.url_matches.filter(regexString => {
-				const regexPattern = new RegExp(regexString);
-				return regexPattern.test(window.location.pathname);
-			});
-			return matches.length > 0;
 		});
 }
 
