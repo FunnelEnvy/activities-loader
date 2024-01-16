@@ -13,6 +13,10 @@
 	"scripts": {
 		"build": "gulp && node build.js"
 	},
+	"resolutions": {
+		"glob-parent": "^6.0.1",
+		"terser": "^5.26.0"
+	},
 	"devDependencies": {
 		"@babel/core": "^7.23.6",
 		"@babel/preset-env": "^7.23.6",
@@ -29,9 +33,8 @@
 		"gulp-css2js": "^1.2.1",
 		"gulp-filter": "^9.0.1",
 		"gulp-include": "^2.4.1",
-		"gulp-minify": "^3.1.0",
 		"gulp-rename": "^2.0.0",
-		"gulp-uglify": "^3.0.2",
+		"gulp-terser": "^2.1.0",
 		"gulp-wrap-file": "^0.1.2",
 		"rollup": "^4.9.1",
 		"rollup-plugin-polyfill-node": "^0.13.0",
