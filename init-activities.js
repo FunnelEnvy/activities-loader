@@ -68,10 +68,12 @@ function detectTypeOfSite() {
 			site.url_missing.map(url => {
 				if (window.location.href.indexOf(url) >= 0) out = false;
 			})
-			out = site.url_matches.some(regexString => {
-				const regexPattern = new RegExp(regexString);
-				return regexPattern.test(window.location.pathname);
-			})
+			if(out && site.url_matches.length > 0) {
+				out = site.url_matches.some(regexString => {
+					const regexPattern = new RegExp(regexString);
+					return regexPattern.test(window.location.pathname);
+				})
+			}
 			return out;
 		})
 		.shift();
