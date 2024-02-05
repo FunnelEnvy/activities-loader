@@ -11,7 +11,7 @@
 		"src/activities/libs"
 	],
 	"scripts": {
-		"build": "gulp && node build.js"
+		"build": "node build.js"
 	},
 	"resolutions": {
 		"glob-parent": "^6.0.1",
@@ -37,6 +37,7 @@
 		"gulp-terser": "^2.1.0",
 		"gulp-wrap-file": "^0.1.2",
 		"rollup": "^4.9.1",
+		"rollup-plugin-insert": "^1.3.2",
 		"rollup-plugin-polyfill-node": "^0.13.0",
 		"rollup-plugin-sass": "^1.12.20",
 		"rollup-plugin-scss": "^4.0.0",
@@ -44,5 +45,7 @@
 		"rollup-plugin-terser": "^7.0.2",
 		"typescript": "^5.3.3"
 	},
-	"dependencies": {}
+	"dependencies": {
+		"sass": "^1.70.0"
+	}
 }
