@@ -3,17 +3,24 @@ import * as rollup from 'rollup';
 import activitiesJSON from './src/activities.json' assert { type: 'json' };
 import resolve from '@rollup/plugin-node-resolve';
 import replace from '@rollup/plugin-replace';
-import scss from 'rollup-plugin-scss';
 import commonjs from '@rollup/plugin-commonjs';
 import babel from '@rollup/plugin-babel';
 import nodePolyfills from 'rollup-plugin-polyfill-node';
 import { terser } from 'rollup-plugin-terser';
-import { wrap, prepend } from 'rollup-plugin-insert'
+import { wrap, prepend } from 'rollup-plugin-insert';
+import fs from 'fs';
+import CleanCSS from 'clean-css';
 
 const plugins = ({ activity, styles, cssRestrictions }) => {
-	const cssInclude = styles.map((style) => `src/activities/${activity}/${style};`).join('\n');
+	// Read the CSS file
+	const cssFilePath = styles ? `./src/activities/${activity}/${styles[0]}` : '';
+	const cssContent = styles ? fs.readFileSync(cssFilePath, 'utf8') : null;
+
+	// Minify the CSS content
+	const minifiedCssContent = styles ? new CleanCSS().minify(cssContent).styles : '';
 	return [
 		prepend(`
+			${styles ? 'const strMinifiedCss = process.env.MINIFIED_CSS' : ''};
 			const feProjectId = process.env.FE_PROJECT_ID;
 			const addCss = () => {
 				${cssRestrictions ? 'if (' + cssRestrictions + ') {' : ''}
@@ -22,12 +29,6 @@ const plugins = ({ activity, styles, cssRestrictions }) => {
 			};
 			${cssRestrictions ? 'window.' + process.env.REUSABLE_FN + '.waitForAudience(addCss);' : 'addCss();'}
 		`),
-		scss({
-			include: ['src/activities/**/*.css'],
-			fileName: 'output.css',
-			output: false,
-			outputStyle: 'compressed',
-		}),
 		wrap(
 			`try {`,
 			`} catch (err) {
@@ -43,10 +44,9 @@ const plugins = ({ activity, styles, cssRestrictions }) => {
 			preventAssignment: false,
 			objectGuards: true,
 			values: {
+				'process.env.MINIFIED_CSS': `${JSON.stringify(minifiedCssContent)}`,
 				'process.env.FE_PROJECT_ID': `"fe_activity_${activity}"`,
 				'process.env.REUSABLE_FN': process.env.REUSABLE_FN,
-				// 'process.env.CSS_RESTRICTION': cssRestrictions,
-				// 'process.env.MINIFIED_CSS': css,
 			},
 		}),
 		babel({
