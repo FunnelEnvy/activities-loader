@@ -1,4 +1,10 @@
 // build.js
+
+// capture command line arguments
+import yargs from 'yargs/yargs';
+import { hideBin } from 'yargs/helpers';
+const argv = yargs(hideBin(process.argv)).argv
+// rollup dependencies
 import * as rollup from 'rollup';
 import activitiesJSON from './src/activities.json' assert { type: 'json' };
 import resolve from '@rollup/plugin-node-resolve';
@@ -8,6 +14,8 @@ import babel from '@rollup/plugin-babel';
 import nodePolyfills from 'rollup-plugin-polyfill-node';
 import { terser } from 'rollup-plugin-terser';
 import { wrap, prepend } from 'rollup-plugin-insert';
+import { cleandir } from 'rollup-plugin-cleandir';
+// for building css
 import fs from 'fs';
 import CleanCSS from 'clean-css';
 
@@ -62,8 +70,14 @@ const plugins = ({ activity, styles, cssRestrictions }) => {
 };
 
 // Loop through files and build each one
-const buildActivities = async () => {
-	for (const activity of activitiesJSON.activities) {
+const buildActivities = async (activitiesFilter = []) => {
+	let activitiesToBuild = [];
+	if (activitiesFilter.length) {
+		activitiesToBuild = activitiesJSON.activities.filter(activity => activitiesFilter.includes(activity.activity));
+	} else {
+		activitiesToBuild = activitiesJSON.activities;
+	}
+	for (const activity of activitiesToBuild) {
 		console.log(`Building ${activity.activity}/${activity.scripts[0]}...`);
 		await buildFile({
 			input: `src/activities/${activity.activity}/${activity.scripts[0]}`,
@@ -169,8 +183,20 @@ const buildLibFiles = async () => {
 }
 
 // Run the build process
-buildLibFiles();
-buildActivities().catch((error) => {
-	console.error('Build error:', error);
-	process.exit(1);
-});
+cleandir('dist');
+if (argv.all) {
+	buildLibFiles();
+	buildActivities().catch((error) => {
+		console.error('Build error:', error);
+		process.exit(1);
+	});
+}
+if (argv.lib) {
+	buildLibFiles();
+}
+if (argv.activities) {
+	buildActivities(argv.activities.split(',')).catch((error) => {
+		console.error('Build error:', error);
+		process.exit(1);
+	});
+}
