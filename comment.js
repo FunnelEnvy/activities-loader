@@ -1,4 +1,4 @@
-const { GitHub, context } = require('@actions/github');
+import { GitHub, context } from '@actions/github';
 
 async function main() {
 	const { payload, repo } = context;
