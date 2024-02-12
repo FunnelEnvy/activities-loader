@@ -1,10 +1,10 @@
-import { GitHub, context } from '@actions/github';
+import github from '@actions/github';
 
 async function main() {
-	const { payload, repo } = context;
+	const { payload, repo } = github.context;
 	const { pull_request } = payload;
 
-	const octokit = new GitHub(process.env.GITHUB_TOKEN);
+	const octokit = new github.getOctokit(process.env.GITHUB_TOKEN);
 
 	// Check if a comment already exists
 	const { data: comments } = await octokit.issues.listComments({
