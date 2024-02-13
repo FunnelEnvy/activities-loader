@@ -195,6 +195,7 @@ if (argv.lib) {
 	buildLibFiles();
 }
 if (argv.activities) {
+	console.log('activities:', argv.activities);
 	buildActivities(argv.activities.split(',')).catch((error) => {
 		console.error('Build error:', error);
 		process.exit(1);
