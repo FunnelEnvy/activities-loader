@@ -32,7 +32,7 @@ const plugins = ({ activity, styles, cssRestrictions }) => {
 			const feProjectId = process.env.FE_PROJECT_ID;
 			const addCss = () => {
 				${cssRestrictions ? 'if (' + cssRestrictions + ') {' : ''}
-					window.${process.env.REUSABLE_FN}.addCss(strMinifiedCss, feProjectId);
+					window.${process.env.REUSABLE_FN}.injectCss(strMinifiedCss, feProjectId);
 				${cssRestrictions ? '}' : ''}
 			};
 			${cssRestrictions ? 'window.' + process.env.REUSABLE_FN + '.waitForAudience(addCss);' : 'addCss();'}
