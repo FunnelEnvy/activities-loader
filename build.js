@@ -11,8 +11,8 @@ import resolve from '@rollup/plugin-node-resolve';
 import replace from '@rollup/plugin-replace';
 import commonjs from '@rollup/plugin-commonjs';
 import babel from '@rollup/plugin-babel';
+import terser from '@rollup/plugin-terser';
 import nodePolyfills from 'rollup-plugin-polyfill-node';
-import { terser } from 'rollup-plugin-terser';
 import { wrap, prepend } from 'rollup-plugin-insert';
 import { cleandir } from 'rollup-plugin-cleandir';
 // for building css
@@ -114,7 +114,7 @@ const buildLibFiles = async () => {
 	await buildFile({
 		input: './init-activities.js',
 		output: {
-			file: 'dist/fe_dev.js',
+			file: 'dist/fe_altloader.js',
 			format: 'iife',
 		},
 		plugins: [
@@ -122,41 +122,7 @@ const buildLibFiles = async () => {
 				preventAssignment: false,
 				objectGuards: true,
 				values: {
-					'process.env.REUSABLE_LIB': `"./src/activities/${activitiesJSON.reusable[0]}"`,
-					'process.env.ENVIRONMENTS': JSON.stringify(activitiesJSON.environments),
-					'process.env.SITES': JSON.stringify(activitiesJSON.sites),
-					'process.env.ACTIVITIES': JSON.stringify(activitiesJSON.activities),
-					'process.env.AWS_S3_BUCKET': `"${process.env.AWS_S3_BUCKET}"`,
-				},
-			}),
-			nodePolyfills(),
-			resolve({
-				preferBuiltins: true,
-			}),
-			commonjs(),
-			babel({
-				babelHelpers: 'bundled',
-				extensions: ['.js', '.ts'],
-				exclude: 'node_modules/**',
-				presets: [
-					'@babel/typescript',
-					'@babel/env',
-				],
-			}),
-		],
-	});
-	await buildFile({
-		input: './init-activities.js',
-		output: {
-			file: 'dist/fe_prod.js',
-			format: 'iife',
-		},
-		plugins: [
-			replace({
-				preventAssignment: false,
-				objectGuards: true,
-				values: {
-					'process.env.REUSABLE_LIB': `"./src/activities/${activitiesJSON.reusable[0]}"`,
+					'process.env.REUSABLE_LIB': `"./src/libs/index.js"`,
 					'process.env.ENVIRONMENTS': JSON.stringify(activitiesJSON.environments),
 					'process.env.SITES': JSON.stringify(activitiesJSON.sites),
 					'process.env.ACTIVITIES': JSON.stringify(activitiesJSON.activities),
