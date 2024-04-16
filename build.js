@@ -70,12 +70,12 @@ const plugins = ({ activity, styles, cssRestrictions }) => {
 };
 
 // Loop through files and build each one
-const buildActivities = async (activitiesFilter = []) => {
+const buildActivities = async (activitiesFilter = [], activitiesGroup) => {
 	let activitiesToBuild = [];
 	if (activitiesFilter.length) {
-		activitiesToBuild = activitiesJSON.activities.filter(activity => activitiesFilter.includes(activity.activity));
+		activitiesToBuild = activitiesJSON.activities[activitiesGroup].filter(activity => activitiesFilter.includes(activity.activity));
 	} else {
-		activitiesToBuild = activitiesJSON.activities;
+		activitiesToBuild = activitiesJSON.activities[activitiesGroup];
 	}
 	for (const activity of activitiesToBuild) {
 		console.log(`Building ${activity.activity}/${activity.scripts[0]}...`);
@@ -162,7 +162,7 @@ if (argv.lib) {
 }
 if (argv.activities) {
 	console.log('activities:', argv.activities);
-	buildActivities(argv.activities.split(',')).catch((error) => {
+	buildActivities(argv.activities.split(','), argv?.group).catch((error) => {
 		console.error('Build error:', error);
 		process.exit(1);
 	});
