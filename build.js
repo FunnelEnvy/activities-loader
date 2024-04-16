@@ -6,7 +6,7 @@ import { hideBin } from 'yargs/helpers';
 const argv = yargs(hideBin(process.argv)).argv
 // rollup dependencies
 import * as rollup from 'rollup';
-import activitiesJSON from './activities.json' assert { type: 'json' };
+import activitiesJSON from './src/activities.json' assert { type: 'json' };
 import resolve from '@rollup/plugin-node-resolve';
 import replace from '@rollup/plugin-replace';
 import commonjs from '@rollup/plugin-commonjs';
