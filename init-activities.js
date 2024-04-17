@@ -161,7 +161,11 @@ function detectActivitiesToActivate() {
 	return acts
 		.filter(activity => activity.enable) // by enable
 		.filter(activity => activity.env.some(e => e === env)) // by env
-		.filter(activity => activity.sites.some(s => sites.indexOf(s) !== -1)) // by sites
+		.filter(activity => { // by sites
+			if (!activity.hasOwnProperty("sites")) return true;
+			const siteNames = sites.map(site => site.name);
+			return activity.sites.some(s => siteNames.indexOf(s) !== -1);
+		})
 		.filter(activity => { // by url_has
 			if (!activity.url_has || activity.url_has.length < 1) return true;
 			const matches = activity.url_has.filter(
