@@ -13,6 +13,7 @@ import commonjs from '@rollup/plugin-commonjs';
 import babel from '@rollup/plugin-babel';
 import terser from '@rollup/plugin-terser';
 import nodePolyfills from 'rollup-plugin-polyfill-node';
+import json from '@rollup/plugin-json';
 import { wrap, prepend } from 'rollup-plugin-insert';
 import { cleandir } from 'rollup-plugin-cleandir';
 // for building css
@@ -27,6 +28,7 @@ const plugins = ({ activity, styles, cssRestrictions }) => {
 	// Minify the CSS content
 	const minifiedCssContent = styles ? new CleanCSS().minify(cssContent).styles : '';
 	return [
+		json(),
 		prepend(`
 			${styles ? 'const strMinifiedCss = process.env.MINIFIED_CSS' : ''};
 			const feProjectId = process.env.FE_PROJECT_ID;
@@ -118,6 +120,7 @@ const buildLibFiles = async () => {
 			format: 'iife',
 		},
 		plugins: [
+			json(),
 			replace({
 				preventAssignment: false,
 				objectGuards: true,
