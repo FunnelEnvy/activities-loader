@@ -153,7 +153,7 @@ function detectTypeOfEnvironment() {
 function detectActivitiesToActivate() {
 	const sites = detectSites();
 	const env = detectTypeOfEnvironment();
-	const acts = [];
+	let acts = [];
 	const allActivities = getActivities();
 	Object.keys(allActivities).forEach(group => {
 		acts = [...acts, ...allActivities[group].map(activity => ({ ...activity, group })) ];
