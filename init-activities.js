@@ -156,7 +156,7 @@ function detectActivitiesToActivate() {
 	const acts = [];
 	const allActivities = getActivities();
 	Object.keys(allActivities).forEach(group => {
-		acts.push(allActivities[group].map(activity => ({ ...activity, group })));
+		acts = [...acts, ...allActivities[group].map(activity => ({ ...activity, group })) ];
 	});
 	return acts
 		.filter(activity => activity.enable) // by enable
