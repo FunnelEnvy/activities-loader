@@ -222,7 +222,7 @@ const loadActivities = () => {
 	const acts = detectActivitiesToActivate();
 	const env = detectTypeOfEnvironment();
 	acts.map(activity => {
-		const path = `${bucketPath}/${activity.group.toLowerCase()}`;
+		const path = `${bucketPath}/${activity.group.toLowerCase()}/v2`;
 		attachJsFile(path + '/fe_activity_' + activity.activity + (env === "PROD" ? '.min' : '') + '.js');
 	});
 }
