@@ -22,15 +22,15 @@ import CleanCSS from 'clean-css';
 
 const plugins = ({ activity, styles, cssRestrictions }) => {
 	// Read the CSS file
-	const cssFilePath = styles ? `./src/activities/${activity}/${styles[0]}` : '';
-	const cssContent = styles ? fs.readFileSync(cssFilePath, 'utf8') : null;
+	const cssFilePath = (styles && styles.length > 0) ? `./src/activities/${activity}/${styles[0]}` : '';
+	const cssContent = (styles && styles.length > 0) ? fs.readFileSync(cssFilePath, 'utf8') : null;
 
 	// Minify the CSS content
-	const minifiedCssContent = styles ? new CleanCSS().minify(cssContent).styles : '';
+	const minifiedCssContent = (styles && styles.length > 0) ? new CleanCSS().minify(cssContent).styles : '';
 	return [
 		json(),
 		prepend(`
-			${styles ? 'const strMinifiedCss = process.env.MINIFIED_CSS' : ''};
+			${(styles && styles.length > 0) ? 'const strMinifiedCss = process.env.MINIFIED_CSS' : ''};
 			const feProjectId = process.env.FE_PROJECT_ID;
 			const addCss = () => {
 				${cssRestrictions ? 'if (' + cssRestrictions + ') {' : ''}
