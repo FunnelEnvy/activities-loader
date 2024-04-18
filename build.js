@@ -75,6 +75,8 @@ const plugins = ({ activity, styles, cssRestrictions }) => {
 const buildActivities = async (activitiesFilter = [], activitiesGroup) => {
 	let activitiesToBuild = [];
 	if (activitiesFilter.length) {
+		console.log('hit?');
+		console.log(activitiesFilter);
 		activitiesToBuild = activitiesJSON.activities[activitiesGroup].filter(activity => activitiesFilter.includes(activity.activity));
 	} else {
 		activitiesToBuild = activitiesJSON.activities[activitiesGroup];
@@ -162,10 +164,9 @@ if (argv.all) {
 }
 if (argv.lib) {
 	buildLibFiles();
-}
-if (argv.activities) {
+} else {
 	console.log('activities:', argv.activities);
-	buildActivities(argv.activities.split(','), argv?.group).catch((error) => {
+	buildActivities(argv.activities?.split(','), argv?.group).catch((error) => {
 		console.error('Build error:', error);
 		process.exit(1);
 	});
