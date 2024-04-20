@@ -34,10 +34,10 @@ const plugins = ({ activity, styles, cssRestrictions }) => {
 			const feProjectId = process.env.FE_PROJECT_ID;
 			const addCss_unique = () => {
 				${cssRestrictions ? 'if (' + cssRestrictions + ') {' : ''}
-					window.${process.env.REUSABLE_FN}.injectCss(strMinifiedCss, feProjectId);
+					window[process.env.REUSABLE_FN].injectCss(strMinifiedCss, feProjectId);
 				${cssRestrictions ? '}' : ''}
 			};
-			${cssRestrictions ? 'window.' + process.env.REUSABLE_FN + '.waitForAudience(addCss_unique);' : 'addCss_unique();'}
+			${cssRestrictions ? 'window[process.env.REUSABLE_FN].waitForAudience(addCss_unique);' : 'addCss_unique();'}
 		`),
 		wrap(
 			`try {`,
@@ -56,7 +56,7 @@ const plugins = ({ activity, styles, cssRestrictions }) => {
 			values: {
 				'process.env.MINIFIED_CSS': `${JSON.stringify(minifiedCssContent)}`,
 				'process.env.FE_PROJECT_ID': `"fe_activity_${activity}"`,
-				'process.env.REUSABLE_FN': process.env.REUSABLE_FN,
+				'process.env.REUSABLE_FN': 'feReusable',
 			},
 		}),
 		babel({
