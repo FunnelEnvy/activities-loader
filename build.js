@@ -34,7 +34,7 @@ const plugins = ({ activity, styles, cssRestrictions }) => {
 			const feProjectId = process.env.FE_PROJECT_ID;
 			const addCss_unique = () => {
 				${cssRestrictions ? 'if (' + cssRestrictions + ') {' : ''}
-					window[process.env.REUSABLE_FN].injectCss(strMinifiedCss, feProjectId);
+					${(styles && styles.length > 0) ? 'window[process.env.REUSABLE_FN].injectCss(strMinifiedCss, feProjectId);' : ''};
 				${cssRestrictions ? '}' : ''}
 			};
 			${cssRestrictions ? 'window[process.env.REUSABLE_FN].waitForAudience(addCss_unique);' : 'addCss_unique();'}
