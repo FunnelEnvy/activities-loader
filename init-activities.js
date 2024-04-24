@@ -13,7 +13,11 @@ if (window && typeof window.FE_LOADER_v2 === 'undefined') {
 }
 
 function getActivities() {
-	return activities;
+	let acts = [];
+	Object.keys(activities).forEach(group => {
+		acts = [...acts, ...activities[group].map(activity => ({ ...activity, group })) ];
+	});
+	return acts;
 }
 
 function getSites() {
@@ -153,12 +157,7 @@ function detectTypeOfEnvironment() {
 function detectActivitiesToActivate() {
 	const sites = detectSites();
 	const env = detectTypeOfEnvironment();
-	let acts = [];
-	const allActivities = getActivities();
-	Object.keys(allActivities).forEach(group => {
-		acts = [...acts, ...allActivities[group].map(activity => ({ ...activity, group })) ];
-	});
-	return acts
+	return getActivities()
 		.filter(activity => activity.enable) // by enable
 		.filter(activity => activity.env.some(e => e === env)) // by env
 		.filter(activity => { // by sites
