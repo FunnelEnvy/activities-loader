@@ -10,7 +10,7 @@ import rename from 'gulp-rename';
 import terser from 'gulp-terser';
 import wrap from 'gulp-wrap-file';
 import gulp from 'gulp';
-const { task, src, dest, series } = gulp;
+const { task, src, dest, series, parallel } = gulp;
 
 import activitiesJSON from './src/activities.json' assert { type: "json" };
 var scriptsPath = 'src/activities';
@@ -35,6 +35,10 @@ const clear = () => {
 	})
 		.pipe(clean());
 };
+
+task('variations', (cb) => {
+	cb();
+});
 
 task('activities', (cb) => {
 	activitiesJSON.activities.filter(a => a.enable === true).map(activity => {
@@ -86,6 +90,7 @@ task('activities', (cb) => {
 });
 
 const activities = task('activities');
+const variations = task('variations');
 
-export default series(clear, activities);
+export default series(clear, parallel(activities, variations));
 
