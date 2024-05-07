@@ -28,11 +28,11 @@ const plugins = ({ activity, styles, cssRestrictions }) => {
 	const minifiedCssContent = styles ? new CleanCSS().minify(cssContent).styles : '';
 	return [
 		prepend(`
-			${styles ? 'const strMinifiedCss = process.env.MINIFIED_CSS' : ''};
+			${(styles && styles.length > 0) ? 'const strMinifiedCss = process.env.MINIFIED_CSS' : ''};
 			const feProjectId = process.env.FE_PROJECT_ID;
 			const addCss = () => {
 				${cssRestrictions ? 'if (' + cssRestrictions + ') {' : ''}
-					window.${process.env.REUSABLE_FN}.injectCss(strMinifiedCss, feProjectId);
+					${(styles && styles.length > 0) ? 'window[process.env.REUSABLE_FN].injectCss(strMinifiedCss, feProjectId);' : ''};
 				${cssRestrictions ? '}' : ''}
 			};
 			${cssRestrictions ? 'window.' + process.env.REUSABLE_FN + '.waitForAudience(addCss);' : 'addCss();'}
