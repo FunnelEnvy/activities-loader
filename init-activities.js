@@ -68,7 +68,7 @@ function detectTypeOfSite() {
 			site.url_missing.map(url => {
 				if (window.location.href.indexOf(url) >= 0) out = false;
 			})
-			if(out && site.url_matches.length > 0) {
+			if (out && site.url_matches.length > 0) {
 				out = site.url_matches.some(regexString => {
 					const regexPattern = new RegExp(regexString);
 					return regexPattern.test(window.location.pathname);
@@ -187,6 +187,43 @@ function attachJsFile(src) {
 		rc.appendChild(sc);
 }
 
+function loadVariation(activity) {
+	// Determine which variation to load
+	const cookieName = activity.activity;
+	let selectedVariation = getCookie(cookieName);
+
+	// Variations object
+	const variations = activity.variants;
+
+	// Function to select a variation based on configured weights
+	function selectVariation() {
+		let rand = Math.random();
+		let sum = 0;
+
+		for (const key in variations) {
+			sum += variations[key].weight;
+			if (rand <= sum) {
+				return key;
+			}
+		}
+		return null; // In case there is a rounding error in the weights
+	}
+
+	if (!selectedVariation) {
+		selectedVariation = selectVariation();
+		// Set the cookie with the selected variation
+		setCookie(cookieName, selectedVariation, 7); // expires in 7 days
+	}
+
+	console.log('selectedVariation: ', selectedVariation)
+	console.log('path: ', `/fe_activity_${activity.activity}_${selectedVariation}${detectTypeOfEnvironment() === "PROD" ? '.min' : ''}.js`)
+
+	// Load the selected variation script
+	const bucketPath = process.env.AWS_S3_BUCKET + '/fe_activity_';
+	//attachJsFile(bucketPath + activity.activity + selectedVariation + (detectTypeOfEnvironment() === "PROD" ? '.min' : '') + '.js');
+	attachJsFile(`${bucketPath}${activity.activity}_${selectedVariation}${detectTypeOfEnvironment() === "PROD" ? '.min' : ''}.js`);
+}
+
 window.FeActivityLoader = window.FeActivityLoader || {};
 window.FeActivityLoader.getActivities = getActivities;
 window.FeActivityLoader.getSites = getSites;
@@ -210,8 +247,10 @@ const whenLibLoaded = function (todoWhenLoaded) {
 const loadActivities = () => {
 	const acts = detectActivitiesToActivate();
 	const env = detectTypeOfEnvironment();
-	acts.map(function(activity) {
-		attachJsFile(process.env.AWS_S3_BUCKET + '/fe_activity_' + activity.activity + (env === "PROD" ? '.min' : '')+'.js');
+
+	acts.map(function (activity) {
+		loadVariation(activity);
+		//attachJsFile(process.env.AWS_S3_BUCKET + '/fe_activity_' + activity.activity + (env === "PROD" ? '.min' : '')+'.js');
 	});
 }
 
