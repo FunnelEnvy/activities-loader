@@ -10,7 +10,7 @@ import include from 'gulp-include';
 import rename from 'gulp-rename';
 import terser from 'gulp-terser';
 import wrap from 'gulp-wrap-file';
-import activitiesJSON from './src/activities.json' assert { type: "json" };
+import activitiesJSON from './src/activities.json' assert { type: 'json' };
 
 const { series, parallel, src, dest } = gulp;
 
@@ -31,24 +31,28 @@ const fileWrap = (content, file) => {
 
 // Clean the 'dist' directory
 const cleanDist = () => {
-  return src('./dist/*', { read: false, allowEmpty: true })
-    .pipe(clean());
+  return src('./dist/*', { read: false, allowEmpty: true }).pipe(clean());
 };
 
 // Process activities and their variants
 const processActivities = (cb) => {
-  activitiesJSON.activities.forEach(activity => {
+  activitiesJSON.activities.forEach((activity) => {
     const activityName = activity.activity;
-    const variants = activity.variants;
+    const variants = activity?.variants || {};
 
     Object.entries(variants).forEach(([variantName, { scripts, styles, weight }]) => {
-      src([].concat(scripts.map(file => path.join(scriptsPath, activityName, variantName, file)),
-                styles.map(file => path.join(scriptsPath, activityName, variantName, file))))
+      src(
+        [].concat(
+          scripts.map((file) => path.join(scriptsPath, activityName, variantName, file)),
+          styles.map((file) => path.join(scriptsPath, activityName, variantName, file))
+        )
+      )
         .pipe(concat('all.css'))
         .pipe(cleanCSS())
-        .pipe(css2js({
-          prefix: "var strMinifiedCss = \"",
-          suffix: `\";\n
+        .pipe(
+          css2js({
+            prefix: 'var strMinifiedCss = "',
+            suffix: `\";\n
             const addCss = () => {
               if (window.${process.env.REUSABLE_FN} && window.${process.env.REUSABLE_FN}.injectCss) {
                 ${activity.cssRestriction ? `if (${activity.cssRestriction}) {` : ''}
@@ -58,7 +62,8 @@ const processActivities = (cb) => {
             };
             ${activity.cssRestriction ? `window.${process.env.REUSABLE_FN}.waitForAudience(addCss);` : 'addCss();'}
           `,
-        }))
+          })
+        )
         .pipe(concat(`fe_activity_${activityName}_${variantName}.ts`))
         .pipe(include().on('error', console.log))
         .pipe(wrap({ wrapper: (content, file) => fileWrap(content, file) }))
