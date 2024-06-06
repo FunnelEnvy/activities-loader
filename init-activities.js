@@ -127,7 +127,7 @@ function detectActivitiesToActivate() {
 	const env = detectTypeOfEnvironment();
 	return activities
 		.filter(activity => { // by env
-			if (!activity.enable) return false;
+			if (activity.enable !== true) return false;
 			let out = false;
 			if (!activity.env) return false;
 			activity.env.map(function (actEnv) {
