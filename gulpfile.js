@@ -12,7 +12,7 @@ import terser from 'gulp-terser';
 import wrap from 'gulp-wrap-file';
 import activitiesJSON from './src/activities.json' assert { type: 'json' };
 
-const { series, parallel, src, dest } = gulp;
+const { series, src, dest } = gulp;
 
 const scriptsPath = 'src/activities';
 
@@ -40,34 +40,47 @@ const processActivities = (cb) => {
     const activityName = activity.activity;
     const variants = activity?.variants || {};
 
-    Object.entries(variants).forEach(([variantName, { scripts, styles, weight }]) => {
+    Object.entries(variants).forEach(([variantName, { scripts, styles }]) => {
+      const filterJS = filter(['**/*.js', '**/*.ts'], { restore: true });
+      const filterCSS = filter(['**/*.css'], { restore: true });
+
       src(
         [].concat(
           scripts.map((file) => path.join(scriptsPath, activityName, variantName, file)),
           styles.map((file) => path.join(scriptsPath, activityName, variantName, file))
-        )
+        ),
+        { allowEmpty: true }
       )
+        .pipe(filterCSS)
         .pipe(concat('all.css'))
         .pipe(cleanCSS())
         .pipe(
           css2js({
             prefix: 'var strMinifiedCss = "',
-            suffix: `\";\n
-            const addCss = () => {
-              if (window.${process.env.REUSABLE_FN} && window.${process.env.REUSABLE_FN}.injectCss) {
-                ${activity.cssRestriction ? `if (${activity.cssRestriction}) {` : ''}
-                window.${process.env.REUSABLE_FN}.injectCss(strMinifiedCss, feProjectId);
-                ${activity.cssRestriction ? '}' : ''}
-              }
-            };
-            ${activity.cssRestriction ? `window.${process.env.REUSABLE_FN}.waitForAudience(addCss);` : 'addCss();'}
-          `,
+            suffix: `";\n
+              const addCss = () => {
+                if (window.${process.env.REUSABLE_FN} && window.${process.env.REUSABLE_FN}.injectCss) {
+                  ${activity.cssRestriction ? `if (${activity.cssRestriction}) {` : ''}
+                  window.${process.env.REUSABLE_FN}.injectCss(strMinifiedCss, feProjectId);
+                  ${activity.cssRestriction ? '}' : ''}
+                }
+              };
+              ${activity.cssRestriction ? `window.${process.env.REUSABLE_FN}.waitForAudience(addCss);` : 'addCss();'}
+            `,
           })
         )
+        .pipe(filterCSS.restore)
+        .pipe(filterJS)
         .pipe(concat(`fe_activity_${activityName}_${variantName}.ts`))
         .pipe(include().on('error', console.log))
-        .pipe(wrap({ wrapper: (content, file) => fileWrap(content, file) }))
+        .pipe(
+          wrap({
+            wrapper: (content, file) => fileWrap(content, file),
+          })
+        )
         .pipe(babel({ presets: ['@babel/env', '@babel/typescript'] }))
+        .pipe(filterJS.restore)
+        .pipe(dest('./dist'))
         .pipe(rename({ suffix: '.min' }))
         .pipe(terser())
         .pipe(dest('./dist'));
