@@ -206,7 +206,7 @@ function loadVariation(activity) {
 				return key;
 			}
 		}
-		return null; // In case there is a rounding error in the weights
+		return Object.keys(variations)[0]; // In case there is a rounding error in the weights return first variant
 	}
 
 	if (!selectedVariation) {
@@ -249,8 +249,11 @@ const loadActivities = () => {
 	const env = detectTypeOfEnvironment();
 
 	acts.map(function (activity) {
-		loadVariation(activity);
-		//attachJsFile(process.env.AWS_S3_BUCKET + '/fe_activity_' + activity.activity + (env === "PROD" ? '.min' : '')+'.js');
+		if (activity.variants) {
+			loadVariation(activity);
+		} else {
+			attachJsFile(process.env.AWS_S3_BUCKET + '/fe_activity_' + activity.activity + (env === "PROD" ? '.min' : '')+'.js');
+		}
 	});
 }
 
