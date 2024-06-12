@@ -20,7 +20,7 @@ import { cleandir } from 'rollup-plugin-cleandir';
 import fs from 'fs';
 import CleanCSS from 'clean-css';
 
-const plugins = ({ activity, styles, cssRestrictions }) => {
+const plugins = ({ activity, styles, cssRestrictions, config }) => {
 	// Read the CSS file
 	const cssFilePath = (styles && styles.length > 0) ? `./src/activities/${activity}/${styles[0]}` : '';
 	const cssContent = (styles && styles.length > 0) ? fs.readFileSync(cssFilePath, 'utf8') : null;
@@ -54,6 +54,7 @@ const plugins = ({ activity, styles, cssRestrictions }) => {
 			preventAssignment: false,
 			objectGuards: true,
 			values: {
+				...config,
 				'process.env.MINIFIED_CSS': `${JSON.stringify(minifiedCssContent)}`,
 				'process.env.FE_PROJECT_ID': `"fe_activity_${activity}"`,
 				'process.env.REUSABLE_FN': `"feReusable"`,
@@ -75,30 +76,60 @@ const plugins = ({ activity, styles, cssRestrictions }) => {
 const buildActivities = async (activitiesFilter = [], activitiesGroup) => {
 	let activitiesToBuild = [];
 	if (activitiesFilter.length) {
-		console.log('hit?');
-		console.log(activitiesFilter);
 		activitiesToBuild = activitiesJSON.activities[activitiesGroup].filter(activity => activitiesFilter.includes(activity.activity));
 	} else {
 		activitiesToBuild = activitiesJSON.activities[activitiesGroup];
 	}
 	for (const activity of activitiesToBuild) {
-		console.log(`Building ${activity.activity}/${activity.scripts[0]}...`);
-		await buildFile({
-			input: `src/activities/${activity.activity}/${activity.scripts[0]}`,
-			output: {
-				file: `dist/fe_activity_${activity.activity}.js`,
-				format: 'iife',
-			},
-			plugins: plugins(activity),
-		});
-		await buildFile({
-			input: `src/activities/${activity.activity}/${activity.scripts[0]}`,
-			output: {
-				file: `dist/fe_activity_${activity.activity}.min.js`,
-				format: 'iife',
-			},
-			plugins: [...plugins(activity), terser()],
-		});
+		let activityConfig = {};
+		const activityConfigPath = `./src/activities/${activity.activity}/activity_config.json`;
+		try {
+			activityConfig = JSON.parse(fs.readFileSync(activityConfigPath, 'utf8'));
+		} catch (err) {}
+		const config = Object.keys(activityConfig).reduce((accum, curr) => {
+			accum[`process.env.${curr.toUpperCase()}`] = activityConfig[curr]
+			return accum;
+		}, {});
+		if (activity.variants) {
+			// build variants...
+			Object.entries(activity.variants).forEach(async (variant) => {
+				console.log(`Building ${activity.activity}_${variant}/${activity.variants[variant].scripts[0]}...`);
+				await buildFile({
+					input: `src/activities/${activity.activity}/${variant}/${activity.scripts[0]}`,
+					output: {
+						file: `dist/fe_activity_${activity.activity}_${variant}}.js`,
+						format: 'iife',
+					},
+					plugins: plugins({ ...activity, config }),
+				});
+				await buildFile({
+					input: `src/activities/${activity.activity}/${variant}/${activity.scripts[0]}`,
+					output: {
+						file: `dist/fe_activity_${activity.activity}_${variant}}.min.js`,
+						format: 'iife',
+					},
+					plugins: [...plugins({ ...activity, config }), terser()],
+				});
+			});
+		} else {
+			console.log(`Building ${activity.activity}/${activity.scripts[0]}...`);
+			await buildFile({
+				input: `src/activities/${activity.activity}/${activity.scripts[0]}`,
+				output: {
+					file: `dist/fe_activity_${activity.activity}.js`,
+					format: 'iife',
+				},
+				plugins: plugins({ ...activity, config }),
+			});
+			await buildFile({
+				input: `src/activities/${activity.activity}/${activity.scripts[0]}`,
+				output: {
+					file: `dist/fe_activity_${activity.activity}.min.js`,
+					format: 'iife',
+				},
+				plugins: [...plugins({ ...activity, config }), terser()],
+			});
+		}
 	}
 }
 
