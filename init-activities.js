@@ -158,7 +158,7 @@ function detectActivitiesToActivate() {
 	const sites = detectSites();
 	const env = detectTypeOfEnvironment();
 	return getActivities()
-		.filter(activity => activity.enable) // by enable
+		.filter(activity => activity?enable === true) // by enable
 		.filter(activity => activity.env.some(e => e === env)) // by env
 		.filter(activity => { // by sites
 			if (!activity.hasOwnProperty("sites")) return true;
