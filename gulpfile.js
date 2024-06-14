@@ -1,3 +1,4 @@
+import fs from 'fs';
 import path from 'path';
 import babel from 'gulp-babel';
 import cleanCSS from 'gulp-clean-css';
@@ -9,6 +10,7 @@ import include from 'gulp-include';
 import rename from 'gulp-rename';
 import terser from 'gulp-terser';
 import wrap from 'gulp-wrap-file';
+import replace from 'gulp-replace';
 import gulp from 'gulp';
 const { task, src, dest, series } = gulp;
 
@@ -42,7 +44,16 @@ task('activities', (cb) => {
 		const filterCSS = filter(["**/*.css"], { restore: true });
 		const scripts = (activity?.scripts ?? []).map(file => path.join(scriptsPath, activity.activity, file));
 		const styles = (activity?.styles ?? []).map(file => path.join(scriptsPath, activity.activity, file));
-		return src([].concat(scripts, styles), { allowEmpty: true })
+		let activityConfig = {};
+		const activityConfigPath = `./src/activities/${activity.activity}/activity_config.json`;
+		try {
+			activityConfig = JSON.parse(fs.readFileSync(activityConfigPath, 'utf8'));
+		} catch (err) {}
+		const config = Object.keys(activityConfig).reduce((accum, curr) => {
+			accum[`process.env.${curr.toUpperCase()}`] = activityConfig[curr]
+			return accum;
+		}, {});
+		let stream = src([].concat(scripts, styles), { allowEmpty: true })
 			.pipe(filterCSS)
 			.pipe(concat('all.css'))
 			.pipe(cleanCSS({}))
@@ -63,7 +74,7 @@ task('activities', (cb) => {
 			.pipe(filterJS)
 			.pipe(concat('fe_activity_' + activity.activity + '.ts'))
 			.pipe(include())
-				.on('error', console.log)
+			.on('error', console.log)
 			.pipe(wrap({
 				wrapper: function(content, file) {
 					return fileWrap(content, file);
@@ -74,7 +85,13 @@ task('activities', (cb) => {
 					'@babel/env',
 					'@babel/typescript',
 				],
-			}))
+			}));
+
+		Object.keys(config).forEach(key => {
+			stream = stream.pipe(replace(key, JSON.stringify(config[key])));
+		});
+
+		return stream
 			.pipe(filterJS.restore)
 			.pipe(dest('./dist'))
 			.pipe(rename({ suffix: '.min' }))
