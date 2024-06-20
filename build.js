@@ -30,11 +30,11 @@ const plugins = ({ activity, styles, cssRestrictions }) => {
 	return [
 		json(),
 		prepend(`
-			${(styles && styles.length > 0) ? 'const strMinifiedCss = process.env.MINIFIED_CSS' : ''};
+			${(styles && styles.length > 0) ? 'const strMinifiedCss = process.env.MINIFIED_CSS;' : ''}
 			const feProjectId = process.env.FE_PROJECT_ID;
 			const addCss_unique = () => {
 				${cssRestrictions ? 'if (' + cssRestrictions + ') {' : ''}
-					${(styles && styles.length > 0) ? 'window[process.env.REUSABLE_FN].injectCss(strMinifiedCss, feProjectId);' : ''};
+					${(styles && styles.length > 0) ? 'window[process.env.REUSABLE_FN].injectCss(strMinifiedCss, feProjectId);' : ''}
 				${cssRestrictions ? '}' : ''}
 			};
 			${cssRestrictions ? 'window[process.env.REUSABLE_FN].waitForAudience(addCss_unique);' : 'addCss_unique();'}
