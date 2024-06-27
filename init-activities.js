@@ -1,5 +1,7 @@
 import process.env.REUSABLE_LIB;
 
+const bucketPath = 'https://fe-hpe-script.s3.us-east-2.amazonaws.com'
+
 if (window.location.href.indexOf('itgh.buy.hpe.com') >= 0) throw new Error('This is not the right site for this code');
 
 const environments = process.env.ENVIRONMENTS;
@@ -11,7 +13,11 @@ if (window && typeof window.FE_LOADER_v2 === 'undefined') {
 }
 
 function getActivities() {
-	return activities;
+	let acts = [];
+	Object.keys(activities).forEach(group => {
+		acts = [...acts, ...activities[group].map(activity => ({ ...activity, group })) ];
+	});
+	return acts;
 }
 
 function getSites() {
@@ -23,9 +29,9 @@ function getCookie(name) {
 	let ca = document.cookie.split(';');
 	ca = ca
 		.filter(function (c) {
-			while (c.charAt(0) == ' ')
+			while (c.charAt(0) === ' ')
 				c = c.substring(1, c.length);
-			return (c.indexOf(nameEQ) == 0);
+			return (c.indexOf(nameEQ) === 0);
 		})
 		.map(function (c) {
 			if (c) {
@@ -52,16 +58,42 @@ function setCookie(name, value, days) {
 	document.cookie = name + '=' + (value || '') + expires + '; path=/';
 }
 
+function detectSites() {
+	return sites
+		.filter(function (site) {
+			let out = true;
+			if (typeof site.url_has === 'undefined') site.url_has = [];
+			if (typeof site.url_has === 'string') site.url_has = [site.url_has];
+			if (typeof site.url_missing === 'undefined') site.url_missing = [];
+			if (typeof site.url_missing === 'string') site.url_missing = [site.url_missing];
+			if (typeof site.url_matches === 'undefined') site.url_matches = [];
+			if (typeof site.url_matches === 'string') site.url_matches = [site.url_matches];
+			site.url_has.map(url => {
+				if (window.location.href.indexOf(url) < 0) out = false;
+			})
+			site.url_missing.map(url => {
+				if (window.location.href.indexOf(url) >= 0) out = false;
+			})
+			if (out && site.url_matches.length > 0) {
+				out = site.url_matches.some(regexString => {
+					const regexPattern = new RegExp(regexString);
+					return regexPattern.test(window.location.pathname);
+				})
+			}
+			return out;
+		});
+}
+
 function detectTypeOfSite() {
 	let out = sites
 		.filter(function (site) {
 			let out = true;
-			if (typeof site.url_has == 'undefined') site.url_has = [];
-			if (typeof site.url_has == 'string') site.url_has = [site.url_has];
-			if (typeof site.url_missing == 'undefined') site.url_missing = [];
-			if (typeof site.url_missing == 'string') site.url_missing = [site.url_missing];
-			if (typeof site.url_matches == 'undefined') site.url_matches = [];
-			if (typeof site.url_matches == 'string') site.url_matches = [site.url_matches];
+			if (typeof site.url_has === 'undefined') site.url_has = [];
+			if (typeof site.url_has === 'string') site.url_has = [site.url_has];
+			if (typeof site.url_missing === 'undefined') site.url_missing = [];
+			if (typeof site.url_missing === 'string') site.url_missing = [site.url_missing];
+			if (typeof site.url_matches === 'undefined') site.url_matches = [];
+			if (typeof site.url_matches === 'string') site.url_matches = [site.url_matches];
 			site.url_has.map(url => {
 				if (window.location.href.indexOf(url) < 0) out = false;
 			})
@@ -123,25 +155,15 @@ function detectTypeOfEnvironment() {
 }
 
 function detectActivitiesToActivate() {
-	const site = detectTypeOfSite();
+	const sites = detectSites();
 	const env = detectTypeOfEnvironment();
-	return activities
-		.filter(activity => { // by env
-			if (!activity.enable) return false;
-			let out = false;
-			if (!activity.env) return false;
-			activity.env.map(function (actEnv) {
-				out = out || actEnv == env;
-			})
-			return out;
-		})
-		.filter(activity => { // by site
-			let out = false;
-			if (!activity.sites) return false;
-			activity.sites.map(function (actSite) {
-				out = out || actSite == site;
-			})
-			return out;
+	return getActivities()
+		.filter(activity => activity?.enable === true) // by enable
+		.filter(activity => activity.env.some(e => e === env)) // by env
+		.filter(activity => { // by sites
+			if (!activity.hasOwnProperty("sites")) return true;
+			const siteNames = sites.map(site => site.name);
+			return activity.sites.some(s => siteNames.indexOf(s) !== -1);
 		})
 		.filter(activity => { // by url_has
 			if (!activity.url_has || activity.url_has.length < 1) return true;
@@ -153,7 +175,7 @@ function detectActivitiesToActivate() {
 		})
 		.filter(activity => { // by url_missing
 			if (!activity.url_missing || activity.url_missing.length < 1) return true;
-			if (typeof activity.url_missing == 'string') activity.url_missing = [activity.url_missing]
+			if (typeof activity.url_missing === 'string') activity.url_missing = [activity.url_missing]
 			const matches = activity.url_missing.filter(
 				function (urlFragment) {
 					return (window.location.href.indexOf(urlFragment) >= 0);
@@ -162,7 +184,7 @@ function detectActivitiesToActivate() {
 		})
 		.filter(activity => { // by url_matches
 			if (!activity.url_matches || activity.url_matches.length < 1) return true;
-			if (typeof activity.url_matches == 'string') activity.url_matches = [activity.url_matches]
+			if (typeof activity.url_matches === 'string') activity.url_matches = [activity.url_matches]
 			const matches = activity.url_matches.filter(regexString => {
 				const regexPattern = new RegExp(regexString);
 				return regexPattern.test(window.location.pathname);
@@ -187,32 +209,63 @@ function attachJsFile(src) {
 		rc.appendChild(sc);
 }
 
+
+
+function loadVariation(activity) {
+	// Determine which variation to load
+	const cookieName = activity.activity;
+	let selectedVariation = getCookie(cookieName);
+
+	// Variations object
+	const variations = activity.variants;
+
+	// Function to select a variation based on configured weights
+	function selectVariation() {
+		let rand = Math.random();
+		let sum = 0;
+
+		for (const key in variations) {
+			sum += variations[key].weight;
+			if (rand <= sum) {
+				return key;
+			}
+		}
+		return null; // In case there is a rounding error in the weights
+	}
+
+	if (!selectedVariation) {
+		selectedVariation = selectVariation();
+		// Set the cookie with the selected variation
+		setCookie(cookieName, selectedVariation, 7); // expires in 7 days
+	}
+
+	// Load the selected variation script
+	const path = `${bucketPath}/${activity.group.toLowerCase()}/v2`;
+	const bucketPath = path + '/fe_activity_';
+	//attachJsFile(bucketPath + activity.activity + selectedVariation + (detectTypeOfEnvironment() === "PROD" ? '.min' : '') + '.js');
+	attachJsFile(`${bucketPath}${activity.activity}_${selectedVariation}${detectTypeOfEnvironment() === "PROD" ? '.min' : ''}.js`);
+}
+
 window.FeActivityLoader = window.FeActivityLoader || {};
 window.FeActivityLoader.getActivities = getActivities;
 window.FeActivityLoader.getSites = getSites;
+window.FeActivityLoader.detectSites = detectSites;
 window.FeActivityLoader.detectTypeOfSite = detectTypeOfSite;
 window.FeActivityLoader.detectTypeOfEnvironment = detectTypeOfEnvironment;
 window.FeActivityLoader.detectActivitiesToActivate = detectActivitiesToActivate;
 
-const whenLibLoaded = function (todoWhenLoaded) {
-	const waitFor = setInterval(
-		function () {
-			if (typeof window.jQuery != 'undefined') {
-				clearInterval(waitFor);
-				todoWhenLoaded();
-			}
-		}, 500);
-	setTimeout(function () {
-		clearInterval(waitFor);
-	}, 10000);
-}
-
 const loadActivities = () => {
 	const acts = detectActivitiesToActivate();
 	const env = detectTypeOfEnvironment();
-	acts.map(function(activity) {
-		attachJsFile(process.env.AWS_S3_BUCKET + '/fe_activity_' + activity.activity + (env === "PROD" ? '.min' : '')+'.js');
+	acts.map(activity => {
+		const path = `${bucketPath}/${activity.group.toLowerCase()}/v2`;
+		if (activity.variants) {
+			attachJsFile(path + '/fe_activity_' + activity.activity + (env === "PROD" ? '.min' : '')+'.js');
+			loadVariation(activity);
+		} else {
+			attachJsFile(path + '/fe_activity_' + activity.activity + (env === "PROD" ? '.min' : '')+'.js');
+		}
 	});
 }
 
-whenLibLoaded(loadActivities);
+loadActivities();
