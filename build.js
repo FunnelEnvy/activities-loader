@@ -87,7 +87,7 @@ const buildActivities = async (activitiesFilter = [], activitiesGroup) => {
 			activityConfig = JSON.parse(fs.readFileSync(activityConfigPath, 'utf8'));
 		} catch (err) {}
 		const config = Object.keys(activityConfig).reduce((accum, curr) => {
-			accum[`process.env.${curr.toUpperCase()}`] = activityConfig[curr]
+			accum[`process.env.${curr.toUpperCase()}`] = JSON.stringify(activityConfig[curr]);
 			return accum;
 		}, {});
 		if (activity.variants) {
