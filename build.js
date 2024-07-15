@@ -163,7 +163,7 @@ const buildLibFiles = async () => {
 					'process.env.ENVIRONMENTS': JSON.stringify(activitiesJSON.environments),
 					'process.env.SITES': JSON.stringify(activitiesJSON.sites),
 					'process.env.ACTIVITIES': JSON.stringify(activitiesJSON.activities),
-					'processenv.LOCATIONS': JSON.stringify(locationsJSON),
+					'process.env.LOCATIONS': JSON.stringify(locationsJSON),
 					'process.env.AWS_S3_BUCKET': `"${process.env.AWS_S3_BUCKET}"`,
 				},
 			}),
