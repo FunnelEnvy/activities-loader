@@ -126,23 +126,35 @@ function evaluateCondition(condition) {
 			return conditions.every(cond => evaluateCondition(url, cond));
 		case 'OR':
 			return conditions.some(cond => evaluateCondition(url, cond));
-		case 'NOT':
-			return conditions.length === 1 && !evaluateCondition(url, conditions[0]);
-		case 'contains':
-			return url.includes(value);
 		case 'matches regex':
 			const regex = new RegExp(value);
 			return regex.test(url);
+		case 'does not match regex':
+			return !new RegExp(value).test(url);
 		case 'starts with':
 			return url.startsWith(value);
+		case 'does not start with':
+			return !url.startsWith(value);
 		case 'ends with':
 			return url.endsWith(value);
-		case 'equals':
+		case 'does not end with':
+			return !url.endsWith(value);
+		case 'matches exactly':
 			return url === value;
+		case 'does not match exactly':
+			return url !== value;
+		case 'contains':
+			return url.includes(value);
+		case 'does not contain':
+			return !url.includes(value);
 		case 'contains one of':
 			return value.some(val => url.includes(val));
+		case 'does not contain one of':
+			return !value.some(val => url.includes(val));
 		case 'contains all of':
 			return value.every(val => url.includes(val));
+		case 'does not contain any of':
+			return !value.every(val => url.includes(val));
 		default:
 			return false;
 	}
