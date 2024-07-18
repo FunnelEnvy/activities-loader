@@ -7,6 +7,7 @@ const argv = yargs(hideBin(process.argv)).argv
 // rollup dependencies
 import * as rollup from 'rollup';
 import activitiesJSON from './src/activities.json' assert { type: 'json' };
+import locationsJSON from './src/locations.json' assert { type: 'json' };
 import resolve from '@rollup/plugin-node-resolve';
 import replace from '@rollup/plugin-replace';
 import commonjs from '@rollup/plugin-commonjs';
@@ -162,6 +163,7 @@ const buildLibFiles = async () => {
 					'process.env.ENVIRONMENTS': JSON.stringify(activitiesJSON.environments),
 					'process.env.SITES': JSON.stringify(activitiesJSON.sites),
 					'process.env.ACTIVITIES': JSON.stringify(activitiesJSON.activities),
+					'process.env.LOCATIONS': JSON.stringify(locationsJSON),
 					'process.env.AWS_S3_BUCKET': `"${process.env.AWS_S3_BUCKET}"`,
 				},
 			}),
