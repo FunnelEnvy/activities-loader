@@ -7,7 +7,6 @@ if (window.location.href.indexOf('itgh.buy.hpe.com') >= 0) throw new Error('This
 const environments = process.env.ENVIRONMENTS;
 const activities = process.env.ACTIVITIES;
 const sites = process.env.SITES;
-const locations = process.env.LOCATIONS;
 
 if (window && typeof window.FE_LOADER_v2 === 'undefined') {
 	window.FE_LOADER_v2 = [];
@@ -23,10 +22,6 @@ function getActivities() {
 
 function getSites() {
 	return sites;
-}
-
-function getLocations() {
-	return locations;
 }
 
 function getCookie(name) {
@@ -117,53 +112,6 @@ function detectTypeOfSite() {
 	return out ? out.name : '';
 }
 
-function evaluateCondition(condition) {
-	const url = window.location.href;
-	const { operator, value, conditions } = condition;
-
-	switch (operator) {
-		case 'AND':
-			return conditions.every(cond => evaluateCondition(url, cond));
-		case 'OR':
-			return conditions.some(cond => evaluateCondition(url, cond));
-		case 'matches regex':
-			const regex = new RegExp(value);
-			return regex.test(url);
-		case 'does not match regex':
-			return !new RegExp(value).test(url);
-		case 'starts with':
-			return url.startsWith(value);
-		case 'does not start with':
-			return !url.startsWith(value);
-		case 'ends with':
-			return url.endsWith(value);
-		case 'does not end with':
-			return !url.endsWith(value);
-		case 'matches exactly':
-			return url === value;
-		case 'does not match exactly':
-			return url !== value;
-		case 'contains':
-			return url.includes(value);
-		case 'does not contain':
-			return !url.includes(value);
-		case 'contains one of':
-			return value.some(val => url.includes(val));
-		case 'does not contain one of':
-			return !value.some(val => url.includes(val));
-		case 'contains all of':
-			return value.every(val => url.includes(val));
-		case 'does not contain any of':
-			return !value.every(val => url.includes(val));
-		default:
-			return false;
-	}
-}
-
-function detectLocation() {
-	return locations.filter(({ conditions }) => evaluateCondition(conditions)).map(location => location.name);
-}
-
 function detectTypeOfEnvironment() {
 	//use cookies first
 	const envs = ['DEV', 'QA', 'PROD'];
@@ -207,7 +155,6 @@ function detectTypeOfEnvironment() {
 }
 
 function detectActivitiesToActivate() {
-	const locations = detectLocation();
 	const sites = detectSites();
 	const env = detectTypeOfEnvironment();
 	return getActivities()
@@ -216,11 +163,7 @@ function detectActivitiesToActivate() {
 		.filter(activity => { // by sites
 			if (!activity.hasOwnProperty("sites")) return true;
 			const siteNames = sites.map(site => site.name);
-			return activity.sites.some(s => siteNames.indexOf(s) > -1);
-		})
-		.filter(activity => { // by locations
-			if (!activity.hasOwnProperty("locations")) return true;
-			return activity.locations.some(l => locations.indexOf(l) > -1);
+			return activity.sites.some(s => siteNames.indexOf(s) !== -1);
 		})
 		.filter(activity => { // by url_has
 			if (!activity.url_has || activity.url_has.length < 1) return true;
@@ -307,8 +250,6 @@ window.FeActivityLoader = window.FeActivityLoader || {};
 window.FeActivityLoader.getActivities = getActivities;
 window.FeActivityLoader.getSites = getSites;
 window.FeActivityLoader.detectSites = detectSites;
-window.FeActivityLoader.getLocations = getLocations;
-window.FeActivityLoader.detectLocation = detectLocation;
 window.FeActivityLoader.detectTypeOfSite = detectTypeOfSite;
 window.FeActivityLoader.detectTypeOfEnvironment = detectTypeOfEnvironment;
 window.FeActivityLoader.detectActivitiesToActivate = detectActivitiesToActivate;
