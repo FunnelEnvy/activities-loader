@@ -319,7 +319,7 @@ const loadActivities = () => {
 	let msDelay = 0;
 	// if wip.it.hpe.com, delay loading by 5 seconds
 	if (window.location.href.indexOf('wip.it.hpe.com') >= 0) {
-		msDelay = 5000;
+		msDelay = 8000;
 		console.log('FE:fe_loader detected maui site ');
 	}
 	setTimeout(() => {
