@@ -316,23 +316,21 @@ window.FeActivityLoader.detectActivitiesToActivate = detectActivitiesToActivate;
 const loadActivities = () => {
 	const acts = detectActivitiesToActivate();
 	const env = detectTypeOfEnvironment();
-	let msDelay = 0;
+	const addActivitiesToHeader = acts.map(activity => {
+		const path = `${bucketPath}/${activity.group.toLowerCase()}/v2`;
+		if (activity.variants) {
+			attachJsFile(path + '/fe_activity_' + activity.activity + (env === "PROD" ? '.min' : '')+'.js');
+			loadVariation(activity);
+		} else {
+			attachJsFile(path + '/fe_activity_' + activity.activity + (env === "PROD" ? '.min' : '')+'.js');
+		}
+	});
 	// if wip.it.hpe.com, delay loading by 5 seconds
 	if (window.location.href.indexOf('wip.it.hpe.com') >= 0) {
-		msDelay = 8000;
-		console.log('FE:fe_loader detected maui site ');
+		window.feUtils.waitForConditions(['.total_price'], addActivitiesToHeader, null, 80000);
+	} else {
+		addActivitiesToHeader();
 	}
-	setTimeout(() => {
-		acts.map(activity => {
-			const path = `${bucketPath}/${activity.group.toLowerCase()}/v2`;
-			if (activity.variants) {
-				attachJsFile(path + '/fe_activity_' + activity.activity + (env === "PROD" ? '.min' : '')+'.js');
-				loadVariation(activity);
-			} else {
-				attachJsFile(path + '/fe_activity_' + activity.activity + (env === "PROD" ? '.min' : '')+'.js');
-			}
-		});
-	}, msDelay);
 }
 
 loadActivities();
