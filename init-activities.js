@@ -73,6 +73,9 @@ function detectSites() {
 			if (typeof site.url_missing === 'string') site.url_missing = [site.url_missing];
 			if (typeof site.url_matches === 'undefined') site.url_matches = [];
 			if (typeof site.url_matches === 'string') site.url_matches = [site.url_matches];
+			if (site.hostname && typeof site.hostname === 'string') {
+				if (window.location.hostname !== site.hostname) out = false;
+			}
 			site.url_has.map(url => {
 				if (window.location.href.indexOf(url) < 0) out = false;
 			})
