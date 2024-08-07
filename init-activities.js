@@ -316,7 +316,7 @@ window.FeActivityLoader.detectActivitiesToActivate = detectActivitiesToActivate;
 const loadActivities = () => {
 	const acts = detectActivitiesToActivate();
 	const env = detectTypeOfEnvironment();
-	const addActivitiesToHeader = acts.map(activity => {
+	const addActivitiesToHeader = () => acts.map(activity => {
 		const path = `${bucketPath}/${activity.group.toLowerCase()}/v2`;
 		if (activity.variants) {
 			attachJsFile(path + '/fe_activity_' + activity.activity + (env === "PROD" ? '.min' : '')+'.js');
