@@ -327,7 +327,7 @@ const loadActivities = () => {
 	});
 	// if wip.it.hpe.com, delay loading by 5 seconds
 	if (window.location.href.indexOf('wip.it.hpe.com') >= 0) {
-		window.feUtils.waitForConditions(['.total_price'], addActivitiesToHeader, null, 80000);
+		window.feUtils.waitForConditions(['.total_price'], addActivitiesToHeader, null, 200000, 500);
 	} else {
 		addActivitiesToHeader();
 	}
