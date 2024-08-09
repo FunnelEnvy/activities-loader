@@ -6,6 +6,7 @@ if (window.location.href.indexOf('itgh.buy.hpe.com') >= 0) throw new Error('This
 
 const environments = process.env.ENVIRONMENTS;
 const activities = process.env.ACTIVITIES;
+const audiences = process.env.AUDIENCES;
 const sites = process.env.SITES;
 const locations = process.env.LOCATIONS;
 
@@ -23,6 +24,10 @@ function getActivities() {
 
 function getSites() {
 	return sites;
+}
+
+function getAudiences() {
+	return audiences;
 }
 
 function getLocations() {
@@ -61,6 +66,25 @@ function setCookie(name, value, days) {
 		expires = '; expires=' + date.toUTCString();
 	}
 	document.cookie = name + '=' + (value || '') + expires + '; path=/';
+}
+
+function detectAudiences(userAudience, activityAudiences) {
+	let inAudience = true;
+	const userAccountID = userAudience ?? "";
+	const userOrgID = userAudience.split('_')[0] ?? "";
+	const fullActivityAudiences = activityAudiences.map(a => audiences[a]);
+	fullActivityAudiences.forEach((audience) => {
+		if (typeof audience.account_unit_id_include === 'undefined') audience.account_unit_id_include = [];
+		if (typeof audience.account_unit_id_exclude === 'undefined') audience.account_unit_id_exclude = [];
+		if (typeof audience.org_unit_id_include === 'undefined') audience.org_unit_id_include = [];
+		if (typeof audience.org_unit_id_exclude === 'undefined') audience.org_unit_id_exclude = [];
+
+		if (audience.account_unit_id_include.indexOf(userAccountID) === -1) inAudience = false;
+		if (audience.account_unit_id_exclude.indexOf(userAccountID) > -1) inAudience = false;
+		if (audience.org_unit_id_include.indexOf(userOrgID) === -1) inAudience = false;
+		if (audience.org_unit_id_exclude.indexOf(userOrgID) > -1) inAudience = false;
+	});
+	return inAudience;
 }
 
 function detectSites() {
@@ -318,11 +342,22 @@ const loadActivities = () => {
 	const env = detectTypeOfEnvironment();
 	acts.map(activity => {
 		const path = `${bucketPath}/${activity.group.toLowerCase()}/v2`;
-		if (activity.variants) {
-			attachJsFile(path + '/fe_activity_' + activity.activity + (env === "PROD" ? '.min' : '')+'.js');
-			loadVariation(activity);
+		const addActivityToPage = () => {
+			if (activity.variants) {
+				attachJsFile(path + '/fe_activity_' + activity.activity + (env === "PROD" ? '.min' : '')+'.js');
+				loadVariation(activity);
+			} else {
+				attachJsFile(path + '/fe_activity_' + activity.activity + (env === "PROD" ? '.min' : '')+'.js');
+			}
+		}
+		if (activity.audiences) {
+			window.feUtils.waitForConditions([() => typeof window?.headerData?.user?.account_id === 'string'], () => {
+				if (detectAudiences(window.headerData.user.account_id, activity.audiences)) {
+					addActivityToPage();
+				}
+			});
 		} else {
-			attachJsFile(path + '/fe_activity_' + activity.activity + (env === "PROD" ? '.min' : '')+'.js');
+			addActivityToPage();
 		}
 	});
 }
