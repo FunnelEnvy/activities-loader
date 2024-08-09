@@ -329,6 +329,7 @@ function loadVariation(activity) {
 
 window.FeActivityLoader = window.FeActivityLoader || {};
 window.FeActivityLoader.getActivities = getActivities;
+window.FeActivityLoader.getAudiences = getAudiences;
 window.FeActivityLoader.getSites = getSites;
 window.FeActivityLoader.detectSites = detectSites;
 window.FeActivityLoader.getLocations = getLocations;
@@ -336,6 +337,22 @@ window.FeActivityLoader.detectLocation = detectLocation;
 window.FeActivityLoader.detectTypeOfSite = detectTypeOfSite;
 window.FeActivityLoader.detectTypeOfEnvironment = detectTypeOfEnvironment;
 window.FeActivityLoader.detectActivitiesToActivate = detectActivitiesToActivate;
+
+const getCustomerPartyIDFromURL = (url) => {
+	url = url ? url : window.location.href;
+	const queryString = url.split('?')[1];
+	const searchParams = new URLSearchParams(queryString);
+
+	if (searchParams.has('OptimusParameters')) {
+		const optimusParameters = JSON.parse(decodeURIComponent(searchParams.get('OptimusParameters')));
+		return optimusParameters.customerPartyID || null;
+	}
+
+	if (searchParams.has('customerPartyID')) {
+		return searchParams.get('customerPartyID');
+	}
+	return null;
+}
 
 const loadActivities = () => {
 	const acts = detectActivitiesToActivate();
@@ -351,11 +368,18 @@ const loadActivities = () => {
 			}
 		}
 		if (activity.audiences) {
-			window.feUtils.waitForConditions([() => typeof window?.headerData?.user?.account_id === 'string'], () => {
-				if (detectAudiences(window.headerData.user.account_id, activity.audiences)) {
+			// special logic if on configurator
+			if (window.location.href.includes('occ-ext.wip.it.hpe.com/ngc-maui/')) {
+				if (detectAudiences(getCustomerPartyIDFromURL(), activity.audiences)) {
 					addActivityToPage();
 				}
-			});
+			} else {
+				window.feUtils.waitForConditions([() => typeof window?.headerData?.user?.account_id === 'string'], () => {
+					if (detectAudiences(window.headerData.user.account_id, activity.audiences)) {
+						addActivityToPage();
+					}
+				});
+			}
 		} else {
 			addActivityToPage();
 		}
