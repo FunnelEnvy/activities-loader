@@ -85,7 +85,7 @@ function detectAudiences(userAudience, activityAudiences) {
 
 			if (
 				account_unit_id_include.length > 0 &&
-				!account_unit_id_include.every(user => userAccountID.includes(user))
+				!account_unit_id_include.some(user => userAccountID.includes(user))
 			) {
 				inAudience = false;
 			}
