@@ -410,7 +410,7 @@ const loadActivities = () => {
 		// first wait for headerData information, then load activities based on audience
 		const loadAudienceActivities = () => {
 			activitiesWithAudience.forEach(activity => {
-				if (detectAudiences(window.headerData?.user?.account_id, activity.audiences)) {
+				if (detectAudiences(window?.headerData?.user?.account_id, activity.audiences)) {
 					loadActivityOrVariation(activity);
 				}
 			});
