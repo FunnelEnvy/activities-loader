@@ -415,7 +415,7 @@ const loadActivities = () => {
 				}
 			});
 		};
-		window.feUtils.waitForConditions(['body', () => typeof window.headerData.user.account_id === 'string'], loadAudienceActivities);
+		window.feUtils.waitForConditions(['body', () => typeof window?.headerData?.user?.account_id === 'string'], loadAudienceActivities);
 	}
 }
 
