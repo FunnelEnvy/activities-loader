@@ -6,6 +6,7 @@ if (window.location.href.indexOf('itgh.buy.hpe.com') >= 0) throw new Error('This
 
 const environments = process.env.ENVIRONMENTS;
 const activities = process.env.ACTIVITIES;
+const audiences = process.env.AUDIENCES;
 const sites = process.env.SITES;
 const locations = process.env.LOCATIONS;
 
@@ -23,6 +24,10 @@ function getActivities() {
 
 function getSites() {
 	return sites;
+}
+
+function getAudiences() {
+	return audiences;
 }
 
 function getLocations() {
@@ -61,6 +66,51 @@ function setCookie(name, value, days) {
 		expires = '; expires=' + date.toUTCString();
 	}
 	document.cookie = name + '=' + (value || '') + expires + '; path=/';
+}
+
+function detectAudiences(userAudience, activityAudiences) {
+	let inAudience = true;
+	const userAccountID = userAudience ?? "";
+	const userOrgID = userAudience.split('_')[0] ?? "";
+
+	activityAudiences.forEach((a) => {
+		const audience = audiences[a];
+		if (audience) {
+			const {
+				account_unit_id_include = [],
+				account_unit_id_exclude = [],
+				org_unit_id_include = [],
+				org_unit_id_exclude = []
+			} = audience;
+
+			if (
+				account_unit_id_include.length > 0 &&
+				!account_unit_id_include.some(user => userAccountID.includes(user))
+			) {
+				inAudience = false;
+			}
+			if (
+				account_unit_id_exclude.length > 0 &&
+				account_unit_id_exclude.some(user => userAccountID.includes(user))
+			) {
+				inAudience = false;
+			}
+			if (
+				org_unit_id_include.length > 0 &&
+				!org_unit_id_include.includes(userOrgID)
+			) {
+				inAudience = false;
+			}
+			if (
+				org_unit_id_exclude.length > 0 &&
+				org_unit_id_exclude.includes(userOrgID)
+			) {
+				inAudience = false;
+			}
+		}
+	});
+
+	return inAudience;
 }
 
 function detectSites() {
@@ -305,6 +355,7 @@ function loadVariation(activity) {
 
 window.FeActivityLoader = window.FeActivityLoader || {};
 window.FeActivityLoader.getActivities = getActivities;
+window.FeActivityLoader.getAudiences = getAudiences;
 window.FeActivityLoader.getSites = getSites;
 window.FeActivityLoader.detectSites = detectSites;
 window.FeActivityLoader.getLocations = getLocations;
@@ -313,18 +364,59 @@ window.FeActivityLoader.detectTypeOfSite = detectTypeOfSite;
 window.FeActivityLoader.detectTypeOfEnvironment = detectTypeOfEnvironment;
 window.FeActivityLoader.detectActivitiesToActivate = detectActivitiesToActivate;
 
+const getCustomerPartyIDFromURL = (url) => {
+	url = url ? url : window.location.href;
+	const queryString = url.split('?')[1];
+	const searchParams = new URLSearchParams(queryString);
+
+	if (searchParams.has('OptimusParameters')) {
+		const optimusParameters = JSON.parse(decodeURIComponent(searchParams.get('OptimusParameters')));
+		return optimusParameters.customerPartyID || null;
+	}
+
+	if (searchParams.has('customerPartyID')) {
+		return searchParams.get('customerPartyID');
+	}
+	return null;
+}
+
+const env = detectTypeOfEnvironment();
+const loadActivityOrVariation = (activity) => {
+	const path = `${bucketPath}/${activity.group.toLowerCase()}/v2`;
+	if (activity.variants) {
+		attachJsFile(path + '/fe_activity_' + activity.activity + (env === "PROD" ? '.min' : '')+'.js');
+		loadVariation(activity);
+	} else {
+		attachJsFile(path + '/fe_activity_' + activity.activity + (env === "PROD" ? '.min' : '')+'.js');
+	}
+}
+
 const loadActivities = () => {
 	const acts = detectActivitiesToActivate();
-	const env = detectTypeOfEnvironment();
-	acts.map(activity => {
-		const path = `${bucketPath}/${activity.group.toLowerCase()}/v2`;
-		if (activity.variants) {
-			attachJsFile(path + '/fe_activity_' + activity.activity + (env === "PROD" ? '.min' : '')+'.js');
-			loadVariation(activity);
-		} else {
-			attachJsFile(path + '/fe_activity_' + activity.activity + (env === "PROD" ? '.min' : '')+'.js');
-		}
+	const activitiesWithAudience = acts.filter(a => a.audiences && a.audiences.length > 0);
+	const activitiesWithoutAudience = acts.filter(a => !a.hasOwnProperty('audiences') || a.audiences.length === 0);
+	// Add these activities right away
+	activitiesWithoutAudience.forEach(activity => {
+		loadActivityOrVariation(activity);
 	});
+	if (window.location.href.includes('occ-ext.wip.it.hpe.com/ngc-maui')) {
+		// add activities to page after checking URL for audience
+		activitiesWithAudience.forEach(activity => {
+			if (detectAudiences(getCustomerPartyIDFromURL(), activity.audiences)) {
+				loadActivityOrVariation(activity);
+			}
+		});
+	} else {
+		// first wait for headerData information, then load activities based on audience
+		const loadAudienceActivities = () => {
+			activitiesWithAudience.forEach(activity => {
+				if (detectAudiences(window.headerData.user.account_id, activity.audiences)) {
+					loadActivityOrVariation(activity);
+				}
+			});
+		};
+		window.feUtils.waitForConditions(['body', () => typeof window.headerData.user.account_id === 'string'], loadAudienceActivities);
+	}
 }
 
 loadActivities();
