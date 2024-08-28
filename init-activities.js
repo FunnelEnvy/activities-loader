@@ -179,6 +179,9 @@ function evaluateCondition(condition) {
 		case 'matches regex':
 			const regex = new RegExp(value);
 			return regex.test(url);
+		case 'path matches regex':
+			const pathRegex = new RegExp(value);
+			return pathRegex.test(window.location.pathname);
 		case 'does not match regex':
 			return !new RegExp(value).test(url);
 		case 'starts with':
