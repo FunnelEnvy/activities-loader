@@ -361,7 +361,6 @@ window.FeActivityLoader.getActivities = getActivities;
 window.FeActivityLoader.getAudiences = getAudiences;
 window.FeActivityLoader.getSites = getSites;
 window.FeActivityLoader.detectSites = detectSites;
-window.FeActivityLoader.detectAudiences = detectAudiences;
 window.FeActivityLoader.getLocations = getLocations;
 window.FeActivityLoader.detectLocation = detectLocation;
 window.FeActivityLoader.detectTypeOfSite = detectTypeOfSite;
