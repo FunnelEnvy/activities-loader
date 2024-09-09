@@ -79,8 +79,8 @@ function detectAudiences(userAudience, activityAudiences) {
 			const {
 				account_unit_id_include = [],
 				account_unit_id_exclude = [],
-				org_unit_id_include = [],
-				org_unit_id_exclude = []
+				org_party_id_include = [],
+				org_party_id_exclude = []
 			} = audience;
 
 			if (
@@ -96,14 +96,14 @@ function detectAudiences(userAudience, activityAudiences) {
 				inAudience = false;
 			}
 			if (
-				org_unit_id_include.length > 0 &&
-				!org_unit_id_include.includes(userOrgID)
+				org_party_id_include.length > 0 &&
+				!org_party_id_include.includes(userOrgID)
 			) {
 				inAudience = false;
 			}
 			if (
-				org_unit_id_exclude.length > 0 &&
-				org_unit_id_exclude.includes(userOrgID)
+				org_party_id_exclude.length > 0 &&
+				org_party_id_exclude.includes(userOrgID)
 			) {
 				inAudience = false;
 			}
