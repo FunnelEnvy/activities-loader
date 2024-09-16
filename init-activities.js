@@ -68,49 +68,88 @@ function setCookie(name, value, days) {
 	document.cookie = name + '=' + (value || '') + expires + '; path=/';
 }
 
-function detectAudiences(userAudience, activityAudiences) {
-	let inAudience = true;
-	const userAccountID = userAudience ?? "";
-	const userOrgID = userAudience.split('_')[0] ?? "";
+async function detectAudiences(userAudience, activityAudiences) {
+	// Fetch the audiences using the getAudiences function
+	const audiences = await getAudiences();
 
-	activityAudiences.forEach((a) => {
-		const audience = audiences[a];
-		if (audience) {
-			const {
-				account_unit_id_include = [],
-				account_unit_id_exclude = [],
-				org_party_id_include = [],
-				org_party_id_exclude = []
-			} = audience;
+	// Extract first 10 digits of userAudience for org_party matching
+	const userAudienceOrg = userAudience.slice(0, 10);
 
-			if (
-				account_unit_id_include.length > 0 &&
-				!account_unit_id_include.some(user => userAccountID.includes(user))
-			) {
-				inAudience = false;
-			}
-			if (
-				account_unit_id_exclude.length > 0 &&
-				account_unit_id_exclude.some(user => userAccountID.includes(user))
-			) {
-				inAudience = false;
-			}
-			if (
-				org_party_id_include.length > 0 &&
-				!org_party_id_include.includes(userOrgID)
-			) {
-				inAudience = false;
-			}
-			if (
-				org_party_id_exclude.length > 0 &&
-				org_party_id_exclude.includes(userOrgID)
-			) {
-				inAudience = false;
-			}
+	// Helper function to check inclusion/exclusion for a specific audience entry
+	const isInAudience = (audienceEntry) => {
+		const {
+			account_unit_include = [],
+			account_unit_exclude = [],
+			org_party_id_include = [],
+			org_party_id_exclude = []
+		} = audienceEntry;
+
+		// Check account_unit conditions (exact match)
+		const accountUnitMatch =
+			account_unit_include.some(user => user.trim() === userAudience.trim()) &&
+			!account_unit_exclude.includes(user => user.trim() === userAudience.trim());
+
+		// Check org_party_id conditions (first 10 digits)
+		const orgPartyMatch =
+			org_party_id_include.some(org => org.trim().startsWith(userAudienceOrg.trim())) &&
+			!org_party_id_exclude.some(org => org.trim().startsWith(userAudienceOrg.trim()));
+
+		// User must meet both account_unit and org_party_id conditions to be included
+		return accountUnitMatch && orgPartyMatch;
+	};
+
+	// Loop through each activityAudience to check if the user is in any audience
+	for (let audienceKey of activityAudiences) {
+		const audienceEntry = audiences[audienceKey];
+		if (audienceEntry && isInAudience(audienceEntry)) {
+			return true; // User is in one of the audiences
 		}
-	});
+	}
 
-	return inAudience;
+	// If no matching audience is found, return false
+	return false;
+}
+
+function detectConfiguratorCustomerAudience(userAudience, activityAudiences) {
+	// Fetch the audiences using the getAudiences function
+	const audiences = await getAudiences();
+
+	// Extract first 10 digits of userAudience for org_party matching
+	const userAudienceOrg = userAudience.slice(0, 10);
+
+	// Helper function to check inclusion/exclusion for a specific audience entry
+	const isInAudience = (audienceEntry) => {
+		const {
+			account_unit_include = [],
+			account_unit_exclude = [],
+			org_party_id_include = [],
+			org_party_id_exclude = []
+		} = audienceEntry;
+
+		// Check account_unit conditions (exact match)
+		const accountUnitMatch =
+			account_unit_include.some(user => user.trim().startsWith(userAudience.trim())) &&
+			!account_unit_exclude.some(user => user.trim().startsWith(userAudience.trim()));
+
+		// Check org_party_id conditions (first 10 digits)
+		const orgPartyMatch =
+			org_party_id_include.some(org => org.trim().startsWith(userAudienceOrg.trim())) &&
+			!org_party_id_exclude.some(org => org.trim().startsWith(userAudienceOrg.trim()));
+
+		// User must meet both account_unit and org_party_id conditions to be included
+		return accountUnitMatch && orgPartyMatch;
+	};
+
+	// Loop through each activityAudience to check if the user is in any audience
+	for (let audienceKey of activityAudiences) {
+		const audienceEntry = audiences[audienceKey];
+		if (audienceEntry && isInAudience(audienceEntry)) {
+			return true; // User is in one of the audiences
+		}
+	}
+
+	// If no matching audience is found, return false
+	return false;
 }
 
 function detectSites() {
@@ -402,24 +441,21 @@ const loadActivities = () => {
 	activitiesWithoutAudience.forEach(activity => {
 		loadActivityOrVariation(activity);
 	});
-	if (window.location.href.includes('occ-ext.wip.it.hpe.com/ngc-maui')) {
-		// add activities to page after checking URL for audience
-		activitiesWithAudience.forEach(activity => {
-			if (detectAudiences(getCustomerPartyIDFromURL(), activity.audiences)) {
+	// add activities to page after checking URL for audience
+	activitiesWithAudience.filter(a => a.group === 'configurator').forEach(activity => {
+		if (detectConfiguratorCustomerAudience(getCustomerPartyIDFromURL(), activity.audiences)) {
+			loadActivityOrVariation(activity);
+		}
+	});
+	// first wait for headerData information, then load activities based on audience
+	const loadAudienceActivities = () => {
+		activitiesWithAudience.filter(a => a.group !== 'configurator').forEach(activity => {
+			if (detectAudiences(window?.headerData?.user?.account_id, activity.audiences)) {
 				loadActivityOrVariation(activity);
 			}
 		});
-	} else {
-		// first wait for headerData information, then load activities based on audience
-		const loadAudienceActivities = () => {
-			activitiesWithAudience.forEach(activity => {
-				if (detectAudiences(window?.headerData?.user?.account_id, activity.audiences)) {
-					loadActivityOrVariation(activity);
-				}
-			});
-		};
-		window.feUtils.waitForConditions(['body', () => typeof window?.headerData?.user?.account_id === 'string'], loadAudienceActivities);
-	}
+	};
+	window.feUtils.waitForConditions(['body', () => typeof window?.headerData?.user?.account_id === 'string'], loadAudienceActivities);
 }
 
 loadActivities();
