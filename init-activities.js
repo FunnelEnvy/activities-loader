@@ -84,8 +84,8 @@ function detectAudiences(userAudience, activityAudiences) {
 			org_party_id_exclude = []
 		} = audienceEntry;
 
-		let accountUnitMatch = true;
-		let orgPartyMatch = true;
+		let accountUnitMatch = false;
+		let orgPartyMatch = false;
 
 		// Check account_unit conditions (exact match)
 		if (account_unit_id_include.length > 0) {
@@ -101,8 +101,8 @@ function detectAudiences(userAudience, activityAudiences) {
 			orgPartyMatch = !org_party_id_exclude.some(org => org.trim().startsWith(userAudienceOrg.trim()));
 		}
 
-		// User must meet both account_unit and org_party_id conditions to be included
-		return accountUnitMatch && orgPartyMatch;
+		// User must meet either account_unit or org_party_id conditions to be included
+		return accountUnitMatch || orgPartyMatch;
 	};
 
 	// Loop through each activityAudience to check if the user is in any audience
@@ -133,8 +133,8 @@ function detectConfiguratorCustomerAudience(userAudience, activityAudiences) {
 			org_party_id_exclude = []
 		} = audienceEntry;
 
-		let accountUnitMatch = true;
-		let orgPartyMatch = true;
+		let accountUnitMatch = false;
+		let orgPartyMatch = false;
 
 		// Check account_unit conditions (exact match)
 		if (account_unit_id_include.length > 0) {
@@ -151,8 +151,8 @@ function detectConfiguratorCustomerAudience(userAudience, activityAudiences) {
 			orgPartyMatch = !org_party_id_exclude.some(org => org.trim().startsWith(userAudienceOrg.trim()));
 		}
 
-		// User must meet both account_unit and org_party_id conditions to be included
-		return accountUnitMatch && orgPartyMatch;
+		// User must meet either account_unit or org_party_id conditions to be included
+		return accountUnitMatch || orgPartyMatch;
 	};
 
 	// Loop through each activityAudience to check if the user is in any audience
