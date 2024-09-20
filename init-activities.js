@@ -84,8 +84,8 @@ function detectAudiences(userAudience, activityAudiences) {
 			org_party_id_exclude = []
 		} = audienceEntry;
 
-		let accountUnitMatch = true;
-		let orgPartyMatch = true;
+		let accountUnitMatch = false;
+		let orgPartyMatch = false;
 
 		// Check account_unit conditions (exact match)
 		if (account_unit_id_include.length > 0) {
@@ -133,8 +133,8 @@ function detectConfiguratorCustomerAudience(userAudience, activityAudiences) {
 			org_party_id_exclude = []
 		} = audienceEntry;
 
-		let accountUnitMatch = true;
-		let orgPartyMatch = true;
+		let accountUnitMatch = false;
+		let orgPartyMatch = false;
 
 		// Check account_unit conditions (exact match)
 		if (account_unit_id_include.length > 0) {
