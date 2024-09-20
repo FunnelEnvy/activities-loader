@@ -101,8 +101,8 @@ function detectAudiences(userAudience, activityAudiences) {
 			orgPartyMatch = !org_party_id_exclude.some(org => org.trim().startsWith(userAudienceOrg.trim()));
 		}
 
-		// User must meet both account_unit and org_party_id conditions to be included
-		return accountUnitMatch && orgPartyMatch;
+		// User must meet either account_unit or org_party_id conditions to be included
+		return accountUnitMatch || orgPartyMatch;
 	};
 
 	// Loop through each activityAudience to check if the user is in any audience
@@ -151,8 +151,8 @@ function detectConfiguratorCustomerAudience(userAudience, activityAudiences) {
 			orgPartyMatch = !org_party_id_exclude.some(org => org.trim().startsWith(userAudienceOrg.trim()));
 		}
 
-		// User must meet both account_unit and org_party_id conditions to be included
-		return accountUnitMatch && orgPartyMatch;
+		// User must meet either account_unit or org_party_id conditions to be included
+		return accountUnitMatch || orgPartyMatch;
 	};
 
 	// Loop through each activityAudience to check if the user is in any audience
