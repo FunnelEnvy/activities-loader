@@ -227,9 +227,9 @@ function evaluateCondition(condition) {
 
 	switch (operator) {
 		case 'AND':
-			return conditions.every(cond => evaluateCondition(url, cond));
+			return conditions.every(cond => evaluateCondition(cond));
 		case 'OR':
-			return conditions.some(cond => evaluateCondition(url, cond));
+			return conditions.some(cond => evaluateCondition(cond));
 		case 'matches regex':
 			const regex = new RegExp(value);
 			return regex.test(url);
