@@ -22,7 +22,7 @@ function loggingError(err, activity = "") {
 			body: JSON.stringify({
 				message: err?.message ?? err ?? "",
 				location: window.location.href,
-				activity,
+				activity: activity.replace('fe_activity_', ''),
 				customer: window?.headerData?.user?.account_id ?? "",
 				stack_trace: JSON.stringify(err.stack),
 			}),
