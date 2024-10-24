@@ -82,13 +82,30 @@ const plugins = ({ activity, styles, cssRestrictions, config }) => {
 	];
 };
 
+const addingDefaultSite = (activity, group) => {
+	const defaultSites = {
+		"B2B-Hybris": ["B2B-PROD"],
+		"B2C": ["B2C-PROD"],
+		"configurator": ["CONFIGURATOR"],
+	}
+
+	if (!defaultSites[group] || (activity.sites && activity.sites.length > 0)) {
+		// return the original activity
+		return activity;
+	}
+	return {
+		sites: defaultSites[group],
+		...activity,
+	};
+}
+
 // Loop through files and build each one
 const buildActivities = async (activitiesFilter = [], activitiesGroup) => {
 	let activitiesToBuild = [];
 	if (activitiesFilter.length) {
-		activitiesToBuild = activitiesJSON.activities[activitiesGroup].filter(activity => activitiesFilter.includes(activity.activity));
+		activitiesToBuild = activitiesJSON.activities.map(activity => addingDefaultSite(activity, activitiesGroup))[activitiesGroup].filter(activity => activitiesFilter.includes(activity.activity));
 	} else {
-		activitiesToBuild = activitiesJSON.activities[activitiesGroup];
+		activitiesToBuild = activitiesJSON.activities[activitiesGroup].map(activity => addingDefaultSite(activity, activitiesGroup));
 	}
 	for (const activity of activitiesToBuild) {
 		let activityConfig = {};
