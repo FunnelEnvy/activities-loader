@@ -82,30 +82,36 @@ const plugins = ({ activity, styles, cssRestrictions, config }) => {
 	];
 };
 
-const addingDefaultSite = (activity, group) => {
+const addingDefaultSite = (activities) => {
+	let activityData = {};
 	const defaultSites = {
 		"B2B-Hybris": ["B2B-PROD"],
 		"B2C": ["B2C-PROD"],
 		"configurator": ["CONFIGURATOR"],
 	}
-
-	if (!defaultSites[group] || (activity.sites && activity.sites.length > 0)) {
-		// return the original activity
-		return activity;
+	const keys = Object.keys(activities);
+	for (const key of keys) {
+		activityData[key] = activities[key].map(a => {
+			if (a.sites && a.sites.length > 0) {
+				return a;
+			}
+			return {
+				...a,
+				sites: defaultSites[key],
+			};
+		});
 	}
-	return {
-		sites: defaultSites[group],
-		...activity,
-	};
+
+	return activityData;
 }
 
 // Loop through files and build each one
 const buildActivities = async (activitiesFilter = [], activitiesGroup) => {
 	let activitiesToBuild = [];
 	if (activitiesFilter.length) {
-		activitiesToBuild = activitiesJSON.activities.map(activity => addingDefaultSite(activity, activitiesGroup))[activitiesGroup].filter(activity => activitiesFilter.includes(activity.activity));
+		activitiesToBuild = activitiesJSON.activities.filter(activity => activitiesFilter.includes(activity.activity));
 	} else {
-		activitiesToBuild = activitiesJSON.activities[activitiesGroup].map(activity => addingDefaultSite(activity, activitiesGroup));
+		activitiesToBuild = activitiesJSON.activities[activitiesGroup];
 	}
 	for (const activity of activitiesToBuild) {
 		let activityConfig = {};
@@ -188,7 +194,7 @@ const buildLibFiles = async () => {
 					'process.env.REUSABLE_LIB': `"./src/libs/index.js"`,
 					'process.env.ENVIRONMENTS': JSON.stringify(activitiesJSON.environments),
 					'process.env.SITES': JSON.stringify(sitesJSON),
-					'process.env.ACTIVITIES': JSON.stringify(activitiesJSON.activities),
+					'process.env.ACTIVITIES': JSON.stringify(addingDefaultSite(activitiesJSON.activities)),
 					'process.env.AUDIENCES': JSON.stringify(audiencesJSON),
 					'process.env.LOCATIONS': JSON.stringify(locationsJSON),
 					'process.env.AWS_S3_BUCKET': `"${process.env.AWS_S3_BUCKET}"`,
