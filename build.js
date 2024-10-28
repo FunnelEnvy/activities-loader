@@ -109,7 +109,7 @@ const addingDefaultSite = (activities) => {
 const buildActivities = async (activitiesFilter = [], activitiesGroup) => {
 	let activitiesToBuild = [];
 	if (activitiesFilter.length) {
-		activitiesToBuild = activitiesJSON.activities.filter(activity => activitiesFilter.includes(activity.activity));
+		activitiesToBuild = activitiesJSON.activities[activitiesGroup].filter(activity => activitiesFilter.includes(activity.activity));
 	} else {
 		activitiesToBuild = activitiesJSON.activities[activitiesGroup];
 	}
