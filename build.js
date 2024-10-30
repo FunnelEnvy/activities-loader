@@ -93,6 +93,8 @@ const buildActivities = async (activitiesFilter = [], activitiesGroup) => {
 	for (const activity of activitiesToBuild) {
 		let activityConfig = {};
 		const activityConfigPath = `./src/activities/${activity.activity}/activity_config.json`;
+		const packageJsonPath = `./src/activities/${activity.activity}/package.json`;
+		let packageJson;
 		try {
 			activityConfig = JSON.parse(fs.readFileSync(activityConfigPath, 'utf8'));
 		} catch (err) {}
@@ -100,6 +102,26 @@ const buildActivities = async (activitiesFilter = [], activitiesGroup) => {
 			accum[`process.env.${curr.toUpperCase()}`] = JSON.stringify(activityConfig[curr]);
 			return accum;
 		}, {});
+		// check if activity has package.json
+		if (fs.existsSync(packageJsonPath)) {
+			console.log('package json found');
+			const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
+			if (packageJson.scripts && packageJson.scripts.dist) {
+				console.log(`"dist" script found. Running "dist" script...`);
+				const dirPath = `./src/activities/${activity.activity}`;
+				const { exec } = await import('child_process')
+				exec('npm run dist', { cwd: dirPath }, (error, stdout, stderr) => {
+					if (error) {
+						console.error(`Error executing "dist" script: ${error.message}`);
+						return;
+					}
+					if (stderr) {
+						console.error(`stderr: ${stderr}`);
+					}
+					console.log(`stdout: ${stdout}`);
+				});
+			}
+		}
 		if (activity.variants) {
 			// build variants...
 			Object.entries(activity.variants).forEach(async (variant) => {
