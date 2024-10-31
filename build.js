@@ -82,6 +82,29 @@ const plugins = ({ activity, styles, cssRestrictions, config }) => {
 	];
 };
 
+const addingDefaultSite = (activities) => {
+	let activityData = {};
+	const defaultSites = {
+		"B2B-Hybris": ["B2B-PROD"],
+		"B2C": ["B2C-PROD"],
+		"configurator": ["CONFIGURATOR"],
+	}
+	const keys = Object.keys(activities);
+	for (const key of keys) {
+		activityData[key] = activities[key].map(a => {
+			if (a.sites && a.sites.length > 0) {
+				return a;
+			}
+			return {
+				...a,
+				sites: defaultSites[key],
+			};
+		});
+	}
+
+	return activityData;
+}
+
 // Loop through files and build each one
 const buildActivities = async (activitiesFilter = [], activitiesGroup) => {
 	let activitiesToBuild = [];
@@ -171,7 +194,7 @@ const buildLibFiles = async () => {
 					'process.env.REUSABLE_LIB': `"./src/libs/index.js"`,
 					'process.env.ENVIRONMENTS': JSON.stringify(activitiesJSON.environments),
 					'process.env.SITES': JSON.stringify(sitesJSON),
-					'process.env.ACTIVITIES': JSON.stringify(activitiesJSON.activities),
+					'process.env.ACTIVITIES': JSON.stringify(addingDefaultSite(activitiesJSON.activities)),
 					'process.env.AUDIENCES': JSON.stringify(audiencesJSON),
 					'process.env.LOCATIONS': JSON.stringify(locationsJSON),
 					'process.env.AWS_S3_BUCKET': `"${process.env.AWS_S3_BUCKET}"`,
