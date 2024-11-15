@@ -470,7 +470,6 @@ const loadActivities = () => {
 	const sites = detectSites().map(s => s.name);
 	const activitiesWithAudience = acts.filter(a => a.audiences && a.audiences.length > 0);
 	const activitiesWithoutAudience = acts.filter(a => !a.hasOwnProperty('audiences') || a.audiences.length === 0);
-	console.log('sites:', sites);
 	// Add these activities right away
 	activitiesWithoutAudience.forEach(activity => {
 		loadActivityOrVariation(activity);
