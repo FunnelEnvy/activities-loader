@@ -467,27 +467,32 @@ const loadActivityOrVariation = (activity) => {
 
 const loadActivities = () => {
 	const acts = detectActivitiesToActivate();
+	const sites = detectSites().map(s => s.name);
 	const activitiesWithAudience = acts.filter(a => a.audiences && a.audiences.length > 0);
 	const activitiesWithoutAudience = acts.filter(a => !a.hasOwnProperty('audiences') || a.audiences.length === 0);
+	console.log('sites:', sites);
 	// Add these activities right away
 	activitiesWithoutAudience.forEach(activity => {
 		loadActivityOrVariation(activity);
 	});
 	// add activities to page after checking URL for audience
-	activitiesWithAudience.filter(a => a.group === 'configurator').forEach(activity => {
-		if (detectConfiguratorCustomerAudience(getCustomerPartyIDFromURL(), activity.audiences)) {
-			loadActivityOrVariation(activity);
-		}
-	});
-	// first wait for headerData information, then load activities based on audience
-	const loadAudienceActivities = () => {
-		activitiesWithAudience.filter(a => a.group !== 'configurator').forEach(activity => {
-			if (detectAudiences(window?.headerData?.user?.account_id, activity.audiences)) {
+	if (sites.indexOf('CONFIGURATOR') > -1) {
+		activitiesWithAudience.forEach(activity => {
+			if (detectConfiguratorCustomerAudience(getCustomerPartyIDFromURL(), activity.audiences)) {
 				loadActivityOrVariation(activity);
 			}
 		});
-	};
-	window.feUtils.waitForConditions(['body', () => typeof window?.headerData?.user?.account_id === 'string'], loadAudienceActivities);
+	} else {
+		// first wait for headerData information, then load activities based on audience
+		const loadAudienceActivities = () => {
+			activitiesWithAudience.forEach(activity => {
+				if (detectAudiences(window?.headerData?.user?.account_id, activity.audiences)) {
+					loadActivityOrVariation(activity);
+				}
+			});
+		};
+		window.feUtils.waitForConditions(['body', () => typeof window?.headerData?.user?.account_id === 'string'], loadAudienceActivities);
+	}
 }
 
 loadActivities();
