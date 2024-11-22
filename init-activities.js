@@ -467,7 +467,7 @@ const loadActivityOrVariation = (activity) => {
 
 const loadActivities = () => {
 	const acts = detectActivitiesToActivate();
-	const sites = detectSites().map(s => s.name);
+	const sites = detectSites().map(s => s.name).join();
 	const activitiesWithAudience = acts.filter(a => a.audiences && a.audiences.length > 0);
 	const activitiesWithoutAudience = acts.filter(a => !a.hasOwnProperty('audiences') || a.audiences.length === 0);
 	// Add these activities right away
