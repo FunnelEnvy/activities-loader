@@ -105,6 +105,23 @@ const addingDefaultSite = (activities) => {
 	return activityData;
 }
 
+const { exec } = await import('child_process');
+
+function runCommand(command, dirPath) {
+	return new Promise((resolve, reject) => {
+		exec(command, { cwd: dirPath }, (error, stdout, stderr) => {
+			if (error) {
+				reject(`Error: ${error.message}`);
+				return;
+			}
+			if (stderr) {
+				console.warn(`Stderr: ${stderr}`);
+			}
+			resolve(stdout);
+		});
+	});
+}
+
 // Loop through files and build each one
 const buildActivities = async (activitiesFilter = [], activitiesGroup) => {
 	let activitiesToBuild = [];
@@ -117,7 +134,6 @@ const buildActivities = async (activitiesFilter = [], activitiesGroup) => {
 		let activityConfig = {};
 		const activityConfigPath = `./src/activities/${activity.activity}/activity_config.json`;
 		const packageJsonPath = `./src/activities/${activity.activity}/package.json`;
-		let packageJson;
 		try {
 			activityConfig = JSON.parse(fs.readFileSync(activityConfigPath, 'utf8'));
 		} catch (err) {}
@@ -132,17 +148,7 @@ const buildActivities = async (activitiesFilter = [], activitiesGroup) => {
 			if (packageJson.scripts && packageJson.scripts.dist) {
 				console.log(`"dist" script found. Running "dist" script...`);
 				const dirPath = `./src/activities/${activity.activity}`;
-				const { exec } = await import('child_process')
-				exec('npm run dist', { cwd: dirPath }, (error, stdout, stderr) => {
-					if (error) {
-						console.error(`Error executing "dist" script: ${error.message}`);
-						return;
-					}
-					if (stderr) {
-						console.error(`stderr: ${stderr}`);
-					}
-					console.log(`stdout: ${stdout}`);
-				});
+				await runCommand('npm run dist', dirPath);
 			}
 		}
 		if (activity.variants) {
