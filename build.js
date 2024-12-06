@@ -126,6 +126,7 @@ function runCommand(command, dirPath) {
 const buildActivities = async (activitiesFilter = [], activitiesGroup) => {
 	let activitiesToBuild = [];
 	if (activitiesFilter.length) {
+		activitiesFilter = activitiesFilter.split("/")[0];
 		activitiesToBuild = activitiesJSON.activities[activitiesGroup].filter(activity => activitiesFilter.includes(activity.activity));
 	} else {
 		activitiesToBuild = activitiesJSON.activities[activitiesGroup];
