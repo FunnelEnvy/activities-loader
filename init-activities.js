@@ -473,7 +473,11 @@ const loadActivities = () => {
 				}
 			});
 		};
-		window.feUtils.waitForConditions(['body', () => typeof window?.headerData?.user?.account_id === 'string'], loadAudienceActivities);
+		window.feUtils.waitForConditions({
+			conditions: ['body', () => typeof window?.headerData?.user?.account_id === 'string'],
+			activity: 'fe_altloader',
+			callback: loadAudienceActivities
+		});
 	}
 }
 
