@@ -41,13 +41,6 @@ const plugins = ({ activity, styles, cssRestrictions, config }) => {
 				${cssRestrictions ? '}' : ''}
 			};
 			${cssRestrictions ? 'window[process.env.REUSABLE_FN].waitForAudience(addCss_unique);' : 'addCss_unique();'}
-			const waitForConditions = (conditions, callback, onError, timeout, pollFreq) => {
-				if (onError || window?.FeActivityLoader?.detectTypeOfEnvironment() !== 'PROD') {
-					return window.feUtils.waitForConditions(conditions, callback, onError, timeout, pollFreq);
-				}
-				const loggingError = (err) => window.FeActivityLoader.loggingError(err, feProjectId);
-				return window.feUtils.waitForConditions(conditions, callback, loggingError, timeout, pollFreq);
-			};
 		`),
 		wrap(
 			`try {`,
