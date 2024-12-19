@@ -59,7 +59,7 @@ const plugins = ({ activity, styles, cssRestrictions, config }) => {
 			values: {
 				...config,
 				'process.env.MINIFIED_CSS': `${JSON.stringify(minifiedCssContent)}`,
-				'process.env.FE_PROJECT_ID': `"${activity}"`,
+				'process.env.FE_PROJECT_ID': `"fe_activity_${activity}"`,
 				'process.env.REUSABLE_FN': `"feReusable"`,
 			},
 		}),
