@@ -169,6 +169,7 @@ const buildActivities = async (activitiesFilter = [], activitiesGroup) => {
 						file: `dist/fe_activity_${activity.activity}_${variant}}.min.js`,
 						format: 'iife',
 						sourcemap: true,
+						sourcemapBaseUrl: `https://fe-hpe-script.s3.us-east-2.amazonaws.com/${activitiesGroup.toLowerCase()}/v2`,
 					},
 					plugins: [...plugins({ ...activity, config }), terser()],
 				});
@@ -189,6 +190,7 @@ const buildActivities = async (activitiesFilter = [], activitiesGroup) => {
 					file: `dist/fe_activity_${activity.activity}.min.js`,
 					format: 'iife',
 					sourcemap: true,
+					sourcemapBaseUrl: `https://fe-hpe-script.s3.us-east-2.amazonaws.com/${activitiesGroup.toLowerCase()}/v2`,
 				},
 				plugins: [...plugins({ ...activity, config }), terser()],
 			});
@@ -215,6 +217,7 @@ const buildLibFiles = async () => {
 			file: 'dist/fe_altloader.js',
 			format: 'iife',
 			sourcemap: true,
+			sourcemapBaseUrl: 'https://fe-hpe-script.s3.us-east-2.amazonaws.com',
 		},
 		plugins: [
 			json(),
