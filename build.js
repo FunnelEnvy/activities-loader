@@ -168,7 +168,6 @@ const buildActivities = async (activitiesFilter = [], activitiesGroup) => {
 					output: {
 						file: `dist/fe_activity_${activity.activity}_${variant}}.min.js`,
 						format: 'iife',
-						sourcemap: true,
 					},
 					plugins: [...plugins({ ...activity, config }), terser()],
 				});
@@ -188,7 +187,6 @@ const buildActivities = async (activitiesFilter = [], activitiesGroup) => {
 				output: {
 					file: `dist/fe_activity_${activity.activity}.min.js`,
 					format: 'iife',
-					sourcemap: true,
 				},
 				plugins: [...plugins({ ...activity, config }), terser()],
 			});
@@ -214,7 +212,6 @@ const buildLibFiles = async () => {
 		output: {
 			file: 'dist/fe_altloader.js',
 			format: 'iife',
-			sourcemap: true,
 		},
 		plugins: [
 			json(),
