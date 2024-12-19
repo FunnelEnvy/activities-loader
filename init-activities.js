@@ -14,6 +14,22 @@ if (window && typeof window.FE_LOADER_v2 === 'undefined') {
 	window.FE_LOADER_v2 = [];
 }
 
+function loggingError(err, activity = "") {
+	if (err) {
+		fetch("https://8tim12msn8.execute-api.us-east-1.amazonaws.com/prod/logging", {
+			method: 'POST',
+			mode: 'cors',
+			body: JSON.stringify({
+				message: err?.message ?? err ?? "",
+				location: window.location.href,
+				activity: activity.replace('fe_activity_', ''),
+				customer: window?.headerData?.user?.account_id ?? "",
+				stack_trace: JSON.stringify(err.stack),
+			}),
+		});
+	}
+}
+
 function getActivities() {
 	let acts = [];
 	Object.keys(activities).forEach(group => {
@@ -411,6 +427,7 @@ function loadVariation(activity) {
 }
 
 window.FeActivityLoader = window.FeActivityLoader || {};
+window.FeActivityLoader.loggingError = loggingError;
 window.FeActivityLoader.getActivities = getActivities;
 window.FeActivityLoader.getAudiences = getAudiences;
 window.FeActivityLoader.getSites = getSites;
@@ -473,11 +490,7 @@ const loadActivities = () => {
 				}
 			});
 		};
-		window.feUtils.waitForConditions({
-			conditions: ['body', () => typeof window?.headerData?.user?.account_id === 'string'],
-			activity: 'fe_altloader',
-			callback: loadAudienceActivities
-		});
+		window.feUtils.waitForConditions(['body', () => typeof window?.headerData?.user?.account_id === 'string'], loadAudienceActivities);
 	}
 }
 
