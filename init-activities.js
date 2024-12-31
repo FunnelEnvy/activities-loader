@@ -329,9 +329,9 @@ function detectActivitiesToActivate() {
 			if (!activity.hasOwnProperty("locations")) return true;
 			if (activity.locations.hasOwnProperty('operator') && activity.locations.hasOwnProperty('locations')) {
 				if (activity.locations.operator === 'OR') {
-					return activities.locations.locations.some(location => locations.includes(location));
+					return activity.locations.locations.some(location => locations.includes(location));
 				} else {
-					return activities.locations.locations.every(location => locations.includes(location));
+					return activity.locations.locations.every(location => locations.includes(location));
 				}
 			} else {
 				return activity.locations.some(l => locations.indexOf(l) > -1);
