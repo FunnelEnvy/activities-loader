@@ -327,7 +327,15 @@ function detectActivitiesToActivate() {
 		})
 		.filter(activity => { // by locations
 			if (!activity.hasOwnProperty("locations")) return true;
-			return activity.locations.some(l => locations.indexOf(l) > -1);
+			if (activity.locations.hasOwnProperty('operator') && activity.locations.hasOwnProperty('locations')) {
+				if (activity.locations.operator === 'OR') {
+					return activity.locations.locations.some(location => locations.includes(location));
+				} else {
+					return activity.locations.locations.every(location => locations.includes(location));
+				}
+			} else {
+				return activity.locations.some(l => locations.indexOf(l) > -1);
+			}
 		})
 		.filter(activity => { // by url_has
 			if (!activity.url_has || activity.url_has.length < 1) return true;
