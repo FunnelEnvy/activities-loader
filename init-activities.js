@@ -84,6 +84,16 @@ function detectAudiences(userAudience, activityAudiences) {
 			org_party_id_exclude = []
 		} = audienceEntry;
 
+		// If there are no restrictions defined, include the audience by default.
+		if (
+			account_unit_id_include.length === 0 &&
+			account_unit_id_exclude.length === 0 &&
+			org_party_id_include.length === 0 &&
+			org_party_id_exclude.length === 0
+		) {
+			return true;
+		}
+
 		let accountUnitMatch = false;
 		let orgPartyMatch = false;
 
