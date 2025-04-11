@@ -26,10 +26,6 @@ function getSites() {
 	return sites;
 }
 
-function getAudiences() {
-	return audiences;
-}
-
 function getLocations() {
 	return locations;
 }
@@ -69,9 +65,6 @@ function setCookie(name, value, days) {
 }
 
 function detectAudiences(userAudience, activityAudiences) {
-	// Fetch the audiences using the getAudiences function
-	const audiences = getAudiences();
-
 	// Extract first 10 digits of userAudience for org_party matching
 	const userAudienceOrg = userAudience.slice(0, 10);
 
