@@ -1,6 +1,7 @@
 import process.env.REUSABLE_LIB;
 
 const bucketPath = 'https://fe-hpe-script.s3.us-east-2.amazonaws.com'
+const COOKIE_NAME = 'fe_altloader';
 
 if (window.location.href.indexOf('itgh.buy.hpe.com') >= 0) throw new Error('This is not the right site for this code');
 
@@ -34,38 +35,37 @@ function getLocations() {
 	return locations;
 }
 
-function getCookie(name) {
-	const nameEQ = name + '=';
-	let ca = document.cookie.split(';');
-	ca = ca
-		.filter(function (c) {
-			while (c.charAt(0) === ' ')
-				c = c.substring(1, c.length);
-			return (c.indexOf(nameEQ) === 0);
-		})
-		.map(function (c) {
-			if (c) {
-				c = c.trim();
-				const pos = c.indexOf("=")
-				return c.substring(pos + 1, c.length)
-				//return c.substring(nameEQ.length, c.length)
+function getJSONFromCookie(cookieName) {
+	const cookies = document.cookie.split(';');
+
+	for (let cookie of cookies) {
+		const [name, value] = cookie.trim().split('=');
+		if (name === cookieName) {
+			try {
+				const decoded = decodeURIComponent(value);
+				return JSON.parse(decoded);
+			} catch (err) {
+				console.error('Failed to parse cookie JSON:', err);
+				return null;
 			}
-			return '';
-		})
-		.sort(function (a, b) {
-			return a.length < b.length ? 1 : -1
-		}).shift();
-	return ca ? ca : null;
+		}
+	}
+
+	return null; // Not found
 }
 
-function setCookie(name, value, days) {
+function setJSONCookie(name, data, days = 365 /* default to 1 year */) {
+	const json = JSON.stringify(data);
+	const encoded = encodeURIComponent(json);
+
 	let expires = '';
 	if (days) {
 		const date = new Date();
-		date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-		expires = '; expires=' + date.toUTCString();
+		date.setTime(date.getTime() + (days * 86400 * 1000));
+		expires = `; expires=${date.toUTCString()}`;
 	}
-	document.cookie = name + '=' + (value || '') + expires + '; path=/';
+
+	document.cookie = `${name}=${encoded}${expires}; path=/`;
 }
 
 function detectAudiences(userAudience, activityAudiences) {
@@ -289,19 +289,21 @@ function detectLocation() {
 function detectTypeOfEnvironment() {
 	//use cookies first
 	const envs = ['DEV', 'QA', 'PROD'];
-	const cookieName = 'fe-alt-load-env';
-	const cooked = getCookie(cookieName)
+	const cooked = getJSONFromCookie(COOKIE_NAME);
 	if (window.location.href.indexOf('FE_LOADER=DEV_COOKIE') > 0) {
-		setCookie(cookieName, 'DEV', 1);
+		setJSONCookie(COOKIE_NAME, { ...cooked, env: 'DEV' });
 		return "DEV";
 	} else if (window.location.href.indexOf('FE_LOADER=QA_COOKIE') > 0) {
-		setCookie(cookieName, 'QA', 1);
+		setJSONCookie(COOKIE_NAME, 'QA');
 		return "QA";
 	} else if (window.location.href.indexOf('FE_LOADER=PROD') > 0) {
-		setCookie(cookieName, '', 1);
+		const { env, ...rest } = cooked;
+		setJSONCookie(COOKIE_NAME, rest);
 		return "PROD";
 	} else if (window.location.href.indexOf('FE_LOADER=') > 0) {
-		setCookie(cookieName, '', 1)
+		const { env, ...rest } = cooked;
+		setJSONCookie(COOKIE_NAME, rest)
+		return "PROD";
 	}
 	if (cooked && cooked.length > 1 && envs.indexOf(cooked) >= 0) {
 		return cooked;//whatever saved in cookie
@@ -400,8 +402,8 @@ function attachJsFile(src) {
 
 function loadVariation(activity) {
 	// Determine which variation to load
-	const cookieName = activity.activity;
-	let selectedVariation = getCookie(cookieName);
+	let cookieValue = getJSONFromCookie(COOKIE_NAME) ?? { variants: {} };
+	let selectedVariation = cookieValue?.variants?.[activity];
 
 	// Variations object
 	const variations = activity.variants;
@@ -423,13 +425,17 @@ function loadVariation(activity) {
 	if (!selectedVariation) {
 		selectedVariation = selectVariation();
 		// Set the cookie with the selected variation
-		setCookie(cookieName, selectedVariation, 7); // expires in 7 days
+		if (!cookieValue.variants) {
+			// initialize the value in the cookie
+			cookieValue.variants = {};
+		}
+		cookieValue.variants[activity] = selectedVariation;
+		setJSONCookie(COOKIE_NAME, cookieValue);
 	}
 
 	// Load the selected variation script
 	const path = `${bucketPath}/${activity.group.toLowerCase()}/v2`;
 	const bucketPath = path + '/fe_activity_';
-	//attachJsFile(bucketPath + activity.activity + selectedVariation + (detectTypeOfEnvironment() === "PROD" ? '.min' : '') + '.js');
 	attachJsFile(`${bucketPath}${activity.activity}_${selectedVariation}${detectTypeOfEnvironment() === "PROD" ? '.min' : ''}.js`);
 }
 
