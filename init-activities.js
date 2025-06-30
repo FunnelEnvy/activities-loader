@@ -2,6 +2,8 @@ import process.env.REUSABLE_LIB;
 
 const bucketPath = 'https://fe-hpe-script.s3.us-east-2.amazonaws.com'
 const COOKIE_NAME = 'fe_altloader';
+const ENV_QUERY_PARAMETER = 'FE_LOADER';
+const VARIATIONS_QUERY_PARAMETER = 'FE_VARIANT';
 
 if (window.location.href.indexOf('itgh.buy.hpe.com') >= 0) throw new Error('This is not the right site for this code');
 
@@ -289,24 +291,24 @@ function detectLocation() {
 function detectTypeOfEnvironment() {
 	//use cookies first
 	const envs = ['DEV', 'QA', 'PROD'];
-	const cooked = getJSONFromCookie(COOKIE_NAME);
-	if (window.location.href.indexOf('FE_LOADER=DEV_COOKIE') > 0) {
-		setJSONCookie(COOKIE_NAME, { ...cooked, env: 'DEV' });
+	const cookie = getJSONFromCookie(COOKIE_NAME) || {};
+	if (window.location.href.indexOf(`${ENV_QUERY_PARAMETER}=DEV_COOKIE`) > 0) {
+		setJSONCookie(COOKIE_NAME, { ...cookie, env: 'DEV' });
 		return "DEV";
-	} else if (window.location.href.indexOf('FE_LOADER=QA_COOKIE') > 0) {
-		setJSONCookie(COOKIE_NAME, 'QA');
+	} else if (window.location.href.indexOf(`${ENV_QUERY_PARAMETER}=QA_COOKIE`) > 0) {
+		setJSONCookie(COOKIE_NAME, { ...cookie, env: 'QA' });
 		return "QA";
-	} else if (window.location.href.indexOf('FE_LOADER=PROD') > 0) {
-		const { env, ...rest } = cooked;
+	} else if (window.location.href.indexOf(`${ENV_QUERY_PARAMETER}=PROD`) > 0) {
+		const { env, ...rest } = cookie;
 		setJSONCookie(COOKIE_NAME, rest);
 		return "PROD";
-	} else if (window.location.href.indexOf('FE_LOADER=') > 0) {
-		const { env, ...rest } = cooked;
+	} else if (window.location.href.indexOf(`${ENV_QUERY_PARAMETER}=`) > 0) {
+		const { env, ...rest } = cookie;
 		setJSONCookie(COOKIE_NAME, rest)
 		return "PROD";
 	}
-	if (cooked && cooked.length > 1 && envs.indexOf(cooked) >= 0) {
-		return cooked;//whatever saved in cookie
+	if (cookie && cookie.length > 1 && envs.includes(cookie.env)) {
+		return cookie.env; // whatever saved in cookie
 	}
 
 	//otherwise try normal way
@@ -327,6 +329,9 @@ function detectTypeOfEnvironment() {
 	});
 	if (isQa) return 'QA';
 
+	// Default to PROD
+	const { env, ...rest } = cookie;
+	setJSONCookie(COOKIE_NAME, rest);
 	return "PROD";
 }
 
@@ -401,14 +406,12 @@ function attachJsFile(src) {
 
 
 function loadVariation(activity) {
-	// Determine which variation to load
-	let cookieValue = getJSONFromCookie(COOKIE_NAME) ?? { variants: {} };
-	let selectedVariation = cookieValue?.variants?.[activity];
-
-	// Variations object
+	const activityName = activity.activity;
 	const variations = activity.variants;
+	const cookieValue = getJSONFromCookie(COOKIE_NAME) || { variations: {} };
+	const cookieVariations = cookieValue.variations || {};
 
-	// Function to select a variation based on configured weights
+	// --- Helper: Weighted random selection ---
 	function selectVariation() {
 		let rand = Math.random();
 		let sum = 0;
@@ -422,21 +425,50 @@ function loadVariation(activity) {
 		return null; // In case there is a rounding error in the weights
 	}
 
-	if (!selectedVariation) {
-		selectedVariation = selectVariation();
-		// Set the cookie with the selected variation
-		if (!cookieValue.variants) {
-			// initialize the value in the cookie
-			cookieValue.variants = {};
-		}
-		cookieValue.variants[activity] = selectedVariation;
-		setJSONCookie(COOKIE_NAME, cookieValue);
+	// --- Helper: Load JS file for variant ---
+	function loadVariantScript(activity, variantKey, env) {
+		const basePath = `${bucketPath}/${activity.group.toLowerCase()}/v2`;
+		const filename = `fe_activity_${activity.activity}_${variantKey}${env === 'PROD' ? '.min' : ''}.js`;
+		attachJsFile(`${basePath}/${filename}`);
 	}
 
-	// Load the selected variation script
-	const path = `${bucketPath}/${activity.group.toLowerCase()}/v2`;
-	const bucketPath = path + '/fe_activity_';
-	attachJsFile(`${bucketPath}${activity.activity}_${selectedVariation}${detectTypeOfEnvironment() === "PROD" ? '.min' : ''}.js`);
+	// --- Helper: Query Param FE_VARIANT parser ---
+	function getQueryParamVariantOverride() {
+		const match = window.location.href.match(/[?&]FE_VARIANT=([^&#]+)/);
+		if (!match) return null;
+
+		const rawParam = decodeURIComponent(match[1]);
+		const pairs = rawParam.split('.');
+		const result = {};
+
+		pairs.forEach(pair => {
+			const [act, variant] = pair.split(':');
+			if (act && variant) result[act] = variant;
+		});
+
+		return result;
+	}
+
+	// --- 1. Handle FE_VARIANT override ---
+	const variantOverride = getQueryParamVariantOverride();
+	const overrideVariant = variantOverride?.[activityName];
+
+	if (overrideVariant && variations?.[overrideVariant]) {
+		// Load overridden variant without modifying cookie
+		loadVariantScript(activity, overrideVariant, env);
+		return;
+	}
+
+	// --- 2. Normal flow using cookie or selection ---
+	let selectedVariation = cookieVariations?.[activityName];
+
+	if (!selectedVariation || !variations?.[selectedVariation]) {
+		selectedVariation = selectVariation(variations);
+		cookieVariations[activityName] = selectedVariation;
+		setJSONCookie(COOKIE_NAME, { ...cookieValue, variations: cookieVariations });
+	}
+
+	loadVariantScript(activity, selectedVariation, env);
 }
 
 window.FeActivityLoader = window.FeActivityLoader || {};
