@@ -428,6 +428,7 @@ function loadVariation(activity) {
 	// --- Helper: Load JS file for variant ---
 	function loadVariantScript(activity, variantKey, env) {
 		const basePath = `${bucketPath}/${activity.group.toLowerCase()}/v2`;
+		const env = detectTypeOfEnvironment();
 		const filename = `fe_activity_${activity.activity}_${variantKey}${env === 'PROD' ? '.min' : ''}.js`;
 		attachJsFile(`${basePath}/${filename}`);
 	}
@@ -502,7 +503,6 @@ const env = detectTypeOfEnvironment();
 const loadActivityOrVariation = (activity) => {
 	const path = `${bucketPath}/${activity.group.toLowerCase()}/v2`;
 	if (activity.variants) {
-		attachJsFile(path + '/fe_activity_' + activity.activity + (env === "PROD" ? '.min' : '')+'.js');
 		loadVariation(activity);
 	} else {
 		attachJsFile(path + '/fe_activity_' + activity.activity + (env === "PROD" ? '.min' : '')+'.js');
