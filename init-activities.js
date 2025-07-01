@@ -37,6 +37,40 @@ function getLocations() {
 	return locations;
 }
 
+function getCookie(name) {
+	const nameEQ = name + '=';
+	let ca = document.cookie.split(';');
+	ca = ca
+		.filter(function (c) {
+			while (c.charAt(0) === ' ')
+				c = c.substring(1, c.length);
+			return (c.indexOf(nameEQ) === 0);
+		})
+		.map(function (c) {
+			if (c) {
+				c = c.trim();
+				const pos = c.indexOf("=")
+				return c.substring(pos + 1, c.length)
+				//return c.substring(nameEQ.length, c.length)
+			}
+			return '';
+		})
+		.sort(function (a, b) {
+			return a.length < b.length ? 1 : -1
+		}).shift();
+	return ca ? ca : null;
+}
+
+function setCookie(name, value, days) {
+	let expires = '';
+	if (days) {
+		const date = new Date();
+		date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+		expires = '; expires=' + date.toUTCString();
+	}
+	document.cookie = name + '=' + (value || '') + expires + '; path=/';
+}
+
 function getJSONFromCookie(cookieName) {
 	const cookies = document.cookie.split(';');
 
@@ -291,24 +325,22 @@ function detectLocation() {
 function detectTypeOfEnvironment() {
 	//use cookies first
 	const envs = ['DEV', 'QA', 'PROD'];
-	const cookie = getJSONFromCookie(COOKIE_NAME) || {};
-	if (window.location.href.indexOf(`${ENV_QUERY_PARAMETER}=DEV_COOKIE`) > 0) {
-		setJSONCookie(COOKIE_NAME, { ...cookie, env: 'DEV' });
+	const cookieName = 'fe-alt-load-env';
+	const cooked = getCookie(cookieName)
+	if (window.location.href.indexOf('FE_LOADER=DEV_COOKIE') > 0) {
+		setCookie(cookieName, 'DEV', 1);
 		return "DEV";
-	} else if (window.location.href.indexOf(`${ENV_QUERY_PARAMETER}=QA_COOKIE`) > 0) {
-		setJSONCookie(COOKIE_NAME, { ...cookie, env: 'QA' });
+	} else if (window.location.href.indexOf('FE_LOADER=QA_COOKIE') > 0) {
+		setCookie(cookieName, 'QA', 1);
 		return "QA";
-	} else if (window.location.href.indexOf(`${ENV_QUERY_PARAMETER}=PROD`) > 0) {
-		const { env, ...rest } = cookie;
-		setJSONCookie(COOKIE_NAME, rest);
+	} else if (window.location.href.indexOf('FE_LOADER=PROD') > 0) {
+		setCookie(cookieName, '', 1);
 		return "PROD";
-	} else if (window.location.href.indexOf(`${ENV_QUERY_PARAMETER}=`) > 0) {
-		const { env, ...rest } = cookie;
-		setJSONCookie(COOKIE_NAME, rest)
-		return "PROD";
+	} else if (window.location.href.indexOf('FE_LOADER=') > 0) {
+		setCookie(cookieName, '', 1)
 	}
-	if (cookie && cookie.length > 1 && envs.includes(cookie.env)) {
-		return cookie.env; // whatever saved in cookie
+	if (cooked && cooked.length > 1 && envs.indexOf(cooked) >= 0) {
+		return cooked;//whatever saved in cookie
 	}
 
 	//otherwise try normal way
@@ -329,9 +361,6 @@ function detectTypeOfEnvironment() {
 	});
 	if (isQa) return 'QA';
 
-	// Default to PROD
-	const { env, ...rest } = cookie;
-	setJSONCookie(COOKIE_NAME, rest);
 	return "PROD";
 }
 
