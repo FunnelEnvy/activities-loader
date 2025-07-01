@@ -426,7 +426,7 @@ function loadVariation(activity) {
 	}
 
 	// --- Helper: Load JS file for variant ---
-	function loadVariantScript(activity, variantKey, env) {
+	function loadVariantScript(activity, variantKey) {
 		const basePath = `${bucketPath}/${activity.group.toLowerCase()}/v2`;
 		const env = detectTypeOfEnvironment();
 		const filename = `fe_activity_${activity.activity}_${variantKey}${env === 'PROD' ? '.min' : ''}.js`;
@@ -469,7 +469,7 @@ function loadVariation(activity) {
 		setJSONCookie(COOKIE_NAME, { ...cookieValue, variations: cookieVariations });
 	}
 
-	loadVariantScript(activity, selectedVariation, env);
+	loadVariantScript(activity, selectedVariation);
 }
 
 window.FeActivityLoader = window.FeActivityLoader || {};

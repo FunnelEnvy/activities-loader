@@ -153,7 +153,7 @@ const buildActivities = async (activitiesFilter = [], activitiesGroup) => {
 				await buildFile({
 					input: `src/activities/${activity.activity}/${variantName}/${variant.scripts[0]}`,
 					output: {
-						file: `dist/fe_activity_${activity.activity}_${variantName}}.js`,
+						file: `dist/fe_activity_${activity.activity}_${variantName}.js`,
 						format: 'iife',
 					},
 					plugins: plugins({ ...activity, config }),
@@ -161,7 +161,7 @@ const buildActivities = async (activitiesFilter = [], activitiesGroup) => {
 				await buildFile({
 					input: `src/activities/${activity.activity}/${variantName}/${variant.scripts[0]}`,
 					output: {
-						file: `dist/fe_activity_${activity.activity}_${variantName}}.min.js`,
+						file: `dist/fe_activity_${activity.activity}_${variantName}.min.js`,
 						format: 'iife',
 						sourcemap: true,
 						sourcemapBaseUrl: `https://fe-hpe-script.s3.us-east-2.amazonaws.com/${activitiesGroup.toLowerCase()}/v2`,
