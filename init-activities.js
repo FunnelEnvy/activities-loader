@@ -1,9 +1,6 @@
 import process.env.REUSABLE_LIB;
 
 const bucketPath = 'https://fe-hpe-script.s3.us-east-2.amazonaws.com'
-const COOKIE_NAME = 'fe_altloader';
-const ENV_QUERY_PARAMETER = 'FE_LOADER';
-const VARIATIONS_QUERY_PARAMETER = 'FE_VARIANT';
 
 if (window.location.href.indexOf('itgh.buy.hpe.com') >= 0) throw new Error('This is not the right site for this code');
 
@@ -69,39 +66,6 @@ function setCookie(name, value, days) {
 		expires = '; expires=' + date.toUTCString();
 	}
 	document.cookie = name + '=' + (value || '') + expires + '; path=/';
-}
-
-function getJSONFromCookie(cookieName) {
-	const cookies = document.cookie.split(';');
-
-	for (let cookie of cookies) {
-		const [name, value] = cookie.trim().split('=');
-		if (name === cookieName) {
-			try {
-				const decoded = decodeURIComponent(value);
-				return JSON.parse(decoded);
-			} catch (err) {
-				console.error('Failed to parse cookie JSON:', err);
-				return null;
-			}
-		}
-	}
-
-	return null; // Not found
-}
-
-function setJSONCookie(name, data, days = 365 /* default to 1 year */) {
-	const json = JSON.stringify(data);
-	const encoded = encodeURIComponent(json);
-
-	// let expires = '';
-	// if (days) {
-	// 	const date = new Date();
-	// 	date.setTime(date.getTime() + (days * 86400 * 1000));
-	// 	expires = `; expires=${date.toUTCString()}`;
-	// }
-
-	document.cookie = `${name}=${encoded}`;
 }
 
 function detectAudiences(userAudience, activityAudiences) {
@@ -435,21 +399,16 @@ function attachJsFile(src) {
 
 
 function loadVariation(activity) {
-	const activityName = activity.activity;
+	// Determine which variation to load
+	const cookieName = activity.activity;
+	let selectedVariation = getCookie(cookieName);
+
+	// Variations object
 	const variations = activity.variants;
-	const cookieValue = getJSONFromCookie(COOKIE_NAME) || { variations: {} };
-	const cookieVariations = cookieValue.variations || {};
 
-	// --- Helper: Weighted random selection ---
+	// Function to select a variation based on configured weights
 	function selectVariation() {
-		// Calculate total weight first
-		let totalWeight = 0;
-		for (const key in variations) {
-			totalWeight += variations[key].weight;
-		}
-
-		// Generate random number in range [0, totalWeight)
-		let rand = Math.random() * totalWeight;
+		let rand = Math.random();
 		let sum = 0;
 
 		for (const key in variations) {
@@ -458,56 +417,20 @@ function loadVariation(activity) {
 				return key;
 			}
 		}
-
-		// Fallback: return the last key if somehow we get here
-		return Object.keys(variations)[Object.keys(variations).length - 1];
+		return null; // In case there is a rounding error in the weights
 	}
 
-	// --- Helper: Load JS file for variant ---
-	function loadVariantScript(activity, variantKey) {
-		const basePath = `${bucketPath}/${activity.group.toLowerCase()}/v2`;
-		const env = detectTypeOfEnvironment();
-		const filename = `fe_activity_${activity.activity}_${variantKey}${env === 'PROD' ? '.min' : ''}.js`;
-		attachJsFile(`${basePath}/${filename}`);
+	if (!selectedVariation) {
+		selectedVariation = selectVariation();
+		// Set the cookie with the selected variation
+		setCookie(cookieName, selectedVariation, 7); // expires in 7 days
 	}
 
-	// --- Helper: Query Param FE_VARIANT parser ---
-	function getQueryParamVariantOverride() {
-		const match = window.location.href.match(/[?&]FE_VARIANT=([^&#]+)/);
-		if (!match) return null;
-
-		const rawParam = decodeURIComponent(match[1]);
-		const pairs = rawParam.split('.');
-		const result = {};
-
-		pairs.forEach(pair => {
-			const [act, variant] = pair.split(':');
-			if (act && variant) result[act] = variant;
-		});
-
-		return result;
-	}
-
-	// --- 1. Handle FE_VARIANT override ---
-	const variantOverride = getQueryParamVariantOverride();
-	const overrideVariant = variantOverride?.[activityName];
-
-	if (overrideVariant && variations?.[overrideVariant]) {
-		// Load overridden variant without modifying cookie
-		loadVariantScript(activity, overrideVariant, env);
-		return;
-	}
-
-	// --- 2. Normal flow using cookie or selection ---
-	let selectedVariation = cookieVariations?.[activityName];
-
-	if (!selectedVariation || !variations?.[selectedVariation]) {
-		selectedVariation = selectVariation(variations);
-		cookieVariations[activityName] = selectedVariation;
-		setJSONCookie(COOKIE_NAME, { ...cookieValue, variations: cookieVariations });
-	}
-
-	loadVariantScript(activity, selectedVariation);
+	// Load the selected variation script
+	const path = `${bucketPath}/${activity.group.toLowerCase()}/v2`;
+	const bucketPath = path + '/fe_activity_';
+	//attachJsFile(bucketPath + activity.activity + selectedVariation + (detectTypeOfEnvironment() === "PROD" ? '.min' : '') + '.js');
+	attachJsFile(`${bucketPath}${activity.activity}_${selectedVariation}${detectTypeOfEnvironment() === "PROD" ? '.min' : ''}.js`);
 }
 
 window.FeActivityLoader = window.FeActivityLoader || {};
@@ -541,6 +464,7 @@ const env = detectTypeOfEnvironment();
 const loadActivityOrVariation = (activity) => {
 	const path = `${bucketPath}/${activity.group.toLowerCase()}/v2`;
 	if (activity.variants) {
+		attachJsFile(path + '/fe_activity_' + activity.activity + (env === "PROD" ? '.min' : '')+'.js');
 		loadVariation(activity);
 	} else {
 		attachJsFile(path + '/fe_activity_' + activity.activity + (env === "PROD" ? '.min' : '')+'.js');
