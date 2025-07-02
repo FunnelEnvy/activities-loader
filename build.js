@@ -147,8 +147,6 @@ const buildActivities = async (activitiesFilter = [], activitiesGroup) => {
 		if (activity.variants) {
 			// build variants...
 			Object.entries(activity.variants).forEach(async ([variantName, variant]) => {
-				console.log('variant name', variantName);
-				console.log('variant', variant);
 				console.log(`Building ${activity.activity}_${variantName}/${variant.scripts[0]}...`);
 				await buildFile({
 					input: `src/activities/${activity.activity}/${variantName}/${variant.scripts[0]}`,

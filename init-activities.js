@@ -94,14 +94,14 @@ function setJSONCookie(name, data, days = 365 /* default to 1 year */) {
 	const json = JSON.stringify(data);
 	const encoded = encodeURIComponent(json);
 
-	let expires = '';
-	if (days) {
-		const date = new Date();
-		date.setTime(date.getTime() + (days * 86400 * 1000));
-		expires = `; expires=${date.toUTCString()}`;
-	}
+	// let expires = '';
+	// if (days) {
+	// 	const date = new Date();
+	// 	date.setTime(date.getTime() + (days * 86400 * 1000));
+	// 	expires = `; expires=${date.toUTCString()}`;
+	// }
 
-	document.cookie = `${name}=${encoded}${expires}; path=/`;
+	document.cookie = `${name}=${encoded}`;
 }
 
 function detectAudiences(userAudience, activityAudiences) {
@@ -442,7 +442,14 @@ function loadVariation(activity) {
 
 	// --- Helper: Weighted random selection ---
 	function selectVariation() {
-		let rand = Math.random();
+		// Calculate total weight first
+		let totalWeight = 0;
+		for (const key in variations) {
+			totalWeight += variations[key].weight;
+		}
+
+		// Generate random number in range [0, totalWeight)
+		let rand = Math.random() * totalWeight;
 		let sum = 0;
 
 		for (const key in variations) {
@@ -451,7 +458,9 @@ function loadVariation(activity) {
 				return key;
 			}
 		}
-		return null; // In case there is a rounding error in the weights
+
+		// Fallback: return the last key if somehow we get here
+		return Object.keys(variations)[Object.keys(variations).length - 1];
 	}
 
 	// --- Helper: Load JS file for variant ---
