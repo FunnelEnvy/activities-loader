@@ -146,20 +146,20 @@ const buildActivities = async (activitiesFilter = [], activitiesGroup) => {
 		}
 		if (activity.variants) {
 			// build variants...
-			Object.entries(activity.variants).forEach(async ([variantName, variant]) => {
-				console.log(`Building ${activity.activity}_${variantName}/${variant.scripts[0]}...`);
+			Object.entries(activity.variants).forEach(async (variant) => {
+				console.log(`Building ${activity.activity}_${variant}/${activity.variants[variant].scripts[0]}...`);
 				await buildFile({
-					input: `src/activities/${activity.activity}/${variantName}/${variant.scripts[0]}`,
+					input: `src/activities/${activity.activity}/${variant}/${activity.scripts[0]}`,
 					output: {
-						file: `dist/fe_activity_${activity.activity}_${variantName}.js`,
+						file: `dist/fe_activity_${activity.activity}_${variant}}.js`,
 						format: 'iife',
 					},
 					plugins: plugins({ ...activity, config }),
 				});
 				await buildFile({
-					input: `src/activities/${activity.activity}/${variantName}/${variant.scripts[0]}`,
+					input: `src/activities/${activity.activity}/${variant}/${activity.scripts[0]}`,
 					output: {
-						file: `dist/fe_activity_${activity.activity}_${variantName}.min.js`,
+						file: `dist/fe_activity_${activity.activity}_${variant}}.min.js`,
 						format: 'iife',
 						sourcemap: true,
 						sourcemapBaseUrl: `https://fe-hpe-script.s3.us-east-2.amazonaws.com/${activitiesGroup.toLowerCase()}/v2`,
