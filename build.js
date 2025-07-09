@@ -23,9 +23,9 @@ import { cleandir } from 'rollup-plugin-cleandir';
 import fs from 'fs';
 import CleanCSS from 'clean-css';
 
-const plugins = ({ activity, styles, cssRestrictions, config }) => {
+const plugins = ({ activity, styles, cssRestrictions, variantName, config }) => {
 	// Read the CSS file
-	const cssFilePath = (styles && styles.length > 0) ? `./src/activities/${activity}/${styles[0]}` : '';
+	const cssFilePath = (styles && styles.length > 0) ? `./src/activities/${activity}/${variantName ? variantName + '/' : ''}${styles[0]}` : '';
 	const cssContent = (styles && styles.length > 0) ? fs.readFileSync(cssFilePath, 'utf8') : null;
 
 	// Minify the CSS content
@@ -154,7 +154,7 @@ const buildActivities = async (activitiesFilter = [], activitiesGroup) => {
 						file: `dist/fe_activity_${activity.activity}_${variantName}.js`,
 						format: 'iife',
 					},
-					plugins: plugins({ ...activity, config }),
+					plugins: plugins({ ...activity, ...variant, variantName, config }),
 				});
 				await buildFile({
 					input: `src/activities/${activity.activity}/${variantName}/${variant.scripts[0]}`,
@@ -164,7 +164,7 @@ const buildActivities = async (activitiesFilter = [], activitiesGroup) => {
 						sourcemap: true,
 						sourcemapBaseUrl: `https://fe-hpe-script.s3.us-east-2.amazonaws.com/${activitiesGroup.toLowerCase()}/v2`,
 					},
-					plugins: [...plugins({ ...activity, config }), terser()],
+					plugins: [...plugins({ ...activity, ...variant, variantName, config }), terser()],
 				});
 			});
 		} else {
