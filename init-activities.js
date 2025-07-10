@@ -493,6 +493,9 @@ function loadVariation(activity) {
 	const overrideVariant = variantOverride?.[activityName];
 
 	if (overrideVariant && variations?.[overrideVariant]) {
+		// set cookie to value used in override
+		cookieVariations[activityName] = overrideVariant;
+		setJSONCookie(COOKIE_NAME, { ...cookieValue, variations: cookieVariations });
 		// Load overridden variant without modifying cookie
 		loadVariantScript(activity, overrideVariant, env);
 		return;
