@@ -564,9 +564,20 @@ const loadActivities = () => {
 	const sites = detectSites().map(s => s.name).join();
 	const activitiesWithAudience = acts.filter(a => a.audiences && a.audiences.length > 0);
 	const activitiesWithoutAudience = acts.filter(a => !a.hasOwnProperty('audiences') || a.audiences.length === 0);
+
+	let loadedCount = 0;
+	const totalToLoad = acts.length;
+
+	const markLoaded = () => {
+		loadedCount++;
+		if (loadedCount === totalToLoad) {
+			patchTrackMetrics();
+		}
+	};
 	// Add these activities right away
 	activitiesWithoutAudience.forEach(activity => {
 		loadActivityOrVariation(activity);
+		markLoaded();
 	});
 	// add activities to page after checking URL for audience
 	if (sites.indexOf('CONFIGURATOR') > -1) {
@@ -574,6 +585,7 @@ const loadActivities = () => {
 			if (detectConfiguratorCustomerAudience(getCustomerPartyIDFromURL(), activity.audiences)) {
 				loadActivityOrVariation(activity);
 			}
+			markLoaded();
 		});
 	} else {
 		// first wait for headerData information, then load activities based on audience
@@ -582,6 +594,7 @@ const loadActivities = () => {
 				if (detectAudiences(window?.headerData?.user?.account_id, activity.audiences)) {
 					loadActivityOrVariation(activity);
 				}
+				markLoaded();
 			});
 		};
 		window.feUtils.waitForConditions({
@@ -590,6 +603,22 @@ const loadActivities = () => {
 			callback: loadAudienceActivities
 		});
 	}
+}
+
+
+function patchTrackMetrics() {
+	const { variations } = getJSONFromCookie(COOKIE_NAME) || { variations: {} };
+	const variationInfo = Object.entries(variations)
+		.map(([key, val]) => `${key}:${val}`)
+		.join(':');
+
+	const originalTrackMetrics = window.trackMetrics;
+	window.trackMetrics = function (eventName, eventData = {}) {
+		if (eventData.link_name && eventData.link_name.indexOf(':fe-activities:') < 0) {
+			eventData.link_name += `:fe-activities:${variationInfo}`;
+		}
+		return originalTrackMetrics.call(this, eventName, eventData);
+	};
 }
 
 loadActivities();
