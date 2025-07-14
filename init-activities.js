@@ -488,6 +488,13 @@ function loadVariation(activity) {
 		return result;
 	}
 
+	function setClarityTags(experiment, variant) {
+		if (window.clarity) {
+			window.clarity('set', 'experiment_id', experiment);
+			window.clarity('set', 'variant_id', variant);
+		}
+	}
+
 	// --- 1. Handle FE_VARIANT override ---
 	const variantOverride = getQueryParamVariantOverride();
 	const overrideVariant = variantOverride?.[activityName];
@@ -496,6 +503,7 @@ function loadVariation(activity) {
 		// set cookie to value used in override
 		cookieVariations[activityName] = overrideVariant;
 		setJSONCookie(COOKIE_NAME, { ...cookieValue, variations: cookieVariations });
+		setClarityTags(activityName, overrideVariant);
 		// Load overridden variant without modifying cookie
 		loadVariantScript(activity, overrideVariant, env);
 		return;
@@ -508,6 +516,7 @@ function loadVariation(activity) {
 		selectedVariation = selectVariation(variations);
 		cookieVariations[activityName] = selectedVariation;
 		setJSONCookie(COOKIE_NAME, { ...cookieValue, variations: cookieVariations });
+		setClarityTags(activityName, selectedVariation);
 	}
 
 	loadVariantScript(activity, selectedVariation);
