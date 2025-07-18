@@ -488,6 +488,23 @@ function loadVariation(activity) {
 		return result;
 	}
 
+	function setClarityTags(experiment, variant) {
+		if (window.clarity) {
+			try {
+				window.clarity('set', 'experiment_id', experiment);
+				window.clarity('set', 'variant_id', variant);
+			} catch(err) {}
+		}
+	}
+
+	function setTrackMetricsLink(experiment, variant) {
+		if (window.trackMetrics) {
+			try {
+				window.trackMetrics('new.link', { link_name: `mp:fe-experiment:${experiment}:${variant}` });
+			} catch(err) {}
+		}
+	}
+
 	// --- 1. Handle FE_VARIANT override ---
 	const variantOverride = getQueryParamVariantOverride();
 	const overrideVariant = variantOverride?.[activityName];
@@ -496,6 +513,8 @@ function loadVariation(activity) {
 		// set cookie to value used in override
 		cookieVariations[activityName] = overrideVariant;
 		setJSONCookie(COOKIE_NAME, { ...cookieValue, variations: cookieVariations });
+		setClarityTags(activityName, overrideVariant);
+		setTrackMetricsLink(activityName, overrideVariant);
 		// Load overridden variant without modifying cookie
 		loadVariantScript(activity, overrideVariant, env);
 		return;
@@ -510,6 +529,8 @@ function loadVariation(activity) {
 		setJSONCookie(COOKIE_NAME, { ...cookieValue, variations: cookieVariations });
 	}
 
+	setClarityTags(activityName, selectedVariation);
+	setTrackMetricsLink(activityName, selectedVariation);
 	loadVariantScript(activity, selectedVariation);
 }
 
@@ -555,6 +576,7 @@ const loadActivities = () => {
 	const sites = detectSites().map(s => s.name).join();
 	const activitiesWithAudience = acts.filter(a => a.audiences && a.audiences.length > 0);
 	const activitiesWithoutAudience = acts.filter(a => !a.hasOwnProperty('audiences') || a.audiences.length === 0);
+
 	// Add these activities right away
 	activitiesWithoutAudience.forEach(activity => {
 		loadActivityOrVariation(activity);
