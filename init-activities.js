@@ -527,10 +527,10 @@ function loadVariation(activity) {
 		selectedVariation = selectVariation(variations);
 		cookieVariations[activityName] = selectedVariation;
 		setJSONCookie(COOKIE_NAME, { ...cookieValue, variations: cookieVariations });
-		setClarityTags(activityName, selectedVariation);
-		setTrackMetricsLink(activityName, selectedVariation);
 	}
 
+	setClarityTags(activityName, selectedVariation);
+	setTrackMetricsLink(activityName, selectedVariation);
 	loadVariantScript(activity, selectedVariation);
 }
 
