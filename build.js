@@ -36,7 +36,7 @@ const plugins = ({ activity, styles, cssRestrictions, variantName, config }) => 
 			${(styles && styles.length > 0) ? 'const strMinifiedCss = process.env.MINIFIED_CSS;' : ''}
 			const feProjectId = process.env.FE_PROJECT_ID;
 			const feVariantId = process.env.FE_VARIANT;
-			const trackMetric = (name, options) => {
+			const trackMetrics = (name, options) => {
 				let { link_name = null } = options;
 				if (link_name) {
 					if (!link_name.contains(feProjectId)) {
@@ -47,7 +47,7 @@ const plugins = ({ activity, styles, cssRestrictions, variantName, config }) => 
 					}
 				}
 
-				window.trackMetric(name, { ...options, link_name });
+				window.trackMetrics(name, { ...options, link_name });
 			};
 			const addCss_unique = () => {
 				${cssRestrictions ? 'if (' + cssRestrictions + ') {' : ''}
