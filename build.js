@@ -35,6 +35,21 @@ const plugins = ({ activity, styles, cssRestrictions, variantName, config }) => 
 		prepend(`
 			${(styles && styles.length > 0) ? 'const strMinifiedCss = process.env.MINIFIED_CSS;' : ''}
 			const feProjectId = process.env.FE_PROJECT_ID;
+			const feVariantId = process.env.FE_VARIANT;
+			const trackMetrics = (name, options) => {
+				let { link_name = null } = options;
+				if (!link_name) {
+					window.trackMetrics(name, options);
+					return;
+				}
+				if (!link_name.contains(feProjectId)) {
+					link_name += ':' + feProjectId;
+				}
+				if (feVariantId && !link_name.contains(feVariantId)) {
+					link_name += ':' + feVariantId;
+				}
+				window.trackMetrics(name, { ...options, link_name });
+			};
 			const addCss_unique = () => {
 				${cssRestrictions ? 'if (' + cssRestrictions + ') {' : ''}
 					${(styles && styles.length > 0) ? 'window[process.env.REUSABLE_FN].injectCss(strMinifiedCss, feProjectId);' : ''}
@@ -60,6 +75,7 @@ const plugins = ({ activity, styles, cssRestrictions, variantName, config }) => 
 				...config,
 				'process.env.MINIFIED_CSS': `${JSON.stringify(minifiedCssContent)}`,
 				'process.env.FE_PROJECT_ID': `"${activity}"`,
+				'process.env.FE_VARIANT': variantName ? `"${variantName}"` : null,
 				'process.env.REUSABLE_FN': `"feReusable"`,
 			},
 		}),
