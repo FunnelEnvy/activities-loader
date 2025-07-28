@@ -36,7 +36,7 @@ const plugins = ({ activity, styles, cssRestrictions, variantName, config }) => 
 			${(styles && styles.length > 0) ? 'const strMinifiedCss = process.env.MINIFIED_CSS;' : ''}
 			const feProjectId = process.env.FE_PROJECT_ID;
 			const feVariantId = process.env.FE_VARIANT;
-			const feTrackMetrics = (name, options) => {
+			const feTrackMetrics = (name, options = {}) => {
 				let { link_name = "" } = options;
 				let linkName = link_name;
 				if (feProjectId && !linkName.includes(feProjectId)) {
