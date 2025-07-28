@@ -39,11 +39,11 @@ const plugins = ({ activity, styles, cssRestrictions, variantName, config }) => 
 			const feTrackMetrics = (name, options) => {
 				let { link_name = "" } = options;
 				let linkName = link_name;
-				if (!linkName.includes(feProjectId)) {
-					linkName = linkName + ':' + feProjectId;
+				if (feProjectId && !linkName.includes(feProjectId)) {
+					linkName += ':' + feProjectId;
 				}
 				if (feVariantId && !linkName.includes(feVariantId)) {
-					linkName = linkName + ':' + feVariantId;
+					linkName += ':' + feVariantId;
 				}
 				window.trackMetrics(name, { ...options, link_name: linkName });
 			};
