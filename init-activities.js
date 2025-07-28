@@ -489,12 +489,18 @@ function loadVariation(activity) {
 	}
 
 	function setClarityTags(experiment, variant) {
-		if (window.clarity) {
-			try {
-				window.clarity('set', 'experiment_id', experiment);
-				window.clarity('set', 'variant_id', variant);
-			} catch(err) {}
-		}
+		try {
+			window.feUtils.waitForConditions({
+				conditions: [
+					() => typeof window.clarity === 'function',
+				],
+				activity: 'fe_altloader',
+				callback: () => {
+					window.clarity('set', 'experiment_id', experiment);
+					window.clarity('set', 'variant_id', variant);
+				},
+			});
+		} catch(err) {}
 	}
 
 	function setTrackMetricsLink(experiment, variant) {
