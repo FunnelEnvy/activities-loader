@@ -38,6 +38,7 @@ const plugins = ({ activity, styles, cssRestrictions, variantName, config }) => 
 			const feVariantId = process.env.FE_VARIANT;
 			const feTrackMetrics = (name, options) => {
 				let { link_name = "" } = options;
+				let linkName = link_name;
 				if (!linkName.includes(feProjectId)) {
 					linkName = linkName + ':' + feProjectId;
 				}
