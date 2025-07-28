@@ -42,7 +42,7 @@ const plugins = ({ activity, styles, cssRestrictions, variantName, config }) => 
 					linkName = linkName + ':' + feProjectId;
 				}
 				if (feVariantId && !linkName.includes(feVariantId)) {
-					linkName = linkName = ':' + feVariantId;
+					linkName = linkName + ':' + feVariantId;
 				}
 				window.trackMetrics('new.link', { link_name: linkName });
 			};
