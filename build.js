@@ -36,15 +36,15 @@ const plugins = ({ activity, styles, cssRestrictions, variantName, config }) => 
 			${(styles && styles.length > 0) ? 'const strMinifiedCss = process.env.MINIFIED_CSS;' : ''}
 			const feProjectId = process.env.FE_PROJECT_ID;
 			const feVariantId = process.env.FE_VARIANT;
-			const feTrackMetrics = (linkNameSubstring) => {
-				let linkName = linkNameSubstring;
+			const feTrackMetrics = (name, options) => {
+				let { link_name = "" } = options;
 				if (!linkName.includes(feProjectId)) {
 					linkName = linkName + ':' + feProjectId;
 				}
 				if (feVariantId && !linkName.includes(feVariantId)) {
 					linkName = linkName + ':' + feVariantId;
 				}
-				window.trackMetrics('new.link', { link_name: linkName });
+				window.trackMetrics(name, { ...options, link_name: linkName });
 			};
 			const addCss_unique = () => {
 				${cssRestrictions ? 'if (' + cssRestrictions + ') {' : ''}
