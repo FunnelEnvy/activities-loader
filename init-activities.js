@@ -504,11 +504,17 @@ function loadVariation(activity) {
 	}
 
 	function setTrackMetricsLink(experiment, variant) {
-		if (window.trackMetrics) {
-			try {
-				window.trackMetrics('new.link', { link_name: `mp:fe-experiment:${experiment}:${variant}` });
-			} catch(err) {}
-		}
+		try {
+			window.feUtils.waitForConditions({
+				conditions: [
+					() => typeof window.trackMetrics === 'function',
+				],
+				activity: 'fe_altloader',
+				callback: () => {
+					window.trackMetrics('new.link', { link_name: `mp:fe-experiment:${experiment}:${variant}` });
+				},
+			});
+		} catch(err) {}
 	}
 
 	// --- 1. Handle FE_VARIANT override ---
