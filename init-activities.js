@@ -127,45 +127,46 @@ function detectAudiences(userAudience, activityAudiences) {
 }
 
 function evaluateAudience(userAudience, audienceEntry) {
-	// Extract first 10 digits of userAudience for org_party matching
-	const userAudienceOrg = userAudience.slice(0, 10);
+	const user = String(userAudience ?? '').trim();
+	const userOrg = user.slice(0, 10);
 
 	const {
 		account_unit_id_include = [],
 		account_unit_id_exclude = [],
 		org_party_id_include = [],
-		org_party_id_exclude = []
+		org_party_id_exclude = [],
 	} = audienceEntry;
 
-	// If there are no restrictions defined, include the audience by default.
-	if (
-		account_unit_id_include.length === 0 &&
-		account_unit_id_exclude.length === 0 &&
-		org_party_id_include.length === 0 &&
-		org_party_id_exclude.length === 0
-	) {
-		return true;
-	}
+	const norm = v => String(v ?? '').trim();
 
-	let accountUnitMatch = false;
-	let orgPartyMatch = false;
+	const auiInc = account_unit_id_include.map(norm);
+	const auiExc = account_unit_id_exclude.map(norm);
+	const opiInc = org_party_id_include.map(norm);
+	const opiExc = org_party_id_exclude.map(norm);
 
-	// Check account_unit conditions (exact match)
-	if (account_unit_id_include.length > 0) {
-		accountUnitMatch = account_unit_id_include.some(user => user.trim() === userAudience.trim());
-	}
-	if (account_unit_id_exclude.length > 0) {
-		accountUnitMatch = !account_unit_id_exclude.some(user => user.trim() === userAudience.trim());
-	}
-	if (org_party_id_include.length > 0) {
-		orgPartyMatch = org_party_id_include.some(org => org.trim().startsWith(userAudienceOrg.trim()));
-	}
-	if (org_party_id_exclude.length > 0) {
-		orgPartyMatch = !org_party_id_exclude.some(org => org.trim().startsWith(userAudienceOrg.trim()));
-	}
+	// No restrictions at all ⇒ include
+	const noRestrictions =
+		auiInc.length === 0 && auiExc.length === 0 &&
+		opiInc.length === 0 && opiExc.length === 0;
+	if (noRestrictions) return true;
 
-	// User must meet either account_unit or org_party_id conditions to be included
-	return accountUnitMatch || orgPartyMatch;
+	// Evaluate all four conditions
+	const auiIncludeMatch = auiInc.length > 0 && auiInc.some(x => x === user);
+	const auiExcludeMatch = auiExc.length > 0 && auiExc.some(x => x === user);
+
+	// org_party: list entries should start with the user's first 10 chars
+	const opiIncludeMatch = opiInc.length > 0 && opiInc.some(x => x.startsWith(userOrg));
+	const opiExcludeMatch = opiExc.length > 0 && opiExc.some(x => x.startsWith(userOrg));
+
+	// Exclusions always win
+	if (auiExcludeMatch || opiExcludeMatch) return false;
+
+	// If any include lists exist, must match at least one include (AU or OP)
+	const hasAnyInclude = auiInc.length > 0 || opiInc.length > 0;
+	if (hasAnyInclude) return auiIncludeMatch || opiIncludeMatch;
+
+	// No includes defined, and not excluded ⇒ include
+	return true;
 }
 
 function detectConfiguratorCustomerAudience(userAudience, activityAudiences) {
