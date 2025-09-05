@@ -255,7 +255,7 @@ const buildLibFiles = async () => {
 					'@babel/env',
 				],
 			}),
-			// terser(),
+			terser(),
 		],
 	});
 }
