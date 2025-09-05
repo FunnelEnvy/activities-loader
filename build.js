@@ -45,6 +45,7 @@ const plugins = ({ activity, styles, cssRestrictions, variantName, config }) => 
 				if (feVariantId) {
 					linkName += ':' + feVariantId;
 				}
+				linkName += ':fe_altloader';
 				window.trackMetrics(name, { ...options, link_name: linkName });
 			};
 			const addCss_unique = () => {
@@ -254,7 +255,7 @@ const buildLibFiles = async () => {
 					'@babel/env',
 				],
 			}),
-			terser(),
+			// terser(),
 		],
 	});
 }
