@@ -45,6 +45,7 @@ const plugins = ({ activity, styles, cssRestrictions, variantName, config }) => 
 				if (feVariantId) {
 					linkName += ':' + feVariantId;
 				}
+				linkName += ':fe-altloader';
 				window.trackMetrics(name, { ...options, link_name: linkName });
 			};
 			const addCss_unique = () => {
