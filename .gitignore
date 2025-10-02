@@ -4,3 +4,4 @@
 !/src/README.md
 .env
 .idea
+build-errors.json
