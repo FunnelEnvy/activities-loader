@@ -91,17 +91,27 @@ function getJSONFromCookie(cookieName) {
 }
 
 function setJSONCookie(name, data, days = 365 /* default to 1 year */) {
-	const json = JSON.stringify(data);
-	const encoded = encodeURIComponent(json);
+	try {
+		const json = JSON.stringify(data);
+		const encoded = encodeURIComponent(json);
 
-	// let expires = '';
-	// if (days) {
-	// 	const date = new Date();
-	// 	date.setTime(date.getTime() + (days * 86400 * 1000));
-	// 	expires = `; expires=${date.toUTCString()}`;
-	// }
+		let expires = '';
+		if (days) {
+			const date = new Date();
+			date.setTime(date.getTime() + (days * 86400 * 1000));
+			expires = `; expires=${date.toUTCString()}`;
+		}
 
-	document.cookie = `${name}=${encoded}`;
+		// Set the cookie with "/" path
+		document.cookie = `${name}=${encoded}${expires}; path=/`;
+		console.log('set cookie with:', `${name}=${encoded}${expires}; path=/`);
+		
+		// Clear any page-specific cookie to avoid conflicts
+		const currentPath = window.location.pathname;
+		document.cookie = `${name}=; path=${currentPath}; max-age=0`;
+	} catch (err) {
+		console.log('error info:', err);
+	}
 }
 
 function detectAudiences(userAudience, activityAudiences) {
