@@ -538,7 +538,7 @@ function loadVariation(activity) {
 		try {
 			window.feUtils.waitForConditions({
 				conditions: [
-					() => typeof window.clarity === 'function',
+					() => typeof window.trackMetrics === 'function',
 				],
 				activity: 'fe_altloader',
 				callback: () => {
