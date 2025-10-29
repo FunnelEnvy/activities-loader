@@ -23,6 +23,9 @@ import { cleandir } from 'rollup-plugin-cleandir';
 import fs from 'fs';
 import CleanCSS from 'clean-css';
 
+// Track build errors
+const buildErrors = [];
+
 const plugins = ({ activity, styles, cssRestrictions, variantName, config }) => {
 	// Read the CSS file
 	const cssFilePath = (styles && styles.length > 0) ? `./src/activities/${activity}/${variantName ? variantName + '/' : ''}${styles[0]}` : '';
@@ -150,71 +153,122 @@ const buildActivities = async (activitiesFilter = [], activitiesGroup) => {
 		}, {});
 		// check if activity has package.json
 		if (fs.existsSync(packageJsonPath)) {
-			console.log('package json found');
 			const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
 			if (packageJson.scripts && packageJson.scripts.dist) {
 				console.log(`"dist" script found. Running "dist" script...`);
 				const dirPath = `./src/activities/${activity.activity}`;
-				await runCommand('npm run dist', dirPath);
+				try {
+					await runCommand('npm run dist', dirPath);
+				} catch (error) {
+					buildErrors.push({
+						activity: activity.activity,
+						variant: null,
+						stage: 'npm run dist',
+						error: error.toString(),
+					});
+					console.error(`Error running npm dist for ${activity.activity}:`, error);
+					continue; // Skip to next activity
+				}
 			}
 		}
 		if (activity.variants) {
 			// build variants...
-			Object.entries(activity.variants).forEach(async ([variantName, variant]) => {
+			for (const [variantName, variant] of Object.entries(activity.variants)) {
 				console.log('BUILDING:'+activity.activity,{variant});
 				console.log(`Building ${activity.activity}_${variantName}/${variant.scripts[0]}...`);
+				
+				try {
+					await buildFile({
+						input: `src/activities/${activity.activity}/${variantName}/${variant.scripts[0]}`,
+						output: {
+							file: `dist/fe_activity_${activity.activity}_${variantName}.js`,
+							format: 'iife',
+						},
+						plugins: plugins({ ...activity, ...variant, variantName, config }),
+					});
+				} catch (error) {
+					buildErrors.push({
+						activity: activity.activity,
+						variant: variantName,
+						stage: 'build (unminified)',
+						error: error.message || error.toString(),
+					});
+					console.error(`Error building ${activity.activity}_${variantName}:`, error);
+					continue; // Skip minified build if unminified fails
+				}
+
+				try {
+					await buildFile({
+						input: `src/activities/${activity.activity}/${variantName}/${variant.scripts[0]}`,
+						output: {
+							file: `dist/fe_activity_${activity.activity}_${variantName}.min.js`,
+							format: 'iife',
+							sourcemap: true,
+							sourcemapBaseUrl: `https://fe-hpe-script.s3.us-east-2.amazonaws.com/${activitiesGroup.toLowerCase()}/v2`,
+						},
+						plugins: [...plugins({ ...activity, ...variant, variantName, config }), terser()],
+					});
+				} catch (error) {
+					buildErrors.push({
+						activity: activity.activity,
+						variant: variantName,
+						stage: 'build (minified)',
+						error: error.message || error.toString(),
+					});
+					console.error(`Error building minified ${activity.activity}_${variantName}:`, error);
+				}
+			}
+		} else {
+			console.log(`Building ${activity.activity}/${activity.scripts[0]}...`);
+			
+			try {
 				await buildFile({
-					input: `src/activities/${activity.activity}/${variantName}/${variant.scripts[0]}`,
+					input: `src/activities/${activity.activity}/${activity.scripts[0]}`,
 					output: {
-						file: `dist/fe_activity_${activity.activity}_${variantName}.js`,
+						file: `dist/fe_activity_${activity.activity}.js`,
 						format: 'iife',
 					},
-					plugins: plugins({ ...activity, ...variant, variantName, config }),
+					plugins: plugins({ ...activity, config }),
 				});
+			} catch (error) {
+				buildErrors.push({
+					activity: activity.activity,
+					variant: null,
+					stage: 'build (unminified)',
+					error: error.message || error.toString(),
+				});
+				console.error(`Error building ${activity.activity}:`, error);
+				continue; // Skip minified build if unminified fails
+			}
+
+			try {
 				await buildFile({
-					input: `src/activities/${activity.activity}/${variantName}/${variant.scripts[0]}`,
+					input: `src/activities/${activity.activity}/${activity.scripts[0]}`,
 					output: {
-						file: `dist/fe_activity_${activity.activity}_${variantName}.min.js`,
+						file: `dist/fe_activity_${activity.activity}.min.js`,
 						format: 'iife',
 						sourcemap: true,
 						sourcemapBaseUrl: `https://fe-hpe-script.s3.us-east-2.amazonaws.com/${activitiesGroup.toLowerCase()}/v2`,
 					},
-					plugins: [...plugins({ ...activity, ...variant, variantName, config }), terser()],
+					plugins: [...plugins({ ...activity, config }), terser()],
 				});
-			});
-		} else {
-			console.log(`Building ${activity.activity}/${activity.scripts[0]}...`);
-			await buildFile({
-				input: `src/activities/${activity.activity}/${activity.scripts[0]}`,
-				output: {
-					file: `dist/fe_activity_${activity.activity}.js`,
-					format: 'iife',
-				},
-				plugins: plugins({ ...activity, config }),
-			});
-			await buildFile({
-				input: `src/activities/${activity.activity}/${activity.scripts[0]}`,
-				output: {
-					file: `dist/fe_activity_${activity.activity}.min.js`,
-					format: 'iife',
-					sourcemap: true,
-					sourcemapBaseUrl: `https://fe-hpe-script.s3.us-east-2.amazonaws.com/${activitiesGroup.toLowerCase()}/v2`,
-				},
-				plugins: [...plugins({ ...activity, config }), terser()],
-			});
+			} catch (error) {
+				buildErrors.push({
+					activity: activity.activity,
+					variant: null,
+					stage: 'build (minified)',
+					error: error.message || error.toString(),
+				});
+				console.error(`Error building minified ${activity.activity}:`, error);
+			}
 		}
 	}
 }
 
 // Function to build a single file
 const buildFile = async (config) => {
-	try {
-		const bundle = await rollup.rollup(config);
-		await bundle.write(config.output);
-	} catch (error) {
-		console.error('Build error:', error);
-		// process.exit(1);
-	}
+	const bundle = await rollup.rollup(config);
+	await bundle.write(config.output);
 }
 
 // Build the library files
@@ -264,18 +318,26 @@ const buildLibFiles = async () => {
 // Run the build process
 cleandir('dist');
 if (argv.all) {
-	buildLibFiles();
-	buildActivities().catch((error) => {
-		console.error('Build error:', error);
-		process.exit(1);
-	});
+	await buildLibFiles();
+	await buildActivities();
 }
 if (argv.lib) {
-	buildLibFiles();
+	await buildLibFiles();
 } else {
-	console.log('activities:', argv.activities);
-	buildActivities(argv.activities?.split(','), argv?.group).catch((error) => {
-		console.error('Build error:', error);
-		process.exit(1);
+	await buildActivities(argv.activities?.split(','), argv?.group);
+}
+
+// Write errors to a JSON file for the GitHub Action to read
+if (buildErrors.length > 0) {
+	console.error('\n=== BUILD ERRORS SUMMARY ===');
+	buildErrors.forEach(err => {
+		const variantInfo = err.variant ? ` (variant: ${err.variant})` : '';
+		console.error(`- ${err.activity}${variantInfo} [${err.stage}]: ${err.error}`);
 	});
+	
+	fs.writeFileSync('./build-errors.json', JSON.stringify(buildErrors, null, 2));
+	console.log('\nBuild errors written to build-errors.json');
+	process.exit(1); // Exit with error code so GitHub Action knows there were failures
+} else {
+	console.log('\n✓ All activities built successfully');
 }
