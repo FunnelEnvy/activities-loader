@@ -114,6 +114,26 @@ function setJSONCookie(name, data, days = 365 /* default to 1 year */) {
 	}
 }
 
+function getJSONFromStorage(key) {
+	try {
+		const value = localStorage.getItem(key);
+		if (!value) return null;
+		return JSON.parse(value);
+	} catch (err) {
+		console.error('Failed to parse localStorage JSON:', err);
+		return null;
+	}
+}
+
+function setJSONStorage(key, data) {
+	try {
+		const json = JSON.stringify(data);
+		localStorage.setItem(key, json);
+	} catch (err) {
+		console.error('Failed to set localStorage:', err);
+	}
+}
+
 function detectAudiences(userAudience, activityAudiences) {
 	// Fetch the audiences using the getAudiences function
 	const audiences = getAudiences();
@@ -448,8 +468,8 @@ function attachJsFile(src) {
 function loadVariation(activity) {
 	const activityName = activity.activity;
 	const variations = activity.variants;
-	const cookieValue = getJSONFromCookie(COOKIE_NAME) || { variations: {} };
-	const cookieVariations = cookieValue.variations || {};
+	const storageValue = getJSONFromStorage(COOKIE_NAME) || { variations: {} };
+	const storageVariations = storageValue.variations || {};
 
 	// --- Helper: Weighted random selection ---
 	function selectVariation() {
@@ -533,23 +553,23 @@ function loadVariation(activity) {
 	const overrideVariant = variantOverride?.[activityName];
 
 	if (overrideVariant && variations?.[overrideVariant]) {
-		// set cookie to value used in override
-		cookieVariations[activityName] = overrideVariant;
-		setJSONCookie(COOKIE_NAME, { ...cookieValue, variations: cookieVariations });
+		// set storage to value used in override
+		storageVariations[activityName] = overrideVariant;
+		setJSONStorage(COOKIE_NAME, { ...storageValue, variations: storageVariations });
 		setClarityTags(activityName, overrideVariant);
 		setTrackMetricsLink(activityName, overrideVariant);
-		// Load overridden variant without modifying cookie
+		// Load overridden variant without modifying storage
 		loadVariantScript(activity, overrideVariant, env);
 		return;
 	}
 
-	// --- 2. Normal flow using cookie or selection ---
-	let selectedVariation = cookieVariations?.[activityName];
+	// --- 2. Normal flow using storage or selection ---
+	let selectedVariation = storageVariations?.[activityName];
 
 	if (!selectedVariation || !variations?.[selectedVariation]) {
 		selectedVariation = selectVariation(variations);
-		cookieVariations[activityName] = selectedVariation;
-		setJSONCookie(COOKIE_NAME, { ...cookieValue, variations: cookieVariations });
+		storageVariations[activityName] = selectedVariation;
+		setJSONStorage(COOKIE_NAME, { ...storageValue, variations: storageVariations });
 	}
 
 	setClarityTags(activityName, selectedVariation);
