@@ -542,7 +542,7 @@ function loadVariation(activity) {
 				],
 				activity: 'fe_altloader',
 				callback: () => {
-					window.trackMetrics('new.link', { link_name: `mp:fe-experiment:${experiment}:${variant}` });
+					window.trackMetrics('new.link', { link_name: `mp:fe-experiment:fe-altloader:${experiment}:${variant}` });
 				},
 			});
 		} catch(err) {}
