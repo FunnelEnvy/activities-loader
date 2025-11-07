@@ -134,6 +134,39 @@ function setJSONStorage(key, data) {
 	}
 }
 
+function cleanupStoredVariations() {
+	const storageValue = getJSONFromStorage(COOKIE_NAME);
+	if (!storageValue || !storageValue.variations) return;
+
+	const storedVariations = storageValue.variations;
+	const cleanedVariations = {};
+	const activities = getActivities();
+
+	// Build a map of valid activities with their variants
+	const validActivities = {};
+	activities.forEach(activity => {
+		if (activity.enable === true && activity.variants) {
+			validActivities[activity.activity] = Object.keys(activity.variants);
+		}
+	});
+
+	// Only keep variations that still exist in valid, enabled activities
+	Object.keys(storedVariations).forEach(activityName => {
+		const variantKey = storedVariations[activityName];
+		
+		// Check if activity exists, is enabled, and variant still exists
+		if (validActivities[activityName] && 
+		    validActivities[activityName].includes(variantKey)) {
+			cleanedVariations[activityName] = variantKey;
+		}
+	});
+
+	// Update storage with cleaned variations
+	if (Object.keys(cleanedVariations).length !== Object.keys(storedVariations).length) {
+		setJSONStorage(COOKIE_NAME, { ...storageValue, variations: cleanedVariations });
+	}
+}
+
 function detectAudiences(userAudience, activityAudiences) {
 	// Fetch the audiences using the getAudiences function
 	const audiences = getAudiences();
@@ -615,6 +648,9 @@ const loadActivityOrVariation = (activity) => {
 }
 
 const loadActivities = () => {
+	// Clean up any stored variations for activities that no longer exist or are disabled
+	cleanupStoredVariations();
+	
 	const acts = detectActivitiesToActivate();
 	const sites = detectSites().map(s => s.name).join();
 	const activitiesWithAudience = acts.filter(a => a.audiences && a.audiences.length > 0);
