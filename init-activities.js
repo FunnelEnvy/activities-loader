@@ -648,9 +648,6 @@ const loadActivityOrVariation = (activity) => {
 }
 
 const loadActivities = () => {
-	// Clean up any stored variations for activities that no longer exist or are disabled
-	cleanupStoredVariations();
-	
 	const acts = detectActivitiesToActivate();
 	const sites = detectSites().map(s => s.name).join();
 	const activitiesWithAudience = acts.filter(a => a.audiences && a.audiences.length > 0);
@@ -682,6 +679,9 @@ const loadActivities = () => {
 			callback: loadAudienceActivities
 		});
 	}
+	
+	// Clean up any stored variations for activities that no longer exist or are disabled
+	cleanupStoredVariations();
 }
 
 loadActivities();
