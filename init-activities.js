@@ -649,7 +649,7 @@ const loadActivityOrVariation = (activity) => {
 
 const loadActivities = () => {
 	const params = new URLSearchParams(window.location.search);
-	if (params.has('fe-altloader-disable')) {
+	if (params.has(ENV_QUERY_PARAMETER) && params.get(ENV_QUERY_PARAMETER) === 'disable') {
 		return;
 	}
 	const acts = detectActivitiesToActivate();
