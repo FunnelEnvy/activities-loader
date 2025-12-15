@@ -71,6 +71,17 @@ function setCookie(name, value, days) {
 	document.cookie = name + '=' + (value || '') + expires + '; path=/';
 }
 
+function getJSONFromMemory(name) {
+	const value = getJSONFromCookie(name);
+	if (value !== null) return value;
+	return getJSONFromStorage(name);
+}
+
+function setJSONToMemory(name, data) {
+	setJSONCookie(name, data);
+	setJSONStorage(name, data);
+}
+
 function getJSONFromCookie(cookieName) {
 	const cookies = document.cookie.split(';');
 
@@ -135,7 +146,7 @@ function setJSONStorage(key, data) {
 }
 
 function cleanupStoredVariations() {
-	const storageValue = getJSONFromStorage(COOKIE_NAME);
+	const storageValue = getJSONFromMemory(COOKIE_NAME);
 	if (!storageValue || !storageValue.variations) return;
 
 	const storedVariations = storageValue.variations;
@@ -162,9 +173,7 @@ function cleanupStoredVariations() {
 	});
 
 	// Update storage with cleaned variations
-	if (Object.keys(cleanedVariations).length !== Object.keys(storedVariations).length) {
-		setJSONStorage(COOKIE_NAME, { ...storageValue, variations: cleanedVariations });
-	}
+	setJSONToMemory(COOKIE_NAME, { ...storageValue, variations: cleanedVariations });
 }
 
 function detectAudiences(userAudience, activityAudiences) {
@@ -501,7 +510,7 @@ function attachJsFile(src) {
 function loadVariation(activity) {
 	const activityName = activity.activity;
 	const variations = activity.variants;
-	const storageValue = getJSONFromStorage(COOKIE_NAME) || { variations: {} };
+	const storageValue = getJSONFromMemory(COOKIE_NAME) || { variations: {} };
 	const storageVariations = storageValue.variations || {};
 
 	// --- Helper: Weighted random selection ---
@@ -588,7 +597,7 @@ function loadVariation(activity) {
 	if (overrideVariant && variations?.[overrideVariant]) {
 		// set storage to value used in override
 		storageVariations[activityName] = overrideVariant;
-		setJSONStorage(COOKIE_NAME, { ...storageValue, variations: storageVariations });
+		setJSONToMemory(COOKIE_NAME, { ...storageValue, variations: storageVariations });
 		setClarityTags(activityName, overrideVariant);
 		setTrackMetricsLink(activityName, overrideVariant);
 		// Load overridden variant without modifying storage
@@ -602,7 +611,7 @@ function loadVariation(activity) {
 	if (!selectedVariation || !variations?.[selectedVariation]) {
 		selectedVariation = selectVariation(variations);
 		storageVariations[activityName] = selectedVariation;
-		setJSONStorage(COOKIE_NAME, { ...storageValue, variations: storageVariations });
+		setJSONToMemory(COOKIE_NAME, { ...storageValue, variations: storageVariations });
 	}
 
 	setClarityTags(activityName, selectedVariation);
