@@ -396,44 +396,28 @@ function detectLocation() {
 }
 
 function detectTypeOfEnvironment() {
-	//use cookies first
 	const envs = ['DEV', 'QA', 'PROD'];
-	const cookieName = 'fe-alt-load-env';
-	const cooked = getCookie(cookieName)
-	if (window.location.href.indexOf('FE_LOADER=DEV_COOKIE') > 0) {
-		setCookie(cookieName, 'DEV', 1);
-		return "DEV";
-	} else if (window.location.href.indexOf('FE_LOADER=QA_COOKIE') > 0) {
-		setCookie(cookieName, 'QA', 1);
-		return "QA";
-	} else if (window.location.href.indexOf('FE_LOADER=PROD') > 0) {
-		setCookie(cookieName, '', 1);
-		return "PROD";
-	} else if (window.location.href.indexOf('FE_LOADER=') > 0) {
-		setCookie(cookieName, '', 1)
+	const sessionName = 'fe-altloader-env';
+	const sessionValue = sessionStorage.getItem(sessionName) ?? null;
+	// check query parameter
+	const params = new URLSearchParams(window.location.search);
+	if (params.has(ENV_QUERY_PARAMETER)) {
+		const paramValue = params.get(ENV_QUERY_PARAMETER);
+		// get value, should work if '-save' is added or not
+		const value = paramValue.split('-')[0];
+		// persist value
+		if (paramValue.endsWith('-save')) {
+			sessionStorage.setItem(sessionName, value)
+		} else {
+			sessionStorage.removeItem(sessionName);
+		}
+		return value;
 	}
-	if (cooked && cooked.length > 1 && envs.indexOf(cooked) >= 0) {
-		return cooked;//whatever saved in cookie
+	// if session storage has a value and it is valid, return and use that value
+	if (sessionValue && envs.indexOf(sessionValue) > -1) {
+		return sessionValue;
 	}
-
-	//otherwise try normal way
-	const urlFlagsDev = environments.DEV.urlFlags;
-	let isDev = false;
-	const urlFlagsQa = environments.QA.urlFlags;
-	let isQa = false;
-
-	urlFlagsDev.map(function (uf) {
-		if (window.location.href.indexOf(uf) >= 0)
-			isDev = true;
-	});
-	if (isDev) return 'DEV';
-
-	urlFlagsQa.map(function (uf) {
-		if (window.location.href.indexOf(uf) >= 0)
-			isQa = true;
-	});
-	if (isQa) return 'QA';
-
+	// default to production
 	return "PROD";
 }
 
