@@ -421,6 +421,23 @@ function detectTypeOfEnvironment() {
 	return "PROD";
 }
 
+function createEnvironmentIndicator() {
+	const env = detectTypeOfEnvironment();
+	if (env.toLowerCase().indexOf('prod') > -1) return;
+	const indicator = document.createElement('div');
+	indicator.textContent = `FunnelEnvy Altloader Environment: ${env}`;
+	Object.assign(indicator.style, {
+		position: 'fixed',
+		top: '10px',
+		left: '10px',
+		fontSize: '12px',
+		color: 'red',
+		zIndex: '999999',
+		pointerEvents: 'none'
+	});
+	document.body.appendChild(indicator)
+}
+
 function detectActivitiesToActivate() {
 	const locations = detectLocation();
 	const sites = detectSites();
@@ -645,6 +662,7 @@ const loadActivities = () => {
 	if (params.has(ENV_QUERY_PARAMETER) && params.get(ENV_QUERY_PARAMETER) === 'disable') {
 		return;
 	}
+	createEnvironmentIndicator();
 	const acts = detectActivitiesToActivate();
 	const sites = detectSites().map(s => s.name).join();
 	const activitiesWithAudience = acts.filter(a => a.audiences && a.audiences.length > 0);
