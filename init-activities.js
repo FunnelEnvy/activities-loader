@@ -657,10 +657,6 @@ const loadActivityOrVariation = (activity) => {
 }
 
 const loadActivities = () => {
-	const params = new URLSearchParams(window.location.search);
-	if (params.has(ENV_QUERY_PARAMETER) && params.get(ENV_QUERY_PARAMETER) === 'disable') {
-		return;
-	}
 	const acts = detectActivitiesToActivate();
 	const sites = detectSites().map(s => s.name).join();
 	const activitiesWithAudience = acts.filter(a => a.audiences && a.audiences.length > 0);
