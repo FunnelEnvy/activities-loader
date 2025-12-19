@@ -437,6 +437,34 @@ function detectTypeOfEnvironment() {
 	return "PROD";
 }
 
+function passQueryParametersToIFrame() {
+	if (window.location.pathname.indexOf('/cart/configure') === -1) return;
+	const IFRAME_ID = 'configure_cart';
+	const alterIframeSrc = () => {
+	const iframe = document.getElementById(IFRAME_ID);
+		if (iframe && iframe.src) {
+			const pageParams = new URLSearchParams(window.location.search);
+			const srcURL = new URL(iframe.src);
+			const variants = pageParams.has('FE_VARIANT') ? pageParams.get('FE_VARIANT') : null;
+			const environment = pageParams.has(ENV_QUERY_PARAMETER) ? pageParams.get(ENV_QUERY_PARAMETER) : null;
+
+			if (environment) {
+				srcURL.searchParams.set(ENV_QUERY_PARAMETER, environment);
+			}
+			if (variants) {
+				srcURL.searchParams.set('FE_VARIANT', variants);
+			}
+			iframe.src = srcURL.toString();
+		}
+	};
+
+	window.feUtils.waitForConditions({
+		conditions: [`iframe#${IFRAME_ID}`],
+		activity: 'fe-altloader',
+		callback: alterIframeSrc,
+	});
+}
+
 function detectActivitiesToActivate() {
 	const locations = detectLocation();
 	const sites = detectSites();
@@ -658,6 +686,7 @@ const loadActivityOrVariation = (activity) => {
 
 const loadActivities = () => {
 	const params = new URLSearchParams(window.location.search);
+	passQueryParametersToIFrame();
 	if (params.has(ENV_QUERY_PARAMETER) && params.get(ENV_QUERY_PARAMETER) === 'disable') {
 		return;
 	}
