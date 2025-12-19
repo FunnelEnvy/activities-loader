@@ -437,7 +437,8 @@ function detectTypeOfEnvironment() {
 	return "PROD";
 }
 
-function passQueryParametersToIFrame() {
+function passQueryParametersToB2BConfiguratorIFrame() {
+	// only run on cart configuration page
 	if (window.location.pathname.indexOf('/cart/configure') === -1) return;
 	const IFRAME_ID = 'configure_cart';
 	const alterIframeSrc = () => {
@@ -445,14 +446,14 @@ function passQueryParametersToIFrame() {
 		if (iframe && iframe.src) {
 			const pageParams = new URLSearchParams(window.location.search);
 			const srcURL = new URL(iframe.src);
-			const variants = pageParams.has('FE_VARIANT') ? pageParams.get('FE_VARIANT') : null;
+			const variants = pageParams.has(VARIATIONS_QUERY_PARAMETER) ? pageParams.get(VARIATIONS_QUERY_PARAMETER) : null;
 			const environment = pageParams.has(ENV_QUERY_PARAMETER) ? pageParams.get(ENV_QUERY_PARAMETER) : null;
 
 			if (environment) {
 				srcURL.searchParams.set(ENV_QUERY_PARAMETER, environment);
 			}
 			if (variants) {
-				srcURL.searchParams.set('FE_VARIANT', variants);
+				srcURL.searchParams.set(VARIATIONS_QUERY_PARAMETER, variants);
 			}
 			iframe.src = srcURL.toString();
 		}
@@ -686,7 +687,7 @@ const loadActivityOrVariation = (activity) => {
 
 const loadActivities = () => {
 	const params = new URLSearchParams(window.location.search);
-	passQueryParametersToIFrame();
+	passQueryParametersToB2BConfiguratorIFrame();
 	if (params.has(ENV_QUERY_PARAMETER) && params.get(ENV_QUERY_PARAMETER) === 'disable') {
 		return;
 	}
