@@ -437,35 +437,6 @@ function detectTypeOfEnvironment() {
 	return "PROD";
 }
 
-function passQueryParametersToB2BConfiguratorIFrame() {
-	// only run on cart configuration page
-	if (window.location.pathname.indexOf('/cart/configure') === -1) return;
-	const IFRAME_ID = 'configure_cart';
-	const alterIframeSrc = () => {
-	const iframe = document.getElementById(IFRAME_ID);
-		if (iframe && iframe.src) {
-			const pageParams = new URLSearchParams(window.location.search);
-			const srcURL = new URL(iframe.src);
-			const variants = pageParams.has(VARIATIONS_QUERY_PARAMETER) ? pageParams.get(VARIATIONS_QUERY_PARAMETER) : null;
-			const environment = pageParams.has(ENV_QUERY_PARAMETER) ? pageParams.get(ENV_QUERY_PARAMETER) : null;
-
-			if (environment) {
-				srcURL.searchParams.set(ENV_QUERY_PARAMETER, environment);
-			}
-			if (variants) {
-				srcURL.searchParams.set(VARIATIONS_QUERY_PARAMETER, variants);
-			}
-			iframe.src = srcURL.toString();
-		}
-	};
-
-	window.feUtils.waitForConditions({
-		conditions: [`iframe#${IFRAME_ID}`],
-		activity: 'fe-altloader',
-		callback: alterIframeSrc,
-	});
-}
-
 function detectActivitiesToActivate() {
 	const locations = detectLocation();
 	const sites = detectSites();
@@ -687,7 +658,6 @@ const loadActivityOrVariation = (activity) => {
 
 const loadActivities = () => {
 	const params = new URLSearchParams(window.location.search);
-	passQueryParametersToB2BConfiguratorIFrame();
 	if (params.has(ENV_QUERY_PARAMETER) && params.get(ENV_QUERY_PARAMETER) === 'disable') {
 		return;
 	}
