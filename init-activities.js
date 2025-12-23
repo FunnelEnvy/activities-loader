@@ -396,50 +396,45 @@ function detectLocation() {
 }
 
 function detectTypeOfEnvironment() {
-	const VALID_ENVS = ['DEV', 'QA', 'PROD'];
-	const SESSION_KEY = 'fe-altloader-env';
-	const sessionValue = sessionStorage.getItem(SESSION_KEY);
-	const params = new URLSearchParams(window.location.search);
-
-	if (params.has(ENV_QUERY_PARAMETER)) {
-		const paramValue = params.get(ENV_QUERY_PARAMETER);
-		const value = paramValue.split('-')[0].toUpperCase();
-
-		if (!VALID_ENVS.includes(value)) {
-			console.warn(`Invalid environment: ${value}`);
-			return 'PROD';
-		}
-
-		if (paramValue.endsWith('-save')) {
-			sessionStorage.setItem(SESSION_KEY, value);
-		} else {
-			sessionStorage.removeItem(SESSION_KEY);
-		}
-		return value;
+	//use cookies first
+	const envs = ['DEV', 'QA', 'PROD'];
+	const cookieName = 'fe-alt-load-env';
+	const cooked = getCookie(cookieName)
+	if (window.location.href.indexOf('FE_LOADER=DEV_COOKIE') > 0) {
+		setCookie(cookieName, 'DEV', 1);
+		return "DEV";
+	} else if (window.location.href.indexOf('FE_LOADER=QA_COOKIE') > 0) {
+		setCookie(cookieName, 'QA', 1);
+		return "QA";
+	} else if (window.location.href.indexOf('FE_LOADER=PROD') > 0) {
+		setCookie(cookieName, '', 1);
+		return "PROD";
+	} else if (window.location.href.indexOf('FE_LOADER=') > 0) {
+		setCookie(cookieName, '', 1)
+	}
+	if (cooked && cooked.length > 1 && envs.indexOf(cooked) >= 0) {
+		return cooked;//whatever saved in cookie
 	}
 
-	if (sessionValue && VALID_ENVS.includes(sessionValue)) {
-		return sessionValue;
-	}
+	//otherwise try normal way
+	const urlFlagsDev = environments.DEV.urlFlags;
+	let isDev = false;
+	const urlFlagsQa = environments.QA.urlFlags;
+	let isQa = false;
 
-	return 'PROD';
-}
-
-function createEnvironmentIndicator() {
-	const env = detectTypeOfEnvironment();
-	if (env === 'PROD') return;
-	const indicator = document.createElement('div');
-	indicator.textContent = `FunnelEnvy Altloader Environment: ${env}`;
-	Object.assign(indicator.style, {
-		position: 'fixed',
-		top: '10px',
-		left: '10px',
-		fontSize: '12px',
-		color: 'red',
-		zIndex: '999999',
-		pointerEvents: 'none'
+	urlFlagsDev.map(function (uf) {
+		if (window.location.href.indexOf(uf) >= 0)
+			isDev = true;
 	});
-	document.body.appendChild(indicator)
+	if (isDev) return 'DEV';
+
+	urlFlagsQa.map(function (uf) {
+		if (window.location.href.indexOf(uf) >= 0)
+			isQa = true;
+	});
+	if (isQa) return 'QA';
+
+	return "PROD";
 }
 
 function passQueryParametersToB2BConfiguratorIFrame() {
@@ -696,7 +691,6 @@ const loadActivities = () => {
 	if (params.has(ENV_QUERY_PARAMETER) && params.get(ENV_QUERY_PARAMETER) === 'disable') {
 		return;
 	}
-	createEnvironmentIndicator();
 	const acts = detectActivitiesToActivate();
 	const sites = detectSites().map(s => s.name).join();
 	const activitiesWithAudience = acts.filter(a => a.audiences && a.audiences.length > 0);
