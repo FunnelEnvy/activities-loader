@@ -396,7 +396,6 @@ function detectLocation() {
 }
 
 function detectTypeOfEnvironment() {
-	const ENV_QUERY_PARAMETER = 'fe_env';
 	const VALID_ENVS = ['DEV', 'QA', 'PROD'];
 	const SESSION_KEY = 'fe-altloader-env';
 	const sessionValue = sessionStorage.getItem(SESSION_KEY);
