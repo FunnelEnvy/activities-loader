@@ -396,34 +396,39 @@ function detectLocation() {
 }
 
 function detectTypeOfEnvironment() {
-	const envs = ['DEV', 'QA', 'PROD'];
-	const sessionName = 'fe-altloader-env';
-	const sessionValue = sessionStorage.getItem(sessionName) ?? null;
-	// check query parameter
+	const ENV_QUERY_PARAMETER = 'fe_env';
+	const VALID_ENVS = ['DEV', 'QA', 'PROD'];
+	const SESSION_KEY = 'fe-altloader-env';
+	const sessionValue = sessionStorage.getItem(SESSION_KEY);
 	const params = new URLSearchParams(window.location.search);
+
 	if (params.has(ENV_QUERY_PARAMETER)) {
 		const paramValue = params.get(ENV_QUERY_PARAMETER);
-		// get value, should work if '-save' is added or not
-		const value = paramValue.split('-')[0];
-		// persist value
+		const value = paramValue.split('-')[0].toUpperCase();
+
+		if (!VALID_ENVS.includes(value)) {
+			console.warn(`Invalid environment: ${value}`);
+			return 'PROD';
+		}
+
 		if (paramValue.endsWith('-save')) {
-			sessionStorage.setItem(sessionName, value)
+			sessionStorage.setItem(SESSION_KEY, value);
 		} else {
-			sessionStorage.removeItem(sessionName);
+			sessionStorage.removeItem(SESSION_KEY);
 		}
 		return value;
 	}
-	// if session storage has a value and it is valid, return and use that value
-	if (sessionValue && envs.indexOf(sessionValue) > -1) {
+
+	if (sessionValue && VALID_ENVS.includes(sessionValue)) {
 		return sessionValue;
 	}
-	// default to production
-	return "PROD";
+
+	return 'PROD';
 }
 
 function createEnvironmentIndicator() {
 	const env = detectTypeOfEnvironment();
-	if (env.toLowerCase().indexOf('prod') > -1) return;
+	if (env === 'PROD') return;
 	const indicator = document.createElement('div');
 	indicator.textContent = `FunnelEnvy Altloader Environment: ${env}`;
 	Object.assign(indicator.style, {
