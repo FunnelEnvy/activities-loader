@@ -661,6 +661,8 @@ function loadVariation(activity) {
 
 // Call this after all activities have been processed
 function sendVariantLoadTracking() {
+	console.log('send variant load tracking');
+	console.log(loadedVariants);
 	if (loadedVariants.length === 0) return;
 
 	const cookie = getJSONFromMemory(COOKIE_NAME) ?? {};
@@ -730,6 +732,7 @@ const loadActivityOrVariation = (activity) => {
 }
 
 const loadActivities = () => {
+	console.log('loadActivities');
 	const params = new URLSearchParams(window.location.search);
 	passQueryParametersToB2BConfiguratorIFrame();
 	if (params.has(ENV_QUERY_PARAMETER) && params.get(ENV_QUERY_PARAMETER) === 'disable') {
