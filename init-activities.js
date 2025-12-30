@@ -661,9 +661,16 @@ function loadVariation(activity) {
 
 // Call this after all activities have been processed
 function sendVariantLoadTracking() {
-	console.log('send variant load tracking');
-	console.log(loadedVariants);
 	if (loadedVariants.length === 0) return;
+
+	// Deduplicate: prevent multiple API calls if script loads twice
+	const TRACKING_KEY = 'fe_tracking_sent';
+	const pageLoadId = `${window.location.href}_${performance.timeOrigin}`;
+
+	if (sessionStorage.getItem(TRACKING_KEY) === pageLoadId) {
+		return; // Already sent for this page load
+	}
+	sessionStorage.setItem(TRACKING_KEY, pageLoadId);
 
 	const cookie = getJSONFromMemory(COOKIE_NAME) ?? {};
 	const env = detectTypeOfEnvironment();
@@ -681,7 +688,7 @@ function sendVariantLoadTracking() {
 		conversion_type = 'order';
 	}
 
-	fetch('https://funnelenvy.retool.com/url/track-conversion-v2', {
+	fetch('https://funnelenvy.retool.com/url/track-conversion', {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
 		body: JSON.stringify({
@@ -732,7 +739,6 @@ const loadActivityOrVariation = (activity) => {
 }
 
 const loadActivities = () => {
-	console.log('loadActivities');
 	const params = new URLSearchParams(window.location.search);
 	passQueryParametersToB2BConfiguratorIFrame();
 	if (params.has(ENV_QUERY_PARAMETER) && params.get(ENV_QUERY_PARAMETER) === 'disable') {
