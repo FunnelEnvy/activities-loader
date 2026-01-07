@@ -676,10 +676,24 @@ function sendVariantLoadTracking() {
 	const env = detectTypeOfEnvironment();
 
 	// Determine if this is a conversion page
+
+	fetch('https://funnelenvy.retool.com/url/track-hits', {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({
+			cookie,
+			env,
+			variants: loadedVariants,
+		}),
+	});
+}
+
+function sendConversionTracking() {
 	const pathname = window.location.pathname ?? '';
 	let conversion_type = '';
 	let internal_id = '';
-
+	let env = window.FeActivityLoader.detectTypeOfEnvironment();
+	const cookie = getJSONFromStorage(COOKIE_NAME) ?? {};
 	if (pathname.includes('/quoteConfirmSummary')) {
 		internal_id = pathname.match(/\/quote\/([^\/]+)\/quoteConfirmSummary$/)?.[1] ?? '';
 		conversion_type = 'quote';
@@ -687,18 +701,22 @@ function sendVariantLoadTracking() {
 		internal_id = pathname.match(/\/checkout\/orderConfirmation\/([^\/]+)$/)?.[1] ?? '';
 		conversion_type = 'order';
 	}
-
-	fetch('https://funnelenvy.retool.com/url/track-conversion', {
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify({
-			internal_id,
-			conversion_type,
-			cookie,
-			env,
-			variants: loadedVariants,
-		}),
-	});
+	if (conversion_type === '') return;
+	const activities = Object.keys(cookie?.variations ?? {});
+	if (activities.filter(a => a.startsWith('3')).length > 0) {
+		fetch('https://funnelenvy.retool.com/url/track-conversion', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({
+				internal_id,
+				conversion_type,
+				cookie,
+				env,
+			}),
+		});
+	}
 }
 
 window.FeActivityLoader = window.FeActivityLoader || {};
@@ -777,6 +795,7 @@ const loadActivities = () => {
 		});
 	}
 	
+	sendConversionTracking();
 	sendVariantLoadTracking();
 	// Clean up any stored variations for activities that no longer exist or are disabled
 	cleanupStoredVariations();
