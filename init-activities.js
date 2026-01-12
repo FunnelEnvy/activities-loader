@@ -539,7 +539,8 @@ function attachJsFile(src) {
 		rc.appendChild(sc);
 }
 
-
+// Module level - tracks variants loaded this page session
+const loadedVariants = [];
 
 function loadVariation(activity) {
 	const activityName = activity.activity;
@@ -547,15 +548,17 @@ function loadVariation(activity) {
 	const storageValue = getJSONFromMemory(COOKIE_NAME) || { variations: {} };
 	const storageVariations = storageValue.variations || {};
 
+	// Check if variant already exists in cookie BEFORE any modifications
+	const existingVariant = storageVariations?.[activityName];
+	const hadValidVariant = existingVariant && variations?.[existingVariant];
+
 	// --- Helper: Weighted random selection ---
 	function selectVariation() {
-		// Calculate total weight first
 		let totalWeight = 0;
 		for (const key in variations) {
 			totalWeight += variations[key].weight;
 		}
 
-		// Generate random number in range [0, totalWeight)
 		let rand = Math.random() * totalWeight;
 		let sum = 0;
 
@@ -566,11 +569,9 @@ function loadVariation(activity) {
 			}
 		}
 
-		// Fallback: return the last key if somehow we get here
 		return Object.keys(variations)[Object.keys(variations).length - 1];
 	}
 
-	// --- Helper: Load JS file for variant ---
 	function loadVariantScript(activity, variantKey) {
 		const basePath = `${bucketPath}/${activity.group.toLowerCase()}/v2`;
 		const env = detectTypeOfEnvironment();
@@ -578,7 +579,6 @@ function loadVariation(activity) {
 		attachJsFile(`${basePath}/${filename}`);
 	}
 
-	// --- Helper: Query Param FE_VARIANT parser ---
 	function getQueryParamVariantOverride() {
 		const match = window.location.href.match(/[?&]FE_VARIANT=([^&#]+)/);
 		if (!match) return null;
@@ -598,59 +598,125 @@ function loadVariation(activity) {
 	function setClarityTags(experiment, variant) {
 		try {
 			window.feUtils.waitForConditions({
-				conditions: [
-					() => typeof window.clarity === 'function',
-				],
+				conditions: [() => typeof window.clarity === 'function'],
 				activity: 'fe_altloader',
 				callback: () => {
 					window.clarity('set', 'experiment_id', experiment);
 					window.clarity('set', 'variant_id', variant);
 				},
 			});
-		} catch(err) {}
+		} catch (err) {}
 	}
 
 	function setTrackMetricsLink(experiment, variant) {
 		try {
 			window.feUtils.waitForConditions({
-				conditions: [
-					() => typeof window.trackMetrics === 'function',
-				],
+				conditions: [() => typeof window.trackMetrics === 'function'],
 				activity: 'fe_altloader',
 				callback: () => {
 					window.trackMetrics('new.link', { link_name: `mp:fe-experiment:fe-altloader:${experiment}:${variant}` });
 				},
 			});
-		} catch(err) {}
+		} catch (err) {}
 	}
 
-	// --- 1. Handle FE_VARIANT override ---
+	// --- 1. Handle FE_VARIANT override (no tracking) ---
 	const variantOverride = getQueryParamVariantOverride();
 	const overrideVariant = variantOverride?.[activityName];
 
 	if (overrideVariant && variations?.[overrideVariant]) {
-		// set storage to value used in override
 		storageVariations[activityName] = overrideVariant;
 		setJSONToMemory(COOKIE_NAME, { ...storageValue, variations: storageVariations });
 		setClarityTags(activityName, overrideVariant);
 		setTrackMetricsLink(activityName, overrideVariant);
-		// Load overridden variant without modifying storage
-		loadVariantScript(activity, overrideVariant, env);
+		loadVariantScript(activity, overrideVariant);
+		// No tracking for overrides
 		return;
 	}
 
-	// --- 2. Normal flow using storage or selection ---
-	let selectedVariation = storageVariations?.[activityName];
+	// --- 2. Normal flow ---
+	let selectedVariation;
 
-	if (!selectedVariation || !variations?.[selectedVariation]) {
-		selectedVariation = selectVariation(variations);
+	if (hadValidVariant) {
+		selectedVariation = existingVariant;
+	} else {
+		selectedVariation = selectVariation();
 		storageVariations[activityName] = selectedVariation;
 		setJSONToMemory(COOKIE_NAME, { ...storageValue, variations: storageVariations });
+	}
+
+	// Track this load (only for trackable activities starting with '3')
+	if (activityName.startsWith('3')) {
+		loadedVariants.push({
+			activity: activityName,
+			variant: selectedVariation,
+			isNew: !hadValidVariant,
+		});
 	}
 
 	setClarityTags(activityName, selectedVariation);
 	setTrackMetricsLink(activityName, selectedVariation);
 	loadVariantScript(activity, selectedVariation);
+}
+
+// Call this after all activities have been processed
+function sendVariantLoadTracking() {
+	if (loadedVariants.length === 0) return;
+
+	// Deduplicate: prevent multiple API calls if script loads twice
+	const TRACKING_KEY = 'fe_tracking_sent';
+	const pageLoadId = `${window.location.href}_${performance.timeOrigin}`;
+
+	if (sessionStorage.getItem(TRACKING_KEY) === pageLoadId) {
+		return; // Already sent for this page load
+	}
+	sessionStorage.setItem(TRACKING_KEY, pageLoadId);
+
+	const cookie = getJSONFromMemory(COOKIE_NAME) ?? {};
+	const env = detectTypeOfEnvironment();
+
+	// Determine if this is a conversion page
+
+	fetch('https://funnelenvy.retool.com/url/track-hits', {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({
+			cookie,
+			env,
+			variants: loadedVariants,
+		}),
+	});
+}
+
+function sendConversionTracking() {
+	const pathname = window.location.pathname ?? '';
+	let conversion_type = '';
+	let internal_id = '';
+	let env = window.FeActivityLoader.detectTypeOfEnvironment();
+	const cookie = getJSONFromStorage(COOKIE_NAME) ?? {};
+	if (pathname.includes('/quoteConfirmSummary')) {
+		internal_id = pathname.match(/\/quote\/([^\/]+)\/quoteConfirmSummary$/)?.[1] ?? '';
+		conversion_type = 'quote';
+	} else if (pathname.includes('/orderConfirmation')) {
+		internal_id = pathname.match(/\/checkout\/orderConfirmation\/([^\/]+)$/)?.[1] ?? '';
+		conversion_type = 'order';
+	}
+	if (conversion_type === '') return;
+	const activities = Object.keys(cookie?.variations ?? {});
+	if (activities.filter(a => a.startsWith('3')).length > 0) {
+		fetch('https://funnelenvy.retool.com/url/track-conversion', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({
+				internal_id,
+				conversion_type,
+				cookie,
+				env,
+			}),
+		});
+	}
 }
 
 window.FeActivityLoader = window.FeActivityLoader || {};
@@ -729,6 +795,8 @@ const loadActivities = () => {
 		});
 	}
 	
+	sendConversionTracking();
+	sendVariantLoadTracking();
 	// Clean up any stored variations for activities that no longer exist or are disabled
 	cleanupStoredVariations();
 }
