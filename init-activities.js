@@ -796,7 +796,7 @@ const loadActivities = () => {
 	}
 	
 	sendConversionTracking();
-	sendVariantLoadTracking();
+	// sendVariantLoadTracking();
 	// Clean up any stored variations for activities that no longer exist or are disabled
 	cleanupStoredVariations();
 }
