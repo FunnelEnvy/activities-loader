@@ -176,31 +176,28 @@ function cleanupStoredVariations() {
 	setJSONToMemory(COOKIE_NAME, { ...storageValue, variations: cleanedVariations });
 }
 
-function detectAudiences(userAudience, activityAudiences) {
-	// Fetch the audiences using the getAudiences function
+function detectAudiences(accountUnitId, activityAudiences) {
 	const audiences = getAudiences();
 
-	// Loop through each activityAudience to check if the user is in any audience
 	for (let audience of activityAudiences) {
 		if (typeof audience === "string") {
 			const audienceEntry = audiences[audience];
-			if (audienceEntry && evaluateAudience(userAudience, audienceEntry)) {
-				return true; // User is in one of the audiences
+			if (audienceEntry && evaluateAudience(accountUnitId, audienceEntry)) {
+				return true;
 			}
 		} else if (typeof audience === "object") {
-			if (evaluateAudience(userAudience, audience)) {
-				return true; // User is custom defined audience
+			if (evaluateAudience(accountUnitId, audience)) {
+				return true;
 			}
 		}
 	}
 
-	// If no matching audience is found, return false
 	return false;
 }
 
-function evaluateAudience(userAudience, audienceEntry) {
-	const user = String(userAudience ?? '').trim();
-	const userOrg = user.slice(0, 10);
+function evaluateAudience(accountUnitId, audienceEntry) {
+	accountUnitId = String(accountUnitId ?? '').trim();
+	const orgPartyId = accountUnitId.slice(0, 10);
 
 	const {
 		account_unit_id_include = [],
@@ -223,17 +220,16 @@ function evaluateAudience(userAudience, audienceEntry) {
 	if (noRestrictions) return true;
 
 	// Evaluate all four conditions
-	const auiIncludeMatch = auiInc.length > 0 && auiInc.some(x => x === user);
-	const auiExcludeMatch = auiExc.length > 0 && auiExc.some(x => x === user);
+	const auiIncludeMatch = auiInc.length > 0 && auiInc.some(x => x === accountUnitId);
+	const auiExcludeMatch = auiExc.length > 0 && auiExc.some(x => x === accountUnitId);
 
-	// org_party: list entries should start with the user's first 10 chars
-	const opiIncludeMatch = opiInc.length > 0 && opiInc.some(x => x.startsWith(userOrg));
-	const opiExcludeMatch = opiExc.length > 0 && opiExc.some(x => x.startsWith(userOrg));
+	const opiIncludeMatch = opiInc.length > 0 && opiInc.some(x => x.startsWith(orgPartyId));
+	const opiExcludeMatch = opiExc.length > 0 && opiExc.some(x => x.startsWith(orgPartyId));
 
 	// Exclusions always win
 	if (auiExcludeMatch || opiExcludeMatch) return false;
 
-	// If any include lists exist, must match at least one include (AU or OP)
+	// If any include lists exist, must match at least one include
 	const hasAnyInclude = auiInc.length > 0 || opiInc.length > 0;
 	if (hasAnyInclude) return auiIncludeMatch || opiIncludeMatch;
 
@@ -241,25 +237,22 @@ function evaluateAudience(userAudience, audienceEntry) {
 	return true;
 }
 
-function detectConfiguratorCustomerAudience(userAudience, activityAudiences) {
-	// Fetch the audiences using the getAudiences function
+function detectConfiguratorCustomerAudience(accountUnitId, activityAudiences) {
 	const audiences = getAudiences();
 
-	// Loop through each activityAudience to check if the user is in any audience
 	for (let audience of activityAudiences) {
 		if (typeof audience === "string") {
 			const audienceEntry = audiences[audience];
-			if (audienceEntry && evaluateAudience(userAudience, audienceEntry)) {
-				return true; // User is in one of the audiences
+			if (audienceEntry && evaluateAudience(accountUnitId, audienceEntry)) {
+				return true;
 			}
 		} else if (typeof audience === "object") {
-			if (evaluateAudience(userAudience, audience)) {
-				return true; // User is in custom defined audience
+			if (evaluateAudience(accountUnitId, audience)) {
+				return true;
 			}
 		}
 	}
 
-	// If no matching audience is found, return false
 	return false;
 }
 
@@ -702,20 +695,10 @@ window.FeActivityLoader.detectTypeOfSite = detectTypeOfSite;
 window.FeActivityLoader.detectTypeOfEnvironment = detectTypeOfEnvironment;
 window.FeActivityLoader.detectActivitiesToActivate = detectActivitiesToActivate;
 
-const getCustomerPartyIDFromURL = (url) => {
+const getAccountIDFromURL = (url) => {
 	const configuratorUrl = url ? url : window.location.href;
-	const queryString = configuratorUrl.split('?')[1];
-	const searchParams = new URLSearchParams(queryString);
-
-	if (searchParams.has('OptimusParameters')) {
-		const optimusParameters = JSON.parse(decodeURIComponent(searchParams.get('OptimusParameters')));
-		return optimusParameters.customerPartyID || null;
-	}
-
-	if (searchParams.has('customerPartyID')) {
-		return searchParams.get('customerPartyID');
-	}
-	return null;
+	const searchParams = new URLSearchParams(configuratorUrl.split('?')[1]);
+	return searchParams.get('orgid') || null;
 }
 
 const env = detectTypeOfEnvironment();
@@ -747,7 +730,7 @@ const loadActivities = () => {
 	// add activities to page after checking URL for audience
 	if (sites.indexOf('CONFIGURATOR') > -1) {
 		activitiesWithAudience.forEach(activity => {
-			if (detectConfiguratorCustomerAudience(getCustomerPartyIDFromURL(), activity.audiences)) {
+			if (detectConfiguratorCustomerAudience(getAccountIDFromURL(), activity.audiences)) {
 				loadActivityOrVariation(activity);
 			}
 		});
