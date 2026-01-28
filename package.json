@@ -12,7 +12,9 @@
 		"src/libs"
 	],
 	"scripts": {
-		"build": "node build.js"
+		"build": "node build.js",
+		"setup:local": "node scripts/setup-local.js",
+		"build:local": "node scripts/setup-local.js && node build.js --lib"
 	},
 	"resolutions": {
 		"braces": "3.0.3"
