@@ -245,45 +245,17 @@ function detectConfiguratorCustomerAudience(userAudience, activityAudiences) {
 	// Fetch the audiences using the getAudiences function
 	const audiences = getAudiences();
 
-	// Extract first 10 digits of userAudience for org_party matching
-	const userAudienceOrg = userAudience.slice(0, 10);
-
-	// Helper function to check inclusion/exclusion for a specific audience entry
-	const isInAudience = (audienceEntry) => {
-		const {
-			account_unit_id_include = [],
-			account_unit_id_exclude = [],
-			org_party_id_include = [],
-			org_party_id_exclude = []
-		} = audienceEntry;
-
-		let accountUnitMatch = false;
-		let orgPartyMatch = false;
-
-		// Check account_unit conditions (exact match)
-		if (account_unit_id_include.length > 0) {
-			accountUnitMatch = account_unit_id_include.some(user => user.trim().startsWith(userAudience.trim()));
-		}
-		if (account_unit_id_exclude.length > 0) {
-			accountUnitMatch = !account_unit_id_exclude.some(user => user.trim().startsWith(userAudience.trim()));
-		}
-		// Check org_party_id conditions (first 10 digits)
-		if (org_party_id_include.length > 0) {
-			orgPartyMatch = org_party_id_include.some(org => org.trim().startsWith(userAudienceOrg.trim()));
-		}
-		if (org_party_id_exclude.length > 0) {
-			orgPartyMatch = !org_party_id_exclude.some(org => org.trim().startsWith(userAudienceOrg.trim()));
-		}
-
-		// User must meet either account_unit or org_party_id conditions to be included
-		return accountUnitMatch || orgPartyMatch;
-	};
-
 	// Loop through each activityAudience to check if the user is in any audience
-	for (let audienceKey of activityAudiences) {
-		const audienceEntry = audiences[audienceKey];
-		if (audienceEntry && isInAudience(audienceEntry)) {
-			return true; // User is in one of the audiences
+	for (let audience of activityAudiences) {
+		if (typeof audience === "string") {
+			const audienceEntry = audiences[audience];
+			if (audienceEntry && evaluateAudience(userAudience, audienceEntry)) {
+				return true; // User is in one of the audiences
+			}
+		} else if (typeof audience === "object") {
+			if (evaluateAudience(userAudience, audience)) {
+				return true; // User is in custom defined audience
+			}
 		}
 	}
 
