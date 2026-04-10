@@ -4,5 +4,5 @@
 !/src/README.md
 .env
 .idea
-.claude
+.claude/settings.local.json
 build-errors.json
