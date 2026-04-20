@@ -71,17 +71,6 @@ function setCookie(name, value, days) {
 	document.cookie = name + '=' + (value || '') + expires + '; path=/';
 }
 
-function getJSONFromMemory(name) {
-	const value = getJSONFromCookie(name);
-	if (value !== null) return value;
-	return getJSONFromStorage(name);
-}
-
-function setJSONToMemory(name, data) {
-	setJSONCookie(name, data);
-	setJSONStorage(name, data);
-}
-
 function getJSONFromCookie(cookieName) {
 	const cookies = document.cookie.split(';');
 
@@ -146,7 +135,7 @@ function setJSONStorage(key, data) {
 }
 
 function cleanupStoredVariations() {
-	const storageValue = getJSONFromMemory(COOKIE_NAME);
+	const storageValue = getJSONFromStorage(COOKIE_NAME);
 	if (!storageValue || !storageValue.variations) return;
 
 	const storedVariations = storageValue.variations;
@@ -173,7 +162,9 @@ function cleanupStoredVariations() {
 	});
 
 	// Update storage with cleaned variations
-	setJSONToMemory(COOKIE_NAME, { ...storageValue, variations: cleanedVariations });
+	if (Object.keys(cleanedVariations).length !== Object.keys(storedVariations).length) {
+		setJSONStorage(COOKIE_NAME, { ...storageValue, variations: cleanedVariations });
+	}
 }
 
 function detectAudiences(accountUnitId, activityAudiences) {
@@ -510,7 +501,7 @@ const loadedVariants = [];
 function loadVariation(activity) {
 	const activityName = activity.activity;
 	const variations = activity.variants;
-	const storageValue = getJSONFromMemory(COOKIE_NAME) || { variations: {} };
+	const storageValue = getJSONFromStorage(COOKIE_NAME) || { variations: {} };
 	const storageVariations = storageValue.variations || {};
 
 	// Check if variant already exists in cookie BEFORE any modifications
@@ -591,7 +582,7 @@ function loadVariation(activity) {
 
 	if (overrideVariant && variations?.[overrideVariant]) {
 		storageVariations[activityName] = overrideVariant;
-		setJSONToMemory(COOKIE_NAME, { ...storageValue, variations: storageVariations });
+		setJSONStorage(COOKIE_NAME, { ...storageValue, variations: storageVariations });
 		setClarityTags(activityName, overrideVariant);
 		setTrackMetricsLink(activityName, overrideVariant);
 		loadVariantScript(activity, overrideVariant);
@@ -607,7 +598,7 @@ function loadVariation(activity) {
 	} else {
 		selectedVariation = selectVariation();
 		storageVariations[activityName] = selectedVariation;
-		setJSONToMemory(COOKIE_NAME, { ...storageValue, variations: storageVariations });
+		setJSONStorage(COOKIE_NAME, { ...storageValue, variations: storageVariations });
 	}
 
 	// Track this load (only for trackable activities starting with '3')
