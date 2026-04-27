@@ -673,12 +673,22 @@ function sendConversionTracking() {
 	if (activities.filter(a => a.startsWith('3')).length > 0) {
 		const body = JSON.stringify({ internal_id, conversion_type, cookie, env });
 		const nowSec = Math.floor(Date.now() / 1000);
-		const lastSentSec = conversionTrackingSentBody[body];
+		const CONVERSION_TRACKING_KEY = 'fe_conversion_tracking_sent';
+		let storageBackup = {};
+		try {
+			storageBackup = JSON.parse(sessionStorage.getItem(CONVERSION_TRACKING_KEY) || '{}');
+		} catch (err) {
+			storageBackup = {};
+		}
+		const lastSentSec = conversionTrackingSentBody[body] ?? storageBackup[body];
 		if (lastSentSec && nowSec - lastSentSec < 60) return;
 		conversionTrackingSentBody[body] = nowSec;
-		// const CONVERSION_TRACKING_KEY = 'fe_conversion_tracking_sent';
-		// if (sessionStorage.getItem(CONVERSION_TRACKING_KEY) === body) return;
-		// sessionStorage.setItem(CONVERSION_TRACKING_KEY, body);
+		storageBackup[body] = nowSec;
+		try {
+			sessionStorage.setItem(CONVERSION_TRACKING_KEY, JSON.stringify(storageBackup));
+		} catch (err) {
+			// sessionStorage unavailable; in-memory dedup still applies
+		}
 		fetch('https://funnelenvy.retool.com/url/track-conversion', {
 			method: 'POST',
 			headers: {
