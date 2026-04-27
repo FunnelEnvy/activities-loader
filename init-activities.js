@@ -506,6 +506,8 @@ function attachJsFile(src) {
 
 // Module level - tracks variants loaded this page session
 const loadedVariants = [];
+// Module level - dedup guard for conversion tracking (body -> epoch seconds of last send)
+const conversionTrackingSentBody = {};
 
 function loadVariation(activity) {
 	const activityName = activity.activity;
@@ -669,17 +671,20 @@ function sendConversionTracking() {
 	if (conversion_type === '') return;
 	const activities = Object.keys(cookie?.variations ?? {});
 	if (activities.filter(a => a.startsWith('3')).length > 0) {
+		const body = JSON.stringify({ internal_id, conversion_type, cookie, env });
+		const nowSec = Math.floor(Date.now() / 1000);
+		const lastSentSec = conversionTrackingSentBody[body];
+		if (lastSentSec && nowSec - lastSentSec < 60) return;
+		conversionTrackingSentBody[body] = nowSec;
+		// const CONVERSION_TRACKING_KEY = 'fe_conversion_tracking_sent';
+		// if (sessionStorage.getItem(CONVERSION_TRACKING_KEY) === body) return;
+		// sessionStorage.setItem(CONVERSION_TRACKING_KEY, body);
 		fetch('https://funnelenvy.retool.com/url/track-conversion', {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
 			},
-			body: JSON.stringify({
-				internal_id,
-				conversion_type,
-				cookie,
-				env,
-			}),
+			body,
 		});
 	}
 }
