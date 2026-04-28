@@ -670,7 +670,7 @@ function sendConversionTracking() {
 	}
 	if (conversion_type === '') return;
 	const activities = Object.keys(cookie?.variations ?? {});
-	if (activities.filter(a => a.startsWith('3')).length > 0) {
+	if (activities.filter(a => a.startsWith('3')||a.startsWith('5')).length > 0) {
 		const body = JSON.stringify({ internal_id, conversion_type, cookie, env });
 		const nowSec = Math.floor(Date.now() / 1000);
 		const CONVERSION_TRACKING_KEY = 'fe_conversion_tracking_sent';
