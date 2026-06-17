@@ -278,6 +278,14 @@ const buildLibFiles = async () => {
 		output: {
 			file: 'dist/fe_altloader.js',
 			format: 'iife',
+			// Idempotency guard. The host page (e.g. B2B-PROD) can include/evaluate
+			// fe_altloader.js more than once per page load. Because this bundle is an
+			// IIFE with src/libs (run_analytics_events, etc.) inlined ahead of the
+			// loader body, a second evaluation would re-bind the delegated analytics
+			// click listener and re-fire side effects (cohort marker, conversion
+			// tracking). `intro` runs at the very top of the IIFE — before any inlined
+			// module code — so this early return makes the whole bundle run-once.
+			intro: 'if (window.__feAltloaderInitialized) { return; } window.__feAltloaderInitialized = true;',
 			sourcemap: true,
 			sourcemapBaseUrl: 'https://fe-hpe-script.s3.us-east-2.amazonaws.com',
 		},
