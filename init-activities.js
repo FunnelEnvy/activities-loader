@@ -461,8 +461,10 @@ function passQueryParametersToB2BConfiguratorIFrame() {
 
 	window.feUtils.waitForConditions({
 		conditions: [`iframe#${IFRAME_ID}`],
-		activity: 'fe-altloader',
+		activity: 'fe_altloader',
 		callback: () => {
+			// Assumes Hybris mutates the src of this existing element rather than swapping in a
+			// new iframe node; the observed behavior sets .src after a token fetch.
 			const iframe = document.getElementById(IFRAME_ID);
 			if (!iframe) return;
 
@@ -472,7 +474,8 @@ function passQueryParametersToB2BConfiguratorIFrame() {
 			// JS-set-late case: Hybris assigns/re-assigns the src asynchronously (after the
 			// token fetch), which the one-shot callback would otherwise miss. Watch the src
 			// attribute and re-apply whenever it changes without our params. The idempotency
-			// guard in applyParams terminates the loop after our own write.
+			// guard in applyParams terminates the loop after our own write. Left connected for
+			// the page lifetime on purpose, so any later re-assignment is also corrected.
 			const observer = new MutationObserver(() => applyParams(iframe));
 			observer.observe(iframe, { attributes: true, attributeFilter: ['src'] });
 		},
