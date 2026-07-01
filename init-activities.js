@@ -410,29 +410,75 @@ function createEnvironmentIndicator() {
 function passQueryParametersToB2BConfiguratorIFrame() {
 	// only run on cart configuration page
 	if (window.location.pathname.indexOf('/cart/configure') === -1) return;
-	const IFRAME_ID = 'configure_cart';
-	const alterIframeSrc = () => {
-	const iframe = document.getElementById(IFRAME_ID);
-		if (iframe && iframe.src) {
-			const pageParams = new URLSearchParams(window.location.search);
-			const srcURL = new URL(iframe.src);
-			const variants = pageParams.has(VARIATIONS_QUERY_PARAMETER) ? pageParams.get(VARIATIONS_QUERY_PARAMETER) : null;
-			const environment = pageParams.has(ENV_QUERY_PARAMETER) ? pageParams.get(ENV_QUERY_PARAMETER) : null;
 
-			if (environment) {
-				srcURL.searchParams.set(ENV_QUERY_PARAMETER, environment);
-			}
-			if (variants) {
-				srcURL.searchParams.set(VARIATIONS_QUERY_PARAMETER, variants);
-			}
-			iframe.src = srcURL.toString();
+	// The configurator runs as a cross-origin iframe (occ-ext.wip.it.hpe.com), so the parent's
+	// cookie/localStorage cannot reach it — forwarding FE_ params via the iframe src URL is the
+	// only bridge. Read the desired values from the parent URL once.
+	const pageParams = new URLSearchParams(window.location.search);
+	const environment = pageParams.has(ENV_QUERY_PARAMETER) ? pageParams.get(ENV_QUERY_PARAMETER) : null;
+	const variants = pageParams.has(VARIATIONS_QUERY_PARAMETER) ? pageParams.get(VARIATIONS_QUERY_PARAMETER) : null;
+
+	// Nothing to forward — never touch the iframe src (a redundant reassignment would force an
+	// extra iframe navigation, re-loading fe_altloader.js inside the iframe for no reason).
+	if (!environment && !variants) return;
+
+	const IFRAME_ID = 'configure_cart';
+
+	// True when the iframe src already carries exactly the FE_ values we want — the idempotency
+	// guard that both avoids a needless reload and prevents an infinite MutationObserver loop
+	// (our own src write re-triggers the observer, which must then no-op).
+	const srcHasDesiredParams = (src) => {
+		try {
+			const sp = new URL(src).searchParams;
+			if (environment && sp.get(ENV_QUERY_PARAMETER) !== environment) return false;
+			if (variants && sp.get(VARIATIONS_QUERY_PARAMETER) !== variants) return false;
+			return true;
+		} catch (err) {
+			return false;
 		}
+	};
+
+	// Append the FE_ params when the src is populated but missing/stale. Returns true only when it
+	// actually rewrote the src.
+	const applyParams = (iframe) => {
+		if (!iframe || !iframe.src) return false;      // src not set yet — wait for a real value
+		if (srcHasDesiredParams(iframe.src)) return false; // already correct — do not reload
+		let srcURL;
+		try {
+			srcURL = new URL(iframe.src);
+		} catch (err) {
+			return false;
+		}
+		if (environment) {
+			srcURL.searchParams.set(ENV_QUERY_PARAMETER, environment);
+		}
+		if (variants) {
+			srcURL.searchParams.set(VARIATIONS_QUERY_PARAMETER, variants);
+		}
+		iframe.src = srcURL.toString();
+		return true;
 	};
 
 	window.feUtils.waitForConditions({
 		conditions: [`iframe#${IFRAME_ID}`],
-		activity: 'fe-altloader',
-		callback: alterIframeSrc,
+		activity: 'fe_altloader',
+		callback: () => {
+			// Assumes Hybris mutates the src of this existing element rather than swapping in a
+			// new iframe node; the observed behavior sets .src after a token fetch.
+			const iframe = document.getElementById(IFRAME_ID);
+			if (!iframe) return;
+
+			// Server-rendered-src case: the src is already present, apply immediately.
+			applyParams(iframe);
+
+			// JS-set-late case: Hybris assigns/re-assigns the src asynchronously (after the
+			// token fetch), which the one-shot callback would otherwise miss. Watch the src
+			// attribute and re-apply whenever it changes without our params. The idempotency
+			// guard in applyParams terminates the loop after our own write. Left connected for
+			// the page lifetime on purpose, so any later re-assignment is also corrected.
+			const observer = new MutationObserver(() => applyParams(iframe));
+			observer.observe(iframe, { attributes: true, attributeFilter: ['src'] });
+		},
 	});
 }
 
