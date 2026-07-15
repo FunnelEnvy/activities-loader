@@ -623,11 +623,33 @@ function loadVariation(activity) {
 
 	function setTrackMetricsLink(experiment, variant) {
 		try {
+			// `window.trackMetrics` becomes a function BEFORE the AEP Web SDK (Alloy)
+			// that backs it is initialized and able to send. Firing on the first poll
+			// tick after trackMetrics is merely defined (observed ~208ms inside the B2B
+			// configurator iframe) lands in that gap, and the cohort-marker beacon is
+			// silently dropped — while later click-triggered events deliver fine. The
+			// WSDK/trackMetrics is HPE-owned and external to this bundle, so no direct
+			// "Alloy ready" signal is exposed to the loader. Gate on the strongest
+			// observable proxies instead: trackMetrics defined AND the document fully
+			// loaded (with a time fallback so a never-completing page still fires rather
+			// than losing the marker entirely), then a short settle to let Alloy finish
+			// any init that trails the load event. Fires at most once per page (paired
+			// with the __feAltloaderInitialized run-once guard) and keeps the existing
+			// 10s waitForConditions timeout / silent-failure semantics.
+			const startedAt = Date.now();
+			const LOAD_FALLBACK_MS = 3000;
+			const SETTLE_MS = 500;
 			window.feUtils.waitForConditions({
-				conditions: [() => typeof window.trackMetrics === 'function'],
+				conditions: [
+					() =>
+						typeof window.trackMetrics === 'function' &&
+						(document.readyState === 'complete' || Date.now() - startedAt >= LOAD_FALLBACK_MS),
+				],
 				activity: 'fe_altloader',
 				callback: () => {
-					window.trackMetrics('new.link', { link_name: `mp:fe-experiment:fe-altloader:${experiment}:${variant}` });
+					setTimeout(() => {
+						window.trackMetrics('new.link', { link_name: `mp:fe-experiment:fe-altloader:${experiment}:${variant}` });
+					}, SETTLE_MS);
 				},
 			});
 		} catch (err) {}
