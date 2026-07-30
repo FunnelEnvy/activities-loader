@@ -550,11 +550,6 @@ function attachJsFile(src) {
 		rc.appendChild(sc);
 }
 
-// Module level - tracks variants loaded this page session
-const loadedVariants = [];
-// Module level - dedup guard for conversion tracking (body -> epoch seconds of last send)
-const conversionTrackingSentBody = {};
-
 function loadVariation(activity) {
 	const activityName = activity.activity;
 	const variations = activity.variants;
@@ -680,91 +675,9 @@ function loadVariation(activity) {
 		setJSONToMemory(COOKIE_NAME, { ...storageValue, variations: storageVariations });
 	}
 
-	// Track this load (only for trackable activities starting with '3')
-	if (activityName.startsWith('3')) {
-		loadedVariants.push({
-			activity: activityName,
-			variant: selectedVariation,
-			isNew: !hadValidVariant,
-		});
-	}
-
 	setClarityTags(activityName, selectedVariation);
 	setTrackMetricsLink(activityName, selectedVariation);
 	loadVariantScript(activity, selectedVariation);
-}
-
-// Call this after all activities have been processed
-function sendVariantLoadTracking() {
-	if (loadedVariants.length === 0) return;
-
-	// Deduplicate: prevent multiple API calls if script loads twice
-	const TRACKING_KEY = 'fe_tracking_sent';
-	const pageLoadId = `${window.location.href}_${performance.timeOrigin}`;
-
-	if (sessionStorage.getItem(TRACKING_KEY) === pageLoadId) {
-		return; // Already sent for this page load
-	}
-	sessionStorage.setItem(TRACKING_KEY, pageLoadId);
-
-	const cookie = getJSONFromMemory(COOKIE_NAME) ?? {};
-	const env = detectTypeOfEnvironment();
-
-	// Determine if this is a conversion page
-
-	fetch('https://funnelenvy.retool.com/url/track-hits', {
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify({
-			cookie,
-			env,
-			variants: loadedVariants,
-		}),
-	});
-}
-
-function sendConversionTracking() {
-	const pathname = window.location.pathname ?? '';
-	let conversion_type = '';
-	let internal_id = '';
-	let env = window.FeActivityLoader.detectTypeOfEnvironment();
-	const cookie = getJSONFromStorage(COOKIE_NAME) ?? {};
-	if (pathname.includes('/quoteConfirmSummary')) {
-		internal_id = pathname.match(/\/quote\/([^\/]+)\/quoteConfirmSummary$/)?.[1] ?? '';
-		conversion_type = 'quote';
-	} else if (pathname.includes('/orderConfirmation')) {
-		internal_id = pathname.match(/\/checkout\/orderConfirmation\/([^\/]+)$/)?.[1] ?? '';
-		conversion_type = 'order';
-	}
-	if (conversion_type === '') return;
-	const activities = Object.keys(cookie?.variations ?? {});
-	if (activities.filter(a => a.startsWith('3')||a.startsWith('5')).length > 0) {
-		const body = JSON.stringify({ internal_id, conversion_type, cookie, env });
-		const nowSec = Math.floor(Date.now() / 1000);
-		const CONVERSION_TRACKING_KEY = 'fe_conversion_tracking_sent';
-		let storageBackup = {};
-		try {
-			storageBackup = JSON.parse(sessionStorage.getItem(CONVERSION_TRACKING_KEY) || '{}');
-		} catch (err) {
-			storageBackup = {};
-		}
-		const lastSentSec = conversionTrackingSentBody[body] ?? storageBackup[body];
-		if (lastSentSec && nowSec - lastSentSec < 60) return;
-		conversionTrackingSentBody[body] = nowSec;
-		storageBackup[body] = nowSec;
-		try {
-			sessionStorage.setItem(CONVERSION_TRACKING_KEY, JSON.stringify(storageBackup));
-		} catch (err) {
-			// sessionStorage unavailable; in-memory dedup still applies
-		}
-		fetch('https://funnelenvy.retool.com/url/track-conversion', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-			},
-			body,
-		});
-	}
 }
 
 window.FeActivityLoader = window.FeActivityLoader || {};
@@ -833,8 +746,6 @@ const loadActivities = () => {
 		});
 	}
 	
-	sendConversionTracking();
-	// sendVariantLoadTracking();
 	// Clean up any stored variations for activities that no longer exist or are disabled
 	cleanupStoredVariations();
 }
