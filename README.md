@@ -84,6 +84,14 @@ On `buy.hpe.com/b2b` the loader reads the `isTestUser` flag from the Hybris `#my
 | `TEST_USER` | Test-user check always reports false; bypass persisted for the tab session |
 | Any other value | Clears the persisted bypass |
 
+Set the bypass once on any B2B page, then browse normally — it stays in effect without the parameter:
+
+`https://buy.hpe.com/b2b/<page>?FE_OVERRIDE=TEST_USER`
+
+To end it before the tab closes, load any B2B page with a clearing value:
+
+`https://buy.hpe.com/b2b/<page>?FE_OVERRIDE=off`
+
 The value match is case-insensitive, and closing the tab ends the bypass. Outside the B2B production storefront the kill switch never runs, so the parameter has no effect there.
 
 ### Shared Libraries
