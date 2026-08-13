@@ -4,6 +4,7 @@ const bucketPath = 'https://fe-hpe-script.s3.us-east-2.amazonaws.com'
 const COOKIE_NAME = 'fe_altloader';
 const ENV_QUERY_PARAMETER = 'FE_LOADER';
 const VARIATIONS_QUERY_PARAMETER = 'FE_VARIANT';
+const OVERRIDE_QUERY_PARAMETER = 'FE_OVERRIDE';
 
 if (window.location.href.indexOf('itgh.buy.hpe.com') >= 0) throw new Error('This is not the right site for this code');
 
@@ -534,6 +535,84 @@ function detectActivitiesToActivate() {
 		});
 }
 
+/* --- B2B test-user kill switch --------------------------------------------
+ * Hybris renders a hidden JSON blob (#myAccountDetail) carrying the logged-in
+ * account context, including "isTestUser". HPE's internal test accounts must
+ * never be enrolled in an activity, so a true flag blocks the entire loader —
+ * not just audience-targeted activities.
+ * Scoped to the B2B production storefront only: the flag is set on QA/UAT
+ * accounts by design, and blocking there would break activity QA.
+ */
+const ACCOUNT_DETAIL_SELECTOR = '#myAccountDetail';
+const TEST_USER_PATTERN = /"isTestUser"\s*:\s*true/i;
+const TEST_USER_OVERRIDE_VALUE = 'TEST_USER';
+const TEST_USER_OVERRIDE_SESSION_KEY = 'fe-altloader-test-user-override';
+
+function isB2BProdSite() {
+	return window.location.href.indexOf('https://buy.hpe.com/b2b') >= 0;
+}
+
+/* Escape hatch for QA on the production storefront: ?FE_OVERRIDE=TEST_USER makes
+ * isTestUser() always report false, so an internal HPE account can still be
+ * enrolled. Persisted in sessionStorage because the flag has to survive the
+ * navigation away from the URL that set it; any other FE_OVERRIDE value clears
+ * it, and closing the tab ends it. */
+function isTestUserOverridden() {
+	const params = new URLSearchParams(window.location.search);
+
+	if (params.has(OVERRIDE_QUERY_PARAMETER)) {
+		const enabled = params.get(OVERRIDE_QUERY_PARAMETER).toUpperCase() === TEST_USER_OVERRIDE_VALUE;
+		if (enabled) {
+			sessionStorage.setItem(TEST_USER_OVERRIDE_SESSION_KEY, '1');
+		} else {
+			sessionStorage.removeItem(TEST_USER_OVERRIDE_SESSION_KEY);
+		}
+		return enabled;
+	}
+
+	return sessionStorage.getItem(TEST_USER_OVERRIDE_SESSION_KEY) === '1';
+}
+
+function isTestUser() {
+	if (isTestUserOverridden()) {
+		console.log('fe_altloader: test-user check overridden via ' + OVERRIDE_QUERY_PARAMETER + '=' + TEST_USER_OVERRIDE_VALUE);
+		return false;
+	}
+	const el = document.querySelector(ACCOUNT_DETAIL_SELECTOR);
+	if (!el) return false;
+	// Substring match rather than JSON.parse: the blob is HPE-owned, its shape
+	// changes without notice, and isTestUser may sit at any nesting depth.
+	return TEST_USER_PATTERN.test(el.textContent || '');
+}
+
+/* Resolve as early as possible without ever deciding on a half-parsed DOM.
+ * The blob is server-rendered, so it is guaranteed present by DOMContentLoaded;
+ * the observer just lets us proceed the moment it is parsed instead of waiting
+ * for the full document, keeping added latency (and flicker) to a minimum. */
+function whenAccountDetailReady(callback) {
+	if (document.querySelector(ACCOUNT_DETAIL_SELECTOR) || document.readyState !== 'loading') {
+		callback();
+		return;
+	}
+
+	let done = false;
+	const finish = (observer) => {
+		if (done) return;
+		done = true;
+		if (observer) observer.disconnect();
+		callback();
+	};
+
+	const observer = new MutationObserver(() => {
+		if (document.querySelector(ACCOUNT_DETAIL_SELECTOR)) finish(observer);
+	});
+	observer.observe(document.documentElement, { childList: true, subtree: true });
+
+	// Blob absent from the page entirely (not every B2B template renders it) —
+	// stop waiting once parsing is done and let activities load.
+	document.addEventListener('DOMContentLoaded', () => finish(observer), { once: true });
+}
+
 function salt(ttlSeconds) {
 	ttlSeconds = ttlSeconds ? ttlSeconds : 60;
 	return Math.round(Date.now() / ttlSeconds / 1000) + '';
@@ -707,7 +786,7 @@ const loadActivityOrVariation = (activity) => {
 	}
 }
 
-const loadActivities = () => {
+const runLoader = () => {
 	const params = new URLSearchParams(window.location.search);
 	passQueryParametersToB2BConfiguratorIFrame();
 	if (params.has(ENV_QUERY_PARAMETER) && params.get(ENV_QUERY_PARAMETER) === 'disable') {
@@ -748,6 +827,21 @@ const loadActivities = () => {
 	
 	// Clean up any stored variations for activities that no longer exist or are disabled
 	cleanupStoredVariations();
+}
+
+const loadActivities = () => {
+	if (!isB2BProdSite()) {
+		runLoader();
+		return;
+	}
+
+	whenAccountDetailReady(() => {
+		if (isTestUser()) {
+			console.log('fe_altloader: HPE test user detected, all activities blocked');
+			return;
+		}
+		runLoader();
+	});
 }
 
 loadActivities();

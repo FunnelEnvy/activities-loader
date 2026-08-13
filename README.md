@@ -5,9 +5,9 @@ description: >
   Repo README for activities-loader — HPE Altloader build pipeline features, governance,
   and dependencies.
 governed_by: repo-standards/repo-readme
-version: "1.0.0"
+version: "1.1.0"
 created: 2026-04-10
-updated: 2026-04-10
+updated: 2026-08-13
 ---
 # Activities Loader
 
@@ -44,6 +44,55 @@ Activities are defined in `src/activities.json` and organized by site group (`B2
 - Dynamically loads matching activity scripts from S3
 - Tracks experiment variants via Microsoft Clarity and analytics events
 - Passes environment and variant parameters to the B2B configurator iframe
+- Blocks every activity load for HPE internal test accounts on the B2B production storefront
+
+#### Runtime Query Parameters
+
+Three URL parameters steer the loader at runtime. Each is read on every page load and can outlive the URL that set it, so the setting survives navigation.
+
+| Parameter | Purpose | Persisted in |
+|---|---|---|
+| `FE_LOADER` | Choose the environment whose activities load, or disable the loader | `sessionStorage` — `fe-altloader-env` (opt-in) |
+| `FE_VARIANT` | Force chosen activities to a specific variant | `fe_altloader` cookie and localStorage |
+| `FE_OVERRIDE` | Bypass the B2B test-user kill switch | `sessionStorage` — `fe-altloader-test-user-override` |
+
+##### `FE_LOADER`
+
+| Value | Effect |
+|---|---|
+| `DEV`, `QA`, `PROD` | Load activities targeted at that environment, for the current page load only |
+| `DEV-save`, `QA-save`, `PROD-save` | Same, persisted for the rest of the tab session |
+| `disable` | Skip the loader entirely — no activities load |
+| Any other value | Logs a warning and falls back to `PROD` |
+
+A value without the `-save` suffix also clears any previously saved environment. Outside `PROD` the loader renders a red on-page environment indicator and loads unminified activity bundles; `PROD` loads the `.min` bundles.
+
+##### `FE_VARIANT`
+
+Forces specific activities to a variant instead of the usual weighted random assignment. The format is `activity:variant`, with multiple pairs separated by a period:
+
+`?FE_VARIANT=hero_test:variant_b.nav_test:control`
+
+An entry applies only when the named variant exists on that activity. The forced choice is written to the `fe_altloader` cookie and localStorage, so it sticks across pages exactly like a normally assigned variant.
+
+##### `FE_OVERRIDE`
+
+On `buy.hpe.com/b2b` the loader reads the `isTestUser` flag from the Hybris `#myAccountDetail` blob and blocks all activity loads when it is true. `FE_OVERRIDE` bypasses that check so an internal HPE account can still QA activities in production.
+
+| Value | Effect |
+|---|---|
+| `TEST_USER` | Test-user check always reports false; bypass persisted for the tab session |
+| Any other value | Clears the persisted bypass |
+
+Set the bypass once on any B2B page, then browse normally — it stays in effect without the parameter:
+
+`https://buy.hpe.com/b2b/<page>?FE_OVERRIDE=TEST_USER`
+
+To end it before the tab closes, load any B2B page with a clearing value:
+
+`https://buy.hpe.com/b2b/<page>?FE_OVERRIDE=off`
+
+The value match is case-insensitive, and closing the tab ends the bypass. Outside the B2B production storefront the kill switch never runs, so the parameter has no effect there.
 
 ### Shared Libraries
 
