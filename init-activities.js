@@ -4,6 +4,7 @@ const bucketPath = 'https://fe-hpe-script.s3.us-east-2.amazonaws.com'
 const COOKIE_NAME = 'fe_altloader';
 const ENV_QUERY_PARAMETER = 'FE_LOADER';
 const VARIATIONS_QUERY_PARAMETER = 'FE_VARIANT';
+const OVERRIDE_QUERY_PARAMETER = 'FE_OVERRIDE';
 
 if (window.location.href.indexOf('itgh.buy.hpe.com') >= 0) throw new Error('This is not the right site for this code');
 
@@ -544,12 +545,39 @@ function detectActivitiesToActivate() {
  */
 const ACCOUNT_DETAIL_SELECTOR = '#myAccountDetail';
 const TEST_USER_PATTERN = /"isTestUser"\s*:\s*true/i;
+const TEST_USER_OVERRIDE_VALUE = 'TEST_USER';
+const TEST_USER_OVERRIDE_SESSION_KEY = 'fe-altloader-test-user-override';
 
 function isB2BProdSite() {
 	return window.location.href.indexOf('https://buy.hpe.com/b2b') >= 0;
 }
 
+/* Escape hatch for QA on the production storefront: ?FE_OVERRIDE=TEST_USER makes
+ * isTestUser() always report false, so an internal HPE account can still be
+ * enrolled. Persisted in sessionStorage because the flag has to survive the
+ * navigation away from the URL that set it; any other FE_OVERRIDE value clears
+ * it, and closing the tab ends it. */
+function isTestUserOverridden() {
+	const params = new URLSearchParams(window.location.search);
+
+	if (params.has(OVERRIDE_QUERY_PARAMETER)) {
+		const enabled = params.get(OVERRIDE_QUERY_PARAMETER).toUpperCase() === TEST_USER_OVERRIDE_VALUE;
+		if (enabled) {
+			sessionStorage.setItem(TEST_USER_OVERRIDE_SESSION_KEY, '1');
+		} else {
+			sessionStorage.removeItem(TEST_USER_OVERRIDE_SESSION_KEY);
+		}
+		return enabled;
+	}
+
+	return sessionStorage.getItem(TEST_USER_OVERRIDE_SESSION_KEY) === '1';
+}
+
 function isTestUser() {
+	if (isTestUserOverridden()) {
+		console.log('fe_altloader: test-user check overridden via ' + OVERRIDE_QUERY_PARAMETER + '=' + TEST_USER_OVERRIDE_VALUE);
+		return false;
+	}
 	const el = document.querySelector(ACCOUNT_DETAIL_SELECTOR);
 	if (!el) return false;
 	// Substring match rather than JSON.parse: the blob is HPE-owned, its shape
