@@ -1,13 +1,15 @@
 ---
 fe-managed: true
 name: root-claude-md
+title: Activities Loader
 description: >
   Repo-level agent context for activities-loader — intent routing and navigational pointers
   for the HPE Altloader build pipeline.
 governed_by: repo-standards/claude-md
+managed_by: change-management
 version: "1.0.0"
 created: 2026-04-10
-updated: 2026-04-10
+updated: 2026-10-05
 ---
 # Activities Loader
 

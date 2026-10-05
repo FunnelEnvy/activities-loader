@@ -1,13 +1,15 @@
 ---
 fe-managed: true
 name: root-readme
+title: Activities Loader
 description: >
   Repo README for activities-loader — HPE Altloader build pipeline features, governance,
   and dependencies.
 governed_by: repo-standards/repo-readme
+managed_by: change-management
 version: "1.1.0"
 created: 2026-04-10
-updated: 2026-08-13
+updated: 2026-10-05
 ---
 # Activities Loader
 
