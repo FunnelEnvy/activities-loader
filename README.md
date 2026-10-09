@@ -9,7 +9,7 @@ governed_by: repo-standards/repo-readme
 managed_by: change-management
 version: "1.1.0"
 created: 2026-04-10
-updated: 2026-10-05
+updated: 2026-10-09
 ---
 # Activities Loader
 
@@ -25,7 +25,7 @@ Rollup-based build system with Babel and TypeScript transpilation, CSS minificat
 |---|---|
 | `npm run build` | Build all activities |
 | `npm run build:local` | Build using local hpe-altloader directory |
-| `npm run setup:local` | Set up local hpe-altloader symlinks |
+| `npm run setup:local` | Copy config files and shared libraries from a sibling hpe-altloader clone into `src/` |
 
 ### Activity Management
 
@@ -106,13 +106,19 @@ The value match is case-insensitive, and closing the tab ends the bypass. Outsid
 
 ## Governance
 
-Managed by [fe-sys-hq](https://github.com/FunnelEnvy/fe-sys-hq). Governance rules deployed to `.claude/rules/` and plugin configuration in `.claude/settings.json`.
+Managed by [fe-sys-hq](https://github.com/FunnelEnvy/fe-sys-hq). It deploys the shared rules to `.claude/rules/`, plugin configuration to `.claude/settings.json`, and the `fe-`-prefixed workflows to `.github/workflows/`.
 
 **Rules:**
 
-- `10-repo-conventions` — file naming, git, credentials, .gitignore
-- `11-skill-loading-requirements` — mandatory skill loading signals
-- `12-claude-usage` — agent behavior conventions
+- `10-repo-conventions`: file naming, credentials, `.gitignore`
+- `11-skill-loading-requirements`: mandatory skill loading signals
+- `12-claude-usage`: agent behavior conventions
+- `13-managed-repo-network-awareness`: registry discovery and cross-repo resolution
+- `14-git-operations`: branch, commit and PR conventions
+- `15-writing-standards`: prose standards
+- `16-reasoning-standards`: reasoning and sourcing
+
+**Workflows:** `fe-branch-sweep`, `fe-release-tag`
 
 **Plugins:** claude-code-management, fe-governance, fe-integrations, fe-knowledge-base
 
@@ -121,4 +127,4 @@ Managed by [fe-sys-hq](https://github.com/FunnelEnvy/fe-sys-hq). Governance rule
 - **Node.js** — runtime for build scripts
 - **Rollup** — module bundler with plugins for Babel, TypeScript, JSON, CommonJS, node polyfills, terser
 - **AWS S3** — deployment target (`fe-hpe-script.s3.us-east-2.amazonaws.com`)
-- **hpe-altloader** — companion repo providing activity source code and configuration (consumed via local symlink for local builds)
+- **hpe-altloader** — companion repo providing activity source code and configuration (copied into `src/` by `npm run setup:local` for local builds)
