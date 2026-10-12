@@ -10,7 +10,7 @@ description: >
 governed_by: change-management/change-document
 managed_by: change-management
 status: Discovery
-status_note: "Discovery review: 1 open issue before Approach approval"
+status_note: "Discovery complete: Approach approved 2026-10-12; ready for Design"
 resource_name: repo
 resource_version: "TBD"
 impact: 3
@@ -26,24 +26,12 @@ updated: 2026-10-12
 
 ## Contents
 
-- [Open Issues](#open-issues)
 - [Background](#background)
 - [Current State](#current-state)
 - [Approach](#approach)
 - [Requirements](#requirements)
 - [Verification Design](#verification-design)
 - [Verification Results](#verification-results)
-
-## Open Issues
-
-**Source:** Discovery review
-**Generated:** 2026-10-12 14:46 PT
-
-### Findings Detail
-
-| # | Source | Finding | Description | Recommendation |
-|---|---|---|---|---|
-| 1 | Discovery review | `npm run build` left broken by the plan | `Approach` > `Plan` item 1 makes a run with neither `--lib` nor `--group` exit with a usage error. The `build` script is a bare `node build.js` (`grep -n -A4 '"scripts"' package.json`), and the README commands table calls it "Build all activities". No hpe-altloader workflow runs it: each passes `--group` or `--lib` (`git grep -n "build.js" origin/master -- .github/workflows/` at hpe-altloader `53f7052`). The plan leaves the script and the README row pointing at a usage error. | Add to `Plan` item 1: remove the `build` script, or point it at `--lib`, and correct the README commands row to match. |
 
 ## Background
 
@@ -125,7 +113,7 @@ The cleanup in `ci-close-pull-request.yml` deletes `b2b-hybris-test/${{ github.e
 **Owner decisions, 2026-10-12.** The change makes no major build or deploy architecture change. It fixes the loader's own code and teaches `setup-local.js` hpe-web-dev's layout. hpe-altloader keeps its workflows until 5.6, and hpe-web-dev ports them in member 5.7 ([hpe-web-dev:charter](hpe-web-dev:CHARTER.md) `Decisions made at kickoff`, `Build and deploy` row). Work that left this change is listed under `Out of Scope`.
 
 1. **Defect fixes.** Fix the six loader-code defects that hold (`Current State` > `Defects`).
-   - *Build (1, 2).* Remove `--all`, and make a run with neither `--lib` nor `--group` exit with a usage error. The full rebuild already builds each group on its own, because each group syncs to its own prefix. Clear `dist/` before the build runs.
+   - *Build (1, 2).* Remove `--all`, and make a run with neither `--lib` nor `--group` exit with a usage error. The full rebuild already builds each group on its own, because each group syncs to its own prefix. Clear `dist/` before the build runs. The `build` script in `package.json` then runs the same sequence as hpe-altloader's `rebuild-all-activities.yml`: each of the three groups with `--group`, then `--lib`. That keeps the README's "Build all activities" description true (owner decision, 2026-10-12).
    - *Targeting operator (4).* Make `does not contain any of` return `!value.some`.
    - *Packages (9).* Remove the `fs` and `child-process` packages and `package-lock.json`.
    - *Dead config (10).* Derive `VALID_ENVS` from the inlined `environments` keys plus `PROD`, and delete `detectTypeOfSite`.
