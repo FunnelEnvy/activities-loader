@@ -5,13 +5,13 @@ title: Changelog
 description: Changelog for the activities-loader repo.
 governed_by: change-management/changelog
 managed_by: change-management
-version: "0.1.0"
+version: "1.2.0"
 created: 2026-10-09
-updated: 2026-10-09
+updated: 2026-10-13
 ---
 # Changelog
 
-## [Unreleased]
+## [1.2.0] - 2026-10-13
 
 ### Added
 - Root CHANGELOG.md, making the repo root a managed resource under fe-sys-hq governance

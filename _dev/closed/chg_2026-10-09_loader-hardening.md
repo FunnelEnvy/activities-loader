@@ -10,15 +10,13 @@ description: >
 governed_by: change-management/change-document
 managed_by: change-management
 status: Closed
-status_note: "Closed 2026-10-13 as completed; awaiting release"
+status_note: "Released 2026-10-13 — repo v1.2.0"
 resource_name: repo
-resource_version: "TBD"
+resource_version: "1.2.0"
 impact: 3
 confidence: 4
 ease: 4
 initiative: altloader-cut-over
-held_by:
-  - sam_altloader-cut-over
 owner: Sam Baron
 version: "0.11.0"
 created: 2026-10-09

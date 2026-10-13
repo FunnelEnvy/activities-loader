@@ -7,9 +7,9 @@ description: >
   and dependencies.
 governed_by: repo-standards/repo-readme
 managed_by: change-management
-version: "1.1.0"
+version: "1.2.0"
 created: 2026-04-10
-updated: 2026-10-09
+updated: 2026-10-13
 ---
 # Activities Loader
 
