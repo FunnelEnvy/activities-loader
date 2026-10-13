@@ -18,7 +18,7 @@ confidence: 4
 ease: 4
 initiative: altloader-cut-over
 owner: Sam Baron
-version: "0.11.0"
+version: "0.12.0"
 created: 2026-10-09
 updated: 2026-10-13
 closed_as: completed
@@ -233,8 +233,10 @@ Record the hpe-altloader sha used. The pre-change commit is `859e48d`.
 
 ### Validation Outcomes
 
-12/14 confirmed; 2 deferred. Run at activities-loader `b9de38d` plus the QA fixes, against hpe-altloader `53f7052` (`git -C /home/user/HPE-altloader rev-parse --short HEAD`, 2026-10-13).
+14/14 confirmed: 1–12 at QA, 13 and 14 after release. Criteria 1–12 ran at activities-loader `b9de38d` plus the QA fixes, against hpe-altloader `53f7052` (`git -C /home/user/HPE-altloader rev-parse --short HEAD`, 2026-10-13).
 
 - **12 (R9), re-checked** at `a35b879` after the README install-step edit: confirmed.
-- **13 (R10), deferred.** Orchestrator-owned in hpe-web-dev, and due only once R6 reaches activities-loader `main`. `kb-altloader/reference/loader-runtime.md` § `Environments` still says the values are hard-coded (read 2026-10-13).
-- **14 (post-release rebuild), deferred.** It runs only after the release cut, and the release PR's `Post-Release Tasks` section carries it with R10.
+- **13 (R10), confirmed after release.** hpe-web-dev PR #6 (`b6e4911`, 2026-10-13) rewrote `kb-altloader/reference/loader-runtime.md` § `Environments` to describe the derived list.
+- **14 (post-release rebuild), confirmed after release.** On 2026-10-13, against activities-loader v1.2.0:
+  - The hand-run `rebuild-all-activities.yml` ([run 38412530397](https://github.com/FunnelEnvy/HPE-altloader/actions/runs/38412530397)) passed every build and upload step.
+  - The next push deploy, from hpe-altloader PR #657 (`7d7ee1f`), passed. The B2C deploy installed with `--frozen-lockfile`, built and synced, and skipped its build-error alert, so no `build-errors.json` was written. The loader deploy built and uploaded `fe_altloader.js` (`gh run list -R FunnelEnvy/HPE-altloader --commit 7d7ee1f`).
