@@ -75,15 +75,19 @@ function copyFolderSync(src, dest) {
 function readSourceArg() {
   const args = process.argv.slice(2);
   for (let i = 0; i < args.length; i++) {
+    let value = null;
     if (args[i] === '--source') {
-      if (!args[i + 1]) {
-        error('--source needs a path');
-      }
-      return args[i + 1];
+      value = args[i + 1];
+    } else if (args[i].startsWith('--source=')) {
+      value = args[i].slice('--source='.length);
+    } else {
+      continue;
     }
-    if (args[i].startsWith('--source=')) {
-      return args[i].slice('--source='.length);
+    // An explicit --source never falls back, so an empty value is an error too.
+    if (!value || value.startsWith('--')) {
+      error('--source needs a path');
     }
+    return value;
   }
   return null;
 }
@@ -168,7 +172,9 @@ function main() {
   if (fs.existsSync(path.join(libsPath, 'package.json'))) {
     log('Installing dependencies in src/libs...');
     try {
-      execSync('npm install', {
+      // --no-package-lock keeps npm from writing package-lock.json or rewriting yarn.lock
+      // at the repo root, which is a yarn workspace that includes src/libs.
+      execSync('npm install --no-package-lock', {
         cwd: libsPath,
         stdio: 'inherit'
       });

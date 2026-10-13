@@ -9,8 +9,8 @@ description: >
   architecture change. Member 5.1 of the altloader-cut-over initiative.
 governed_by: change-management/change-document
 managed_by: change-management
-status: Build
-status_note: "Build complete: R1–R9 built, R10 owed by orchestrator; ready for QA"
+status: QA
+status_note: "QA done: 12/13 confirmed, R10 deferred to orchestrator; awaiting pre-Close"
 resource_name: repo
 resource_version: "TBD"
 impact: 3
@@ -18,7 +18,7 @@ confidence: 4
 ease: 4
 initiative: altloader-cut-over
 owner: Sam Baron
-version: "0.8.0"
+version: "0.9.0"
 created: 2026-10-09
 updated: 2026-10-13
 ---
@@ -165,7 +165,7 @@ The `setup:local` and `build:local` scripts keep their commands.
 
 **R5. Packages and lockfiles.** Remove `fs` from `dependencies`, and `child-process` and `rollup-plugin-cleandir` from `devDependencies`. Delete `package-lock.json`. In `yarn.lock`, remove the entries for those three packages and for `@mstssk/cleandir`, which only `rollup-plugin-cleandir` requires (`grep -n '"@mstssk/cleandir"' yarn.lock` at `859e48d` prints one dependent line, inside the `rollup-plugin-cleandir` entry). Change nothing else in `yarn.lock`, because the deploys install it with `--frozen-lockfile`.
 
-**R6. Environment config.** `detectTypeOfEnvironment` builds its valid list from `Object.keys(environments)` plus `PROD`, replacing the hard-coded `['DEV', 'QA', 'PROD']`. With hpe-altloader's current `environments` block, which has the keys `QA` and `DEV`, the valid set is unchanged. Delete `detectTypeOfSite` and its `window.FeActivityLoader.detectTypeOfSite` export. `detectSites` and the other exports stay.
+**R6. Environment config.** `detectTypeOfEnvironment` builds its valid list from `Object.keys(environments || {})` plus `PROD`, replacing the hard-coded `['DEV', 'QA', 'PROD']`. The guard keeps a config with no `environments` block loading with `PROD` alone rather than throwing (QA review, 2026-10-13). With hpe-altloader's current `environments` block, which has the keys `QA` and `DEV`, the valid set is unchanged. Delete `detectTypeOfSite` and its `window.FeActivityLoader.detectTypeOfSite` export. `detectSites` and the other exports stay.
 
 **R7. Environment indicator.** `createEnvironmentIndicator` appends the indicator at once when `document.body` exists. Otherwise it appends on `DOMContentLoaded`. `runLoader` does not wait for it. The `PROD` early return and the indicator's text and style are unchanged.
 
@@ -176,7 +176,7 @@ The `setup:local` and `build:local` scripts keep their commands.
 3. a sibling `../hpe-web-dev/activities`, when it exists;
 4. a sibling `../hpe-altloader`.
 
-An explicit root from rule 1 or 2 that does not exist is an error, with no fallback. When no rule yields an existing root, the script exits non-zero and names every path it tried. As today, the root's existence is checked before `src/` is removed. The script logs the chosen root and the rule that chose it. It copies the same five config files and `libs/` from that root, and runs the `src/libs` install as today. It does not copy activity directories.
+An explicit root from rule 1 or 2 that does not exist is an error, with no fallback. When no rule yields an existing root, the script exits non-zero and names every path it tried. As today, the root's existence is checked before `src/` is removed. The script logs the chosen root and the rule that chose it. It copies the same five config files and `libs/` from that root, and runs the `src/libs` install as today with `--no-package-lock` added. Without it, npm writes a root `package-lock.json` and rewrites `yarn.lock`, because the root is a yarn workspace that includes `src/libs` (QA review, 2026-10-13). It does not copy activity directories.
 
 **R9. Local-setup text.** Every surface in this repo that says where `setup:local` reads from, or how to build after it, matches R3 and R8. The search `git grep -n -E "hpe-altloader|setup:local|setup-local|build:local|npm run build" -- README.md scripts package.json` at `859e48d` finds these sites:
 
@@ -196,7 +196,7 @@ The `npm run build` row says the build expects `src/` staged the way CI stages i
 
 1. `node scripts/setup-local.js --source /home/user/HPE-altloader`
 2. `mkdir -p src/activities`, then copy the contents of each of hpe-altloader's `B2C/`, `B2B-Hybris/` and `configurator/` into it.
-3. `yarn install`
+3. `yarn install --frozen-lockfile`, as the deploys run it. A plain `yarn install` here rewrites `yarn.lock`, because the staged activities become root workspaces.
 
 Record the hpe-altloader sha used. The pre-change commit is `859e48d`.
 
@@ -207,7 +207,7 @@ Record the hpe-altloader sha used. The pre-change commit is `859e48d`.
 5. **Clear and `--no-clean` (R2).** Create `dist/stale.js`, then run `node build.js --lib`. `stale.js` is gone. Then `node build.js --no-clean --group configurator` leaves both the loader files and the configurator bundles in `dist/`. `grep -n cleandir build.js` prints nothing.
 6. **`npm run build` (R3).** It exits 0 and leaves `dist/` holding exactly the union of the file lists from criteria 1 and 2.
 7. **Operator (R4).** A scratch Node script extracts `evaluateCondition` from `init-activities.js` and runs it in `vm` with a stubbed `window.location.href`, using `value: ["/a", "/b"]`. A URL with neither returns `true`. A URL with `/a` only returns `false`, and so does one with both. At `859e48d` the same script returns `true` for `/a` only, which shows the case fails before the fix.
-8. **Packages and lockfiles (R5).** `package.json` lists none of `fs`, `child-process` or `rollup-plugin-cleandir`, and `package-lock.json` is gone. `grep -n -E '^"?(fs|child-process|rollup-plugin-cleandir|@mstssk/cleandir)@' yarn.lock` prints nothing. `git diff 859e48d -- yarn.lock` removes those four entries and nothing else. Run `yarn install --frozen-lockfile` in two layouts, `src/` empty and `src/` staged per `Setup`. In each layout the outcome after the change matches the outcome at `859e48d`.
+8. **Packages and lockfiles (R5).** `package.json` lists none of `fs`, `child-process` or `rollup-plugin-cleandir`, and `package-lock.json` is gone. `grep -n -E '^"?(fs|child-process|rollup-plugin-cleandir|@mstssk/cleandir)@' yarn.lock` prints nothing. `git diff 859e48d -- yarn.lock` removes those four entries and nothing else. Run `yarn install --frozen-lockfile` in two layouts, `src/` empty and `src/` staged per `Setup`. In each layout the outcome after the change matches the outcome at `859e48d`. `Setup` step 1 leaves `yarn.lock` unchanged and writes no `package-lock.json` (`git status --short`).
 9. **Environment config (R6).** In `init-activities.js`, `grep -n "\['DEV', 'QA', 'PROD'\]"` and `grep -n detectTypeOfSite` print nothing. Load the built `fe_altloader.js` in a local page served by `http-server` and opened in Playwright's Chromium (Playwright 1.56.1, browsers in `/opt/pw-browsers`). Then check:
    - `?FE_LOADER=DEV` shows the indicator reading `DEV`;
    - `?FE_LOADER=QA` shows it reading `QA`;
@@ -231,4 +231,6 @@ Record the hpe-altloader sha used. The pre-change commit is `859e48d`.
 
 ### Validation Outcomes
 
-Not yet run.
+12/13 confirmed; 1 deferred. Run at activities-loader `b9de38d` plus the QA fixes, against hpe-altloader `53f7052` (`git -C /home/user/HPE-altloader rev-parse --short HEAD`, 2026-10-13).
+
+- **13 (R10), deferred.** Orchestrator-owned in hpe-web-dev, and due only once R6 reaches activities-loader `main`. `kb-altloader/reference/loader-runtime.md` § `Environments` still says the values are hard-coded (read 2026-10-13).
