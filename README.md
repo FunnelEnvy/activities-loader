@@ -7,9 +7,9 @@ description: >
   and dependencies.
 governed_by: repo-standards/repo-readme
 managed_by: change-management
-version: "1.1.0"
+version: "1.2.0"
 created: 2026-04-10
-updated: 2026-10-09
+updated: 2026-10-13
 ---
 # Activities Loader
 
@@ -23,9 +23,11 @@ Rollup-based build system with Babel and TypeScript transpilation, CSS minificat
 
 | Command | Description |
 |---|---|
-| `npm run build` | Build all activities |
-| `npm run build:local` | Build using local hpe-altloader directory |
-| `npm run setup:local` | Copy config files and shared libraries from a sibling hpe-altloader clone into `src/` |
+| `npm run build` | Build all activities: each group with `--group` (`B2C`, `B2B-Hybris`, `configurator`), then the loader with `--lib`. Expects `src/` staged the way CI stages it: config files and `libs/` at `src/`, and each group directory's contents copied into `src/activities/`. Then install with `yarn install --frozen-lockfile`, as the deploy workflows do. A plain `yarn install` rewrites `yarn.lock`, because the staged activities are workspaces |
+| `npm run build:local` | Run `setup:local`, then build the loader with `--lib`. Set the source root with `ALTLOADER_SRC`, since `--source` here would reach `build.js` |
+| `npm run setup:local` | Copy the config files and `libs/` into `src/` from a source root: `--source <path>`, else `ALTLOADER_SRC`, else a sibling hpe-web-dev clone's `activities/`, else a sibling hpe-altloader clone. Does not copy activity directories |
+
+`build.js` builds one target per run, `--group <name>` (optionally narrowed by `--activities`) or `--lib`, and exits with a usage error given neither. It clears `dist/` first unless `--no-clean` is passed.
 
 ### Activity Management
 
@@ -127,4 +129,4 @@ Managed by [fe-sys-hq](https://github.com/FunnelEnvy/fe-sys-hq). It deploys the 
 - **Node.js** — runtime for build scripts
 - **Rollup** — module bundler with plugins for Babel, TypeScript, JSON, CommonJS, node polyfills, terser
 - **AWS S3** — deployment target (`fe-hpe-script.s3.us-east-2.amazonaws.com`)
-- **hpe-altloader** — companion repo providing activity source code and configuration (copied into `src/` by `npm run setup:local` for local builds)
+- **hpe-altloader** — current home of activity source code and configuration. hpe-web-dev's `activities/` replaces it at cut-over. `npm run setup:local` copies the config files and `libs/` from either into `src/` for local builds
