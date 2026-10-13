@@ -18,7 +18,6 @@ import terser from '@rollup/plugin-terser';
 import nodePolyfills from 'rollup-plugin-polyfill-node';
 import json from '@rollup/plugin-json';
 import { wrap, prepend } from 'rollup-plugin-insert';
-import { cleandir } from 'rollup-plugin-cleandir';
 // for building css
 import fs from 'fs';
 import CleanCSS from 'clean-css';
@@ -324,10 +323,15 @@ const buildLibFiles = async () => {
 }
 
 // Run the build process
-cleandir('dist');
-if (argv.all) {
-	await buildLibFiles();
-	await buildActivities();
+// Each run builds one group or the loader. Check the arguments before anything is cleared or written.
+if (!argv.lib && !argv.group) {
+	console.error('Usage: node build.js --group <B2B-Hybris|B2C|configurator> [--activities <dir,...>] [--no-clean]');
+	console.error('       node build.js --lib [--no-clean]');
+	process.exit(1);
+}
+// Clear dist/ unless --no-clean is passed, so stale bundles do not survive a run.
+if (argv.clean !== false) {
+	fs.rmSync('dist', { recursive: true, force: true });
 }
 if (argv.lib) {
 	await buildLibFiles();

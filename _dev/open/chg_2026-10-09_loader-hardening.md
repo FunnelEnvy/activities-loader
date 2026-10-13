@@ -9,8 +9,8 @@ description: >
   architecture change. Member 5.1 of the altloader-cut-over initiative.
 governed_by: change-management/change-document
 managed_by: change-management
-status: Design
-status_note: "Design complete: Requirements and Validation authored; ready for Build"
+status: Build
+status_note: "Build complete: R1–R9 built, R10 owed by orchestrator; ready for QA"
 resource_name: repo
 resource_version: "TBD"
 impact: 3
@@ -18,7 +18,7 @@ confidence: 4
 ease: 4
 initiative: altloader-cut-over
 owner: Sam Baron
-version: "0.7.0"
+version: "0.8.0"
 created: 2026-10-09
 updated: 2026-10-13
 ---

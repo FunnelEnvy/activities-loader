@@ -283,34 +283,6 @@ function detectSites() {
 		});
 }
 
-function detectTypeOfSite() {
-	let out = sites
-		.filter(function (site) {
-			let out = true;
-			if (typeof site.url_has === 'undefined') site.url_has = [];
-			if (typeof site.url_has === 'string') site.url_has = [site.url_has];
-			if (typeof site.url_missing === 'undefined') site.url_missing = [];
-			if (typeof site.url_missing === 'string') site.url_missing = [site.url_missing];
-			if (typeof site.url_matches === 'undefined') site.url_matches = [];
-			if (typeof site.url_matches === 'string') site.url_matches = [site.url_matches];
-			site.url_has.map(url => {
-				if (window.location.href.indexOf(url) < 0) out = false;
-			})
-			site.url_missing.map(url => {
-				if (window.location.href.indexOf(url) >= 0) out = false;
-			})
-			if(out && site.url_matches.length > 0) {
-				out = site.url_matches.some(regexString => {
-					const regexPattern = new RegExp(regexString);
-					return regexPattern.test(window.location.pathname);
-				})
-			}
-			return out;
-		})
-		.shift();
-	return out ? out.name : '';
-}
-
 function evaluateCondition(condition) {
 	const url = window.location.href;
 	const { operator, value, conditions } = condition;
@@ -351,7 +323,7 @@ function evaluateCondition(condition) {
 		case 'contains all of':
 			return value.every(val => url.includes(val));
 		case 'does not contain any of':
-			return !value.every(val => url.includes(val));
+			return !value.some(val => url.includes(val));
 		default:
 			return false;
 	}
@@ -362,7 +334,8 @@ function detectLocation() {
 }
 
 function detectTypeOfEnvironment() {
-	const VALID_ENVS = ['DEV', 'QA', 'PROD'];
+	// Valid environments are the keys of the activities.json environments block, plus PROD.
+	const VALID_ENVS = [...Object.keys(environments || {}), 'PROD'];
 	const SESSION_KEY = 'fe-altloader-env';
 	const sessionValue = sessionStorage.getItem(SESSION_KEY);
 	const params = new URLSearchParams(window.location.search);
@@ -405,7 +378,12 @@ function createEnvironmentIndicator() {
 		zIndex: '999999',
 		pointerEvents: 'none'
 	});
-	document.body.appendChild(indicator)
+	// The loader can run in <head>, before document.body exists.
+	if (document.body) {
+		document.body.appendChild(indicator);
+	} else {
+		document.addEventListener('DOMContentLoaded', () => document.body.appendChild(indicator));
+	}
 }
 
 function passQueryParametersToB2BConfiguratorIFrame() {
@@ -766,7 +744,6 @@ window.FeActivityLoader.getSites = getSites;
 window.FeActivityLoader.detectSites = detectSites;
 window.FeActivityLoader.getLocations = getLocations;
 window.FeActivityLoader.detectLocation = detectLocation;
-window.FeActivityLoader.detectTypeOfSite = detectTypeOfSite;
 window.FeActivityLoader.detectTypeOfEnvironment = detectTypeOfEnvironment;
 window.FeActivityLoader.detectActivitiesToActivate = detectActivitiesToActivate;
 
