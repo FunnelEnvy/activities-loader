@@ -9,8 +9,8 @@ description: >
   architecture change. Member 5.1 of the altloader-cut-over initiative.
 governed_by: change-management/change-document
 managed_by: change-management
-status: Discovery
-status_note: "Discovery complete: Approach approved 2026-10-12; ready for Design"
+status: Design
+status_note: "Design complete: Requirements and Validation authored; ready for Build"
 resource_name: repo
 resource_version: "TBD"
 impact: 3
@@ -18,9 +18,9 @@ confidence: 4
 ease: 4
 initiative: altloader-cut-over
 owner: Sam Baron
-version: "0.6.0"
+version: "0.7.0"
 created: 2026-10-09
-updated: 2026-10-12
+updated: 2026-10-13
 ---
 # Loader Hardening
 
@@ -106,20 +106,23 @@ The cleanup in `ci-close-pull-request.yml` deletes `b2b-hybris-test/${{ github.e
 - **Script-affecting: no.** The deliverables are JavaScript, `package.json` and README edits. No Python file changes, so Design covers the code through `Validation` rather than `_tests/`.
 - **Performance-affecting: no.** No skill or agent-facing surface changes.
 - **Test-eval-only: no.** Nothing lands under `_tests/` or `_evals/`.
-- **Production deploy path: no.** No workflow, bucket path or release step changes. The `build.js` and `init-activities.js` fixes still reach production. hpe-altloader checks the loader out at `main`, unpinned (`Current State` > `Callers`), so its first rebuild after the fixes reach `main` ships them in `fe_altloader.js` and the group bundles.
+- **Production deploy path: no.** No workflow, bucket path or release step changes. The `build.js` and `init-activities.js` fixes still reach production. hpe-altloader checks the loader out at `main`, unpinned (`Current State` > `Callers`), so its first rebuild after the fixes reach `main` ships them in `fe_altloader.js` and the group bundles. Clearing `dist/` on every run does not change what those callers upload. Each hpe-altloader job runs `build.js` once before its upload, and `rebuild-all-activities.yml` already runs `rm -rf ./dist` between its builds (`git grep -n -E "build\.js|rm -rf ./dist|s3 (sync|cp)" origin/master -- .github/workflows/` at `53f7052`, 2026-10-13). The deploys install with `yarn install --frozen-lockfile` through the `setup-yarn` composite action (`git show origin/master:.github/actions/setup-yarn/action.yml`), so the lockfile edit also reaches production.
 
 ### Plan
 
 **Owner decisions, 2026-10-12.** The change makes no major build or deploy architecture change. It fixes the loader's own code and teaches `setup-local.js` hpe-web-dev's layout. hpe-altloader keeps its workflows until 5.6, and hpe-web-dev ports them in member 5.7 ([hpe-web-dev:charter](hpe-web-dev:CHARTER.md) `Decisions made at kickoff`, `Build and deploy` row). Work that left this change is listed under `Out of Scope`.
 
 1. **Defect fixes.** Fix the six loader-code defects that hold (`Current State` > `Defects`).
-   - *Build (1, 2).* Remove `--all`, and make a run with neither `--lib` nor `--group` exit with a usage error. The full rebuild already builds each group on its own, because each group syncs to its own prefix. Clear `dist/` before the build runs. The `build` script in `package.json` then runs the same sequence as hpe-altloader's `rebuild-all-activities.yml`: each of the three groups with `--group`, then `--lib`. That keeps the README's "Build all activities" description true (owner decision, 2026-10-12).
+   - *Build (1, 2).* Remove `--all`, and make a run with neither `--lib` nor `--group` exit with a usage error. The full rebuild already builds each group on its own, because each group syncs to its own prefix. The `build` script in `package.json` then runs the same sequence as hpe-altloader's `rebuild-all-activities.yml`: each of the three groups with `--group`, then `--lib`. That keeps the README's "Build all activities" description true (owner decision, 2026-10-12).
+   - *Clearing `dist/` (2).* `build.js` clears `dist/` on every run by default, and a `--no-clean` flag skips the clear. `npm run build` clears on its first invocation and passes `--no-clean` to the other three, so it ends with all four outputs in `dist/` (owner decision, 2026-10-13). Without the flag, each of the script's four runs would clear the one before it and leave only the loader output. The clear uses Node's `fs`. `rollup-plugin-cleandir` cannot do it as a registered plugin, because a run makes many rollup builds and the plugin would clear `dist/` before each one. The package is then unused and goes with the others under *Packages* (Design review, 2026-10-13).
    - *Targeting operator (4).* Make `does not contain any of` return `!value.some`.
-   - *Packages (9).* Remove the `fs` and `child-process` packages and `package-lock.json`.
+   - *Packages (9).* Remove the `fs` and `child-process` packages and `package-lock.json`. `rollup-plugin-cleandir` goes too, once the clear no longer uses it.
    - *Dead config (10).* Derive `VALID_ENVS` from the inlined `environments` keys plus `PROD`, and delete `detectTypeOfSite`.
    - *Environment indicator (11).* Make `createEnvironmentIndicator` wait for `document.body`.
    - *Defect 3.* No fix. Discovery disproved it.
 2. **Source path.** `setup-local.js` reads the config files and `libs/` from a configurable root instead of a fixed sibling hpe-altloader clone. It takes the root as `--source <path>` or `ALTLOADER_SRC`. The default is a sibling hpe-web-dev clone's `activities/`, where the groups, config files and `libs/` sit together. When that is absent, it falls back to a sibling hpe-altloader clone's root. The [README](../../README.md)'s local-setup text follows.
+
+   `setup-local.js` copies the config files and `libs/`, not the activity directories, as it does today. The group builds read activity source from `src/activities/{dir}/`, which CI fills by copying each group directory's contents there (`rebuild-all-activities.yml`, `Copy files` step). A local `npm run build` needs the same staging. The README states it rather than `setup-local.js` taking it on (Design review, 2026-10-13).
 
 ### Out of Scope
 
@@ -143,13 +146,86 @@ The cleanup in `ci-close-pull-request.yml` deletes `b2b-hybris-test/${{ github.e
 
 ## Requirements
 
-To be authored at Design.
+R1 to R9 land in activities-loader. R10 is a hpe-web-dev KB edit. The root `CHANGELOG.md` gets its `[Unreleased]` entry at Closed, not in Build.
+
+**R1. Build arguments.** `build.js` builds one group with `--group <B2B-Hybris|B2C|configurator>`, optionally narrowed by `--activities`, or the loader with `--lib`. Delete the `argv.all` branch. A run with neither `--group` nor `--lib` prints a usage message naming both flags and exits non-zero. It does this before it clears or writes anything, so `--all` alone now gets the usage error. A run with both flags keeps today's behavior: `--lib` wins.
+
+**R2. Clearing `dist/`.** After the argument check and before any build, `build.js` deletes `dist/` with Node's `fs` (recursive, ignoring a missing directory). `--no-clean` skips the delete. Remove the bare `cleandir('dist')` call and its `rollup-plugin-cleandir` import.
+
+**R3. `build` script.** The `package.json` `build` script runs four commands joined by `&&`:
+
+1. `node build.js --group B2C`
+2. `node build.js --no-clean --group B2B-Hybris`
+3. `node build.js --no-clean --group configurator`
+4. `node build.js --no-clean --lib`
+
+The `setup:local` and `build:local` scripts keep their commands.
+
+**R4. Targeting operator.** In `evaluateCondition`, `does not contain any of` returns `!value.some(val => url.includes(val))`. No other operator changes.
+
+**R5. Packages and lockfiles.** Remove `fs` from `dependencies`, and `child-process` and `rollup-plugin-cleandir` from `devDependencies`. Delete `package-lock.json`. In `yarn.lock`, remove the entries for those three packages and for `@mstssk/cleandir`, which only `rollup-plugin-cleandir` requires (`grep -n '"@mstssk/cleandir"' yarn.lock` at `859e48d` prints one dependent line, inside the `rollup-plugin-cleandir` entry). Change nothing else in `yarn.lock`, because the deploys install it with `--frozen-lockfile`.
+
+**R6. Environment config.** `detectTypeOfEnvironment` builds its valid list from `Object.keys(environments)` plus `PROD`, replacing the hard-coded `['DEV', 'QA', 'PROD']`. With hpe-altloader's current `environments` block, which has the keys `QA` and `DEV`, the valid set is unchanged. Delete `detectTypeOfSite` and its `window.FeActivityLoader.detectTypeOfSite` export. `detectSites` and the other exports stay.
+
+**R7. Environment indicator.** `createEnvironmentIndicator` appends the indicator at once when `document.body` exists. Otherwise it appends on `DOMContentLoaded`. `runLoader` does not wait for it. The `PROD` early return and the indicator's text and style are unchanged.
+
+**R8. Source resolution.** `setup-local.js` picks its source root by the first rule that applies:
+
+1. `--source <path>`, resolved against the current directory;
+2. the `ALTLOADER_SRC` environment variable;
+3. a sibling `../hpe-web-dev/activities`, when it exists;
+4. a sibling `../hpe-altloader`.
+
+An explicit root from rule 1 or 2 that does not exist is an error, with no fallback. When no rule yields an existing root, the script exits non-zero and names every path it tried. As today, the root's existence is checked before `src/` is removed. The script logs the chosen root and the rule that chose it. It copies the same five config files and `libs/` from that root, and runs the `src/libs` install as today. It does not copy activity directories.
+
+**R9. Local-setup text.** Every surface in this repo that says where `setup:local` reads from, or how to build after it, matches R3 and R8. The search `git grep -n -E "hpe-altloader|setup:local|setup-local|build:local|npm run build" -- README.md scripts package.json` at `859e48d` finds these sites:
+
+- README `Build Pipeline` table, rows `npm run build`, `npm run build:local` and `npm run setup:local`;
+- README `Dependencies`, the hpe-altloader bullet;
+- `scripts/setup-local.js`, its header comment, the not-found error text and the closing hint, which today reads `npm run build -- --lib`.
+
+The `npm run build` row says the build expects `src/` staged the way CI stages it: config files and `libs/` at `src/`, and each group directory's contents copied into `src/activities/`. The `build:local` row says it takes its source through `ALTLOADER_SRC`, since `npm run build:local -- --source` would pass the flag to `build.js`. The README's frontmatter `version` stays, because the version cascade is Release-only.
+
+**R10 (Orchestrator-Owned).** In hpe-web-dev, `kb-altloader/reference/loader-runtime.md` § `Environments` says the valid values are hard-coded and that `init-activities.js` never reads the `environments` block. Once R6 reaches activities-loader `main`, update both statements to the derived list. Make the edit through that KB's own governance. The search `git -C hpe-web-dev grep -n -I -E "never reads|hardcoded in the function|detectTypeOfSite" -- kb-altloader` at `6962812` finds no other stale site. The same search over hpe-altloader `docs/` at `53f7052` finds none.
 
 ## Verification Design
 
 ### Validation
 
-To be authored at Design.
+**Setup.** Put scratch files under `tmp/`, with the run's date prefix. In this environment hpe-altloader is cloned at `/home/user/HPE-altloader`, so the sibling default `../hpe-altloader` does not resolve, and hpe-web-dev has no `activities/` yet. Stage `src/` the way CI does:
+
+1. `node scripts/setup-local.js --source /home/user/HPE-altloader`
+2. `mkdir -p src/activities`, then copy the contents of each of hpe-altloader's `B2C/`, `B2B-Hybris/` and `configurator/` into it.
+3. `yarn install`
+
+Record the hpe-altloader sha used. The pre-change commit is `859e48d`.
+
+1. **Group builds (R1, R2).** Run `node build.js --group B2C`, `--group B2B-Hybris` and `--group configurator` in turn. Each exits 0. After each run, `dist/` holds only that group's `fe_activity_*` bundles and their maps. Keep each run's file list for criterion 6. If a group exits 1, rerun it at `859e48d`. Matching `build-errors.json` content there marks the failure as pre-existing. Record it, and mark criterion 6 deferred for that cause.
+2. **Loader build (R1, R2).** `node build.js --lib` exits 0, and `dist/` then holds only `fe_altloader.js` and `fe_altloader.js.map`.
+3. **Usage error (R1).** With `dist/` populated, `node build.js` and `node build.js --all` each exit non-zero and print a usage message naming `--group` and `--lib`. The `dist/` listing is unchanged afterwards.
+4. **`--activities` still narrows (R1).** `node build.js --group B2C --activities <one B2C dir>` builds only that activity's bundles. The group deploys depend on this flag.
+5. **Clear and `--no-clean` (R2).** Create `dist/stale.js`, then run `node build.js --lib`. `stale.js` is gone. Then `node build.js --no-clean --group configurator` leaves both the loader files and the configurator bundles in `dist/`. `grep -n cleandir build.js` prints nothing.
+6. **`npm run build` (R3).** It exits 0 and leaves `dist/` holding exactly the union of the file lists from criteria 1 and 2.
+7. **Operator (R4).** A scratch Node script extracts `evaluateCondition` from `init-activities.js` and runs it in `vm` with a stubbed `window.location.href`, using `value: ["/a", "/b"]`. A URL with neither returns `true`. A URL with `/a` only returns `false`, and so does one with both. At `859e48d` the same script returns `true` for `/a` only, which shows the case fails before the fix.
+8. **Packages and lockfiles (R5).** `package.json` lists none of `fs`, `child-process` or `rollup-plugin-cleandir`, and `package-lock.json` is gone. `grep -n -E '^"?(fs|child-process|rollup-plugin-cleandir|@mstssk/cleandir)@' yarn.lock` prints nothing. `git diff 859e48d -- yarn.lock` removes those four entries and nothing else. Run `yarn install --frozen-lockfile` in two layouts, `src/` empty and `src/` staged per `Setup`. In each layout the outcome after the change matches the outcome at `859e48d`.
+9. **Environment config (R6).** In `init-activities.js`, `grep -n "\['DEV', 'QA', 'PROD'\]"` and `grep -n detectTypeOfSite` print nothing. Load the built `fe_altloader.js` in a local page served by `http-server` and opened in Playwright's Chromium (Playwright 1.56.1, browsers in `/opt/pw-browsers`). Then check:
+   - `?FE_LOADER=DEV` shows the indicator reading `DEV`;
+   - `?FE_LOADER=QA` shows it reading `QA`;
+   - `?FE_LOADER=STAGING` logs `Invalid environment` and shows no indicator;
+   - no parameter shows no indicator;
+   - `window.FeActivityLoader.detectTypeOfSite` is `undefined` and `detectSites` is a function.
+10. **Indicator wait (R7).** In the same harness, with the loader in `<head>` and `?FE_LOADER=QA`, the page logs no uncaught `TypeError`, and the indicator is present after `DOMContentLoaded`. A loader built at `859e48d` on the same page logs the `appendChild` `TypeError`. With the loader at the end of `<body>`, the indicator is present as soon as the script runs.
+11. **Source resolution (R8).** Build a fixture tree under `tmp/`. Copy `scripts/setup-local.js` into `<fixture>/activities-loader/scripts/`. Give `<fixture>/hpe-web-dev/activities/`, `<fixture>/hpe-altloader/` and two custom roots each the five config files, every one with marker content naming its root, plus a `libs/` with no `package.json`. Run the copied script from `<fixture>/activities-loader/` and read the marker in `src/activities.json`:
+    - both sibling defaults present, no flag or variable: hpe-web-dev's `activities/`;
+    - `hpe-web-dev/activities/` removed: hpe-altloader;
+    - `ALTLOADER_SRC=<custom-1>`: custom-1;
+    - `--source <custom-2>` with `ALTLOADER_SRC` also set: custom-2;
+    - `--source` naming a missing path: non-zero exit, no fallback, and the existing `src/` is untouched;
+    - no flag, no variable and neither sibling present: non-zero exit, a message listing every path tried, and `src/` untouched.
+
+    In each successful case, the log names the chosen root and its rule. `Setup` step 1 covers a real `--source` run against hpe-altloader.
+12. **Local-setup text (R9).** Each R9 site describes R8's resolution order and R3's build. The README `npm run build` row states the CI-style staging, and the `build:local` row names `ALTLOADER_SRC`. `grep -n "npm run build -- --lib" scripts/setup-local.js` prints nothing. The README frontmatter `version` equals its `859e48d` value.
+13. **KB statement (R10).** The orchestrator confirms in hpe-web-dev that `kb-altloader/reference/loader-runtime.md` § `Environments` describes the derived list and no longer says the block is never read.
 
 ## Verification Results
 
