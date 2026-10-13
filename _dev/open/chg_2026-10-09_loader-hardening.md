@@ -10,7 +10,7 @@ description: >
 governed_by: change-management/change-document
 managed_by: change-management
 status: QA
-status_note: "QA done: 12/13 confirmed, R10 deferred to orchestrator; awaiting pre-Close"
+status_note: "QA done: 12/14 confirmed, 2 post-release checks deferred; awaiting pre-Close"
 resource_name: repo
 resource_version: "TBD"
 impact: 3
@@ -226,11 +226,13 @@ Record the hpe-altloader sha used. The pre-change commit is `859e48d`.
     In each successful case, the log names the chosen root and its rule. `Setup` step 1 covers a real `--source` run against hpe-altloader.
 12. **Local-setup text (R9).** Each R9 site describes R8's resolution order and R3's build. The README `npm run build` row states the CI-style staging, and the `build:local` row names `ALTLOADER_SRC`. `grep -n "npm run build -- --lib" scripts/setup-local.js` prints nothing. The README frontmatter `version` equals its `859e48d` value.
 13. **KB statement (R10).** The orchestrator confirms in hpe-web-dev that `kb-altloader/reference/loader-runtime.md` § `Environments` describes the derived list and no longer says the block is never read.
+14. **Post-release rebuild (R1 to R6).** After the release cut lands these fixes on `main`, run hpe-altloader's `rebuild-all-activities.yml` by hand (owner decision, 2026-10-13). It builds each group and then `--lib` against activities-loader `main`, the sequence R3 mirrors. Every build and upload step passes, and the next push-triggered deploy, which installs with `--frozen-lockfile`, passes too. The rebuild deploys every group and the loader to production, so run it when a full redeploy is acceptable.
 
 ## Verification Results
 
 ### Validation Outcomes
 
-12/13 confirmed; 1 deferred. Run at activities-loader `b9de38d` plus the QA fixes, against hpe-altloader `53f7052` (`git -C /home/user/HPE-altloader rev-parse --short HEAD`, 2026-10-13).
+12/14 confirmed; 2 deferred. Run at activities-loader `b9de38d` plus the QA fixes, against hpe-altloader `53f7052` (`git -C /home/user/HPE-altloader rev-parse --short HEAD`, 2026-10-13).
 
 - **13 (R10), deferred.** Orchestrator-owned in hpe-web-dev, and due only once R6 reaches activities-loader `main`. `kb-altloader/reference/loader-runtime.md` § `Environments` still says the values are hard-coded (read 2026-10-13).
+- **14 (post-release rebuild), deferred.** It runs only after the release cut, and the release PR's `Post-Release Tasks` section carries it with R10.
