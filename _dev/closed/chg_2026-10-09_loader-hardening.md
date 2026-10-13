@@ -9,8 +9,8 @@ description: >
   architecture change. Member 5.1 of the altloader-cut-over initiative.
 governed_by: change-management/change-document
 managed_by: change-management
-status: QA
-status_note: "QA done: 12/14 confirmed, 2 post-release checks deferred; awaiting pre-Close"
+status: Closed
+status_note: "Closed 2026-10-13 as completed; awaiting release"
 resource_name: repo
 resource_version: "TBD"
 impact: 3
@@ -18,9 +18,10 @@ confidence: 4
 ease: 4
 initiative: altloader-cut-over
 owner: Sam Baron
-version: "0.10.0"
+version: "0.11.0"
 created: 2026-10-09
 updated: 2026-10-13
+closed_as: completed
 ---
 # Loader Hardening
 
@@ -184,7 +185,7 @@ An explicit root from rule 1 or 2 that does not exist is an error, with no fallb
 - README `Dependencies`, the hpe-altloader bullet;
 - `scripts/setup-local.js`, its header comment, the not-found error text and the closing hint, which today reads `npm run build -- --lib`.
 
-The `npm run build` row says the build expects `src/` staged the way CI stages it: config files and `libs/` at `src/`, and each group directory's contents copied into `src/activities/`. It then gives the install step, `yarn install --frozen-lockfile`, as CI runs it (owner decision, 2026-10-13). The `build:local` row says it takes its source through `ALTLOADER_SRC`, since `npm run build:local -- --source` would pass the flag to `build.js`. The README's frontmatter `version` stays, because the version cascade is Release-only.
+The `npm run build` row says the build expects `src/` staged the way CI stages it: config files and `libs/` at `src/`, and each group directory's contents copied into `src/activities/`. It then gives the install step, `yarn install --frozen-lockfile`, as the deploys run it (owner decision, 2026-10-13). The `build:local` row says it takes its source through `ALTLOADER_SRC`, since `npm run build:local -- --source` would pass the flag to `build.js`. The README's frontmatter `version` stays, because the version cascade is Release-only.
 
 **R10 (Orchestrator-Owned).** In hpe-web-dev, `kb-altloader/reference/loader-runtime.md` § `Environments` says the valid values are hard-coded and that `init-activities.js` never reads the `environments` block. Once R6 reaches activities-loader `main`, update both statements to the derived list. Make the edit through that KB's own governance. The search `git -C hpe-web-dev grep -n -I -E "never reads|hardcoded in the function|detectTypeOfSite" -- kb-altloader` at `6962812` finds no other stale site. The same search over hpe-altloader `docs/` at `53f7052` finds none.
 
@@ -234,5 +235,6 @@ Record the hpe-altloader sha used. The pre-change commit is `859e48d`.
 
 12/14 confirmed; 2 deferred. Run at activities-loader `b9de38d` plus the QA fixes, against hpe-altloader `53f7052` (`git -C /home/user/HPE-altloader rev-parse --short HEAD`, 2026-10-13).
 
+- **12 (R9), re-checked** at `a35b879` after the README install-step edit: confirmed.
 - **13 (R10), deferred.** Orchestrator-owned in hpe-web-dev, and due only once R6 reaches activities-loader `main`. `kb-altloader/reference/loader-runtime.md` § `Environments` still says the values are hard-coded (read 2026-10-13).
 - **14 (post-release rebuild), deferred.** It runs only after the release cut, and the release PR's `Post-Release Tasks` section carries it with R10.
