@@ -23,7 +23,7 @@ Rollup-based build system with Babel and TypeScript transpilation, CSS minificat
 
 | Command | Description |
 |---|---|
-| `npm run build` | Build all activities: each group with `--group` (`B2C`, `B2B-Hybris`, `configurator`), then the loader with `--lib`. Expects `src/` staged the way CI stages it: config files and `libs/` at `src/`, and each group directory's contents copied into `src/activities/` |
+| `npm run build` | Build all activities: each group with `--group` (`B2C`, `B2B-Hybris`, `configurator`), then the loader with `--lib`. Expects `src/` staged the way CI stages it: config files and `libs/` at `src/`, and each group directory's contents copied into `src/activities/`. Then install with `yarn install --frozen-lockfile`, as CI does. A plain `yarn install` rewrites `yarn.lock`, because the staged activities are workspaces |
 | `npm run build:local` | Run `setup:local`, then build the loader with `--lib`. Set the source root with `ALTLOADER_SRC`, since `--source` here would reach `build.js` |
 | `npm run setup:local` | Copy the config files and `libs/` into `src/` from a source root: `--source <path>`, else `ALTLOADER_SRC`, else a sibling hpe-web-dev clone's `activities/`, else a sibling hpe-altloader clone. Does not copy activity directories |
 
