@@ -17,6 +17,8 @@ impact: 3
 confidence: 4
 ease: 4
 initiative: altloader-cut-over
+held_by:
+  - sam_altloader-cut-over
 owner: Sam Baron
 version: "0.7.0"
 created: 2026-10-09
