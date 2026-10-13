@@ -7,7 +7,7 @@ description: >
   and dependencies.
 governed_by: repo-standards/repo-readme
 managed_by: change-management
-version: "1.2.0"
+version: "1.3.0"
 created: 2026-04-10
 updated: 2026-10-13
 ---
@@ -108,21 +108,11 @@ The value match is case-insensitive, and closing the tab ends the bypass. Outsid
 
 ## Governance
 
-Managed by [fe-sys-hq](https://github.com/FunnelEnvy/fe-sys-hq). It deploys the shared rules to `.claude/rules/`, plugin configuration to `.claude/settings.json`, and the `fe-`-prefixed workflows to `.github/workflows/`.
+Governed by [fe-sys-hq](https://github.com/FunnelEnvy/fe-sys-hq). Its `fe-governance-deploy` skill deploys the governance sources here:
 
-**Rules:**
-
-- `10-repo-conventions`: file naming, credentials, `.gitignore`
-- `11-skill-loading-requirements`: mandatory skill loading signals
-- `12-claude-usage`: agent behavior conventions
-- `13-managed-repo-network-awareness`: registry discovery and cross-repo resolution
-- `14-git-operations`: branch, commit and PR conventions
-- `15-writing-standards`: prose standards
-- `16-reasoning-standards`: reasoning and sourcing
-
-**Workflows:** `fe-branch-sweep`, `fe-release-tag`
-
-**Plugins:** claude-code-management, fe-governance, fe-integrations, fe-knowledge-base
+- **Rules.** `.claude/rules/`
+- **Plugins.** Enabled and configured in `.claude/settings.json`
+- **Workflows.** The `fe-`-prefixed files in `.github/workflows/`
 
 ## Dependencies
 
