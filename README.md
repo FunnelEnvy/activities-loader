@@ -25,7 +25,7 @@ Rollup-based build system with Babel and TypeScript transpilation, CSS minificat
 |---|---|
 | `npm run build` | Build all activities: each group with `--group` (`B2C`, `B2B-Hybris`, `configurator`), then the loader with `--lib`. Expects `src/` staged the way CI stages it: config files and `libs/` at `src/`, and each group directory's contents copied into `src/activities/`. Then install with `yarn install --frozen-lockfile`, as the deploy workflows do. A plain `yarn install` rewrites `yarn.lock`, because the staged activities are workspaces |
 | `npm run build:local` | Run `setup:local`, then build the loader with `--lib`. Set the source root with `ALTLOADER_SRC`, since `--source` here would reach `build.js` |
-| `npm run setup:local` | Copy the config files and `libs/` into `src/` from a source root: `--source <path>`, else `ALTLOADER_SRC`, else a sibling hpe-web-dev clone's `activities/`, else a sibling hpe-altloader clone. Does not copy activity directories |
+| `npm run setup:local` | Copy the config files and `libs/` into `src/` from a source root: `--source <path>`, else `ALTLOADER_SRC`, else a sibling hpe-website-optimization clone's `activities/`, else a sibling hpe-altloader clone. Does not copy activity directories |
 
 `build.js` builds one target per run, `--group <name>` (optionally narrowed by `--activities`) or `--lib`, and exits with a usage error given neither. It clears `dist/` first unless `--no-clean` is passed.
 
@@ -119,4 +119,4 @@ Governed by [fe-sys-hq](https://github.com/FunnelEnvy/fe-sys-hq). Its `fe-govern
 - **Node.js** — runtime for build scripts
 - **Rollup** — module bundler with plugins for Babel, TypeScript, JSON, CommonJS, node polyfills, terser
 - **AWS S3** — deployment target (`fe-hpe-script.s3.us-east-2.amazonaws.com`)
-- **hpe-altloader** — current home of activity source code and configuration. hpe-web-dev's `activities/` replaces it at cut-over. `npm run setup:local` copies the config files and `libs/` from either into `src/` for local builds
+- **hpe-altloader** — current home of activity source code and configuration. hpe-website-optimization's `activities/` replaces it at cut-over. `npm run setup:local` copies the config files and `libs/` from either into `src/` for local builds
