@@ -10,7 +10,7 @@
  * The source root is the first of these that applies:
  * 1. --source <path>, resolved against the current directory
  * 2. the ALTLOADER_SRC environment variable
- * 3. a sibling hpe-web-dev clone's activities/, when it exists
+ * 3. a sibling hpe-website-optimization clone's activities/, when it exists
  * 4. a sibling hpe-altloader clone
  *
  * An explicit root (1 or 2) that does not exist is an error, with no fallback.
@@ -113,7 +113,7 @@ function resolveSourceRoot() {
   }
 
   const siblings = [
-    { root: path.resolve(rootDir, '..', 'hpe-web-dev', 'activities'), rule: 'sibling hpe-web-dev/activities' },
+    { root: path.resolve(rootDir, '..', 'hpe-website-optimization', 'activities'), rule: 'sibling hpe-website-optimization/activities' },
     { root: path.resolve(rootDir, '..', 'hpe-altloader'), rule: 'sibling hpe-altloader' },
   ];
   for (const sibling of siblings) {

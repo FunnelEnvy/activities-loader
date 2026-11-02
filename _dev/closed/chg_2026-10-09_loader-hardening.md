@@ -3,9 +3,9 @@ fe-managed: true
 name: loader-hardening
 title: Loader Hardening
 description: >
-  Harden activities-loader before the hpe-web-dev cut-over. Fix the six loader-code defects
+  Harden activities-loader before the hpe-website-optimization cut-over. Fix the six loader-code defects
   confirmed in discovery, in build.js, init-activities.js and package.json, and give setup-local.js
-  a configurable source path that understands hpe-web-dev's activities/ layout. No build or deploy
+  a configurable source path that understands hpe-website-optimization's activities/ layout. No build or deploy
   architecture change. Member 5.1 of the altloader-cut-over initiative.
 governed_by: change-management/change-document
 managed_by: change-management
@@ -36,20 +36,20 @@ closed_as: completed
 
 ## Background
 
-hpe-web-dev replaces hpe-altloader as the home of HPE Altloader activities ([hpe-web-dev:charter](hpe-web-dev:CHARTER.md)). This change is member 5.1 of the [hpe-web-dev:Platform Hardening and Cut-Over](hpe-web-dev:_initiatives/open/altloader-cut-over/overview.md) initiative. It hardens the loader before any activity moves.
+hpe-website-optimization replaces hpe-altloader as the home of HPE Altloader activities ([hpe-website-optimization:charter](hpe-website-optimization:CHARTER.md)). This change is member 5.1 of the [hpe-website-optimization:Platform Hardening and Cut-Over](hpe-website-optimization:_initiatives/open/altloader-cut-over/overview.md) initiative. It hardens the loader before any activity moves.
 
-hpe-altloader builds with this loader today, and hpe-web-dev will once member 5.7 ports the deploy workflows.
+hpe-altloader builds with this loader today, and hpe-website-optimization will once member 5.7 ports the deploy workflows.
 
-The charter row sets the scope ([hpe-web-dev:charter](hpe-web-dev:CHARTER.md) `Initiative 5`, member 5.1), as the owner revised it on 2026-10-12 (`Approach` > `Plan`):
+The charter row sets the scope ([hpe-website-optimization:charter](hpe-website-optimization:CHARTER.md) `Initiative 5`, member 5.1), as the owner revised it on 2026-10-12 (`Approach` > `Plan`):
 
 - fixes for the six loader-code defects found in discovery;
 - a configurable source path in `setup-local.js` that understands `activities/`.
 
-The defects and the cut-over risks come from the [hpe-web-dev:pipeline and loader discovery](hpe-web-dev:_initiatives/open/altloader-cut-over/2026-10-01_pipeline-and-loader-discovery.md) report, sections 3.5 and 3.6. Discovery of this change re-read all 11 and disproved one (`Current State` > `Defects`). The `activities/` layout comes from member 1.1, [hpe-web-dev:Repo Architecture](hpe-web-dev:_dev/closed/chg_2026-10-01_repo-architecture.md) `Layout` item 1. Activity groups live under `activities/{Group}/{dir}/`, with the config files and shared `libs/` beside them.
+The defects and the cut-over risks come from the [hpe-website-optimization:pipeline and loader discovery](hpe-website-optimization:_initiatives/open/altloader-cut-over/2026-10-01_pipeline-and-loader-discovery.md) report, sections 3.5 and 3.6. Discovery of this change re-read all 11 and disproved one (`Current State` > `Defects`). The `activities/` layout comes from member 1.1, [hpe-website-optimization:Repo Architecture](hpe-website-optimization:_dev/closed/chg_2026-10-01_repo-architecture.md) `Layout` item 1. Activity groups live under `activities/{Group}/{dir}/`, with the config files and shared `libs/` beside them.
 
 **Owner input, 2026-10-09.** Sam asked whether activities-loader needs to be public, and is fine with making it private. On 2026-10-12 the owner decided to keep it public (`Approach` > `Out of Scope`).
 
-**Initiative tag.** The doc keeps `initiative: altloader-cut-over`, although the overview lives in hpe-web-dev. The tag decides where `/advance` lands this doc's build in activities-loader: on the initiative-keyed integration branch, tag-first in either repo class (change-management [fe-sys-hq:git-strategy](fe-sys-hq:plugins/fe-governance/skills/change-management/references/git-strategy.md) `Branch Classes and Naming`, `Merge target` row). `drive_member.py` lands a build-onward step on that same branch. A later `closed:loader-hardening@activities-loader` gate reads that branch too ([fe-sys-hq:Cross-Repo Gate Grammar](fe-sys-hq:plugins/fe-governance/skills/change-management/references/initiative-management.md#cross-repo-gate-grammar)). Untagged, `/advance` would hold the build for the release cut instead, because the registry entry for activities-loader declares no `main_semantics` and so resolves to `released`. The gate would then stay blocked until that cut.
+**Initiative tag.** The doc keeps `initiative: altloader-cut-over`, although the overview lives in hpe-website-optimization. The tag decides where `/advance` lands this doc's build in activities-loader: on the initiative-keyed integration branch, tag-first in either repo class (change-management [fe-sys-hq:git-strategy](fe-sys-hq:plugins/fe-governance/skills/change-management/references/git-strategy.md) `Branch Classes and Naming`, `Merge target` row). `drive_member.py` lands a build-onward step on that same branch. A later `closed:loader-hardening@activities-loader` gate reads that branch too ([fe-sys-hq:Cross-Repo Gate Grammar](fe-sys-hq:plugins/fe-governance/skills/change-management/references/initiative-management.md#cross-repo-gate-grammar)). Untagged, `/advance` would hold the build for the release cut instead, because the registry entry for activities-loader declares no `main_semantics` and so resolves to `released`. The gate would then stay blocked until that cut.
 
 ## Current State
 
@@ -96,7 +96,7 @@ The 11 defects from discovery section 3.5, re-read at the measured shas. Ten hol
 
 ### Preview Paths
 
-PR previews upload to `{group}-test/{PR number}/` and libs to `test/{PR number}/`, with no repo in the path (`git grep -n "s3://fe-hpe-script/.*test/" origin/master -- .github/workflows/ci-pull-request.yml`). hpe-web-dev's PR numbers restart at 1, so its previews would overwrite hpe-altloader's.
+PR previews upload to `{group}-test/{PR number}/` and libs to `test/{PR number}/`, with no repo in the path (`git grep -n "s3://fe-hpe-script/.*test/" origin/master -- .github/workflows/ci-pull-request.yml`). hpe-website-optimization's PR numbers restart at 1, so its previews would overwrite hpe-altloader's.
 
 The cleanup in `ci-close-pull-request.yml` deletes `b2b-hybris-test/${{ github.event.ref }}` and `b2c-test/${{ github.event.ref }}` only (`git show origin/master:.github/workflows/ci-close-pull-request.yml`). It leaves configurator and libs previews in place. What it deletes was not confirmed against a run, because the run logs could not be fetched (`gh run view 37976002173 -R FunnelEnvy/hpe-altloader --log` fails on 2026-10-09). From training data, not a checked source: a `pull_request` event payload carries no top-level `ref`, so the expression may be empty and the step may delete each group's whole test prefix.
 
@@ -111,7 +111,7 @@ The cleanup in `ci-close-pull-request.yml` deletes `b2b-hybris-test/${{ github.e
 
 ### Plan
 
-**Owner decisions, 2026-10-12.** The change makes no major build or deploy architecture change. It fixes the loader's own code and teaches `setup-local.js` hpe-web-dev's layout. hpe-altloader keeps its workflows until 5.6, and hpe-web-dev ports them in member 5.7 ([hpe-web-dev:charter](hpe-web-dev:CHARTER.md) `Decisions made at kickoff`, `Build and deploy` row). Work that left this change is listed under `Out of Scope`.
+**Owner decisions, 2026-10-12.** The change makes no major build or deploy architecture change. It fixes the loader's own code and teaches `setup-local.js` hpe-website-optimization's layout. hpe-altloader keeps its workflows until 5.6, and hpe-website-optimization ports them in member 5.7 ([hpe-website-optimization:charter](hpe-website-optimization:CHARTER.md) `Decisions made at kickoff`, `Build and deploy` row). Work that left this change is listed under `Out of Scope`.
 
 1. **Defect fixes.** Fix the six loader-code defects that hold (`Current State` > `Defects`).
    - *Build (1, 2).* Remove `--all`, and make a run with neither `--lib` nor `--group` exit with a usage error. The full rebuild already builds each group on its own, because each group syncs to its own prefix. The `build` script in `package.json` then runs the same sequence as hpe-altloader's `rebuild-all-activities.yml`: each of the three groups with `--group`, then `--lib`. That keeps the README's "Build all activities" description true (owner decision, 2026-10-12).
@@ -121,13 +121,13 @@ The cleanup in `ci-close-pull-request.yml` deletes `b2b-hybris-test/${{ github.e
    - *Dead config (10).* Derive `VALID_ENVS` from the inlined `environments` keys plus `PROD`, and delete `detectTypeOfSite`.
    - *Environment indicator (11).* Make `createEnvironmentIndicator` wait for `document.body`.
    - *Defect 3.* No fix. Discovery disproved it.
-2. **Source path.** `setup-local.js` reads the config files and `libs/` from a configurable root instead of a fixed sibling hpe-altloader clone. It takes the root as `--source <path>` or `ALTLOADER_SRC`. The default is a sibling hpe-web-dev clone's `activities/`, where the groups, config files and `libs/` sit together. When that is absent, it falls back to a sibling hpe-altloader clone's root. The [README](../../README.md)'s local-setup text follows.
+2. **Source path.** `setup-local.js` reads the config files and `libs/` from a configurable root instead of a fixed sibling hpe-altloader clone. It takes the root as `--source <path>` or `ALTLOADER_SRC`. The default is a sibling hpe-website-optimization clone's `activities/`, where the groups, config files and `libs/` sit together. When that is absent, it falls back to a sibling hpe-altloader clone's root. The [README](../../README.md)'s local-setup text follows.
 
    `setup-local.js` copies the config files and `libs/`, not the activity directories, as it does today. The group builds read activity source from `src/activities/{dir}/`, which CI fills by copying each group directory's contents there (`rebuild-all-activities.yml`, `Copy files` step). A local `npm run build` needs the same staging. The README states it rather than `setup-local.js` taking it on (Design review, 2026-10-13).
 
 ### Out of Scope
 
-- **Workflow fixes and preview paths.** The four workflow defects (5 to 8), the repo-prefixed preview paths and the PR-close cleanup fix move to member 5.7, the deploy workflow port in hpe-web-dev. `Current State` > `Defects` and `Preview Paths` stay as its evidence.
+- **Workflow fixes and preview paths.** The four workflow defects (5 to 8), the repo-prefixed preview paths and the PR-close cleanup fix move to member 5.7, the deploy workflow port in hpe-website-optimization. `Current State` > `Defects` and `Preview Paths` stay as its evidence.
 - **Loader-owned build and deploy.** Rejected by the owner (`Alternatives Considered`).
 - **Config schema validation.** JSON Schema validation of `activities.json`, `sites.json`, `locations.json` and `audiences.json` moves to member 3.2, the activity manifest, whose charter row includes JSON Schema in CI. This doc's Discovery profile is input for it:
   - Eight enabled variants carry weight 0, which is how a concluded test is parked, so a rule requiring every weight above zero would fail the next deploy. They sit in 3058, 3071, 4063, 4066, 4067, 4074 (two) and 5004 at hpe-altloader `fde7bf3` (`git show fde7bf3:activities.json` piped through a Python `json` scan of `variants.*.weight`).
@@ -143,11 +143,11 @@ The cleanup in `ci-close-pull-request.yml` deletes `b2b-hybris-test/${{ github.e
 
 ### Alternatives Considered
 
-- **Loader-owned build and deploy.** Discovery first planned a reusable `workflow_call` workflow in activities-loader, from the discovery report's `Structural improvements` (section 3.5). It brought a release tag for callers to pin, hpe-altloader's adoption of the workflow and a token-based loader checkout. The owner rejected it on 2026-10-12: no major build or deploy architecture change ([hpe-web-dev:charter](hpe-web-dev:CHARTER.md) `Decisions made at kickoff`, `Build and deploy` row). hpe-web-dev ports hpe-altloader's workflows with minor fixes in member 5.7 instead.
+- **Loader-owned build and deploy.** Discovery first planned a reusable `workflow_call` workflow in activities-loader, from the discovery report's `Structural improvements` (section 3.5). It brought a release tag for callers to pin, hpe-altloader's adoption of the workflow and a token-based loader checkout. The owner rejected it on 2026-10-12: no major build or deploy architecture change ([hpe-website-optimization:charter](hpe-website-optimization:CHARTER.md) `Decisions made at kickoff`, `Build and deploy` row). hpe-website-optimization ports hpe-altloader's workflows with minor fixes in member 5.7 instead.
 
 ## Requirements
 
-R1 to R9 land in activities-loader. R10 is a hpe-web-dev KB edit. The root `CHANGELOG.md` gets its `[Unreleased]` entry at Closed, not in Build.
+R1 to R9 land in activities-loader. R10 is a hpe-website-optimization KB edit. The root `CHANGELOG.md` gets its `[Unreleased]` entry at Closed, not in Build.
 
 **R1. Build arguments.** `build.js` builds one group with `--group <B2B-Hybris|B2C|configurator>`, optionally narrowed by `--activities`, or the loader with `--lib`. Delete the `argv.all` branch. A run with neither `--group` nor `--lib` prints a usage message naming both flags and exits non-zero. It does this before it clears or writes anything, so `--all` alone now gets the usage error. A run with both flags keeps today's behavior: `--lib` wins.
 
@@ -174,7 +174,7 @@ The `setup:local` and `build:local` scripts keep their commands.
 
 1. `--source <path>`, resolved against the current directory;
 2. the `ALTLOADER_SRC` environment variable;
-3. a sibling `../hpe-web-dev/activities`, when it exists;
+3. a sibling `../hpe-website-optimization/activities`, when it exists;
 4. a sibling `../hpe-altloader`.
 
 An explicit root from rule 1 or 2 that does not exist is an error, with no fallback. When no rule yields an existing root, the script exits non-zero and names every path it tried. As today, the root's existence is checked before `src/` is removed. The script logs the chosen root and the rule that chose it. It copies the same five config files and `libs/` from that root, and runs the `src/libs` install as today with `--no-package-lock` added. Without it, npm writes a root `package-lock.json` and rewrites `yarn.lock`, because the root is a yarn workspace that includes `src/libs` (QA review, 2026-10-13). It does not copy activity directories.
@@ -187,13 +187,13 @@ An explicit root from rule 1 or 2 that does not exist is an error, with no fallb
 
 The `npm run build` row says the build expects `src/` staged the way CI stages it: config files and `libs/` at `src/`, and each group directory's contents copied into `src/activities/`. It then gives the install step, `yarn install --frozen-lockfile`, as the deploys run it (owner decision, 2026-10-13). The `build:local` row says it takes its source through `ALTLOADER_SRC`, since `npm run build:local -- --source` would pass the flag to `build.js`. The README's frontmatter `version` stays, because the version cascade is Release-only.
 
-**R10 (Orchestrator-Owned).** In hpe-web-dev, `kb-altloader/reference/loader-runtime.md` § `Environments` says the valid values are hard-coded and that `init-activities.js` never reads the `environments` block. Once R6 reaches activities-loader `main`, update both statements to the derived list. Make the edit through that KB's own governance. The search `git -C hpe-web-dev grep -n -I -E "never reads|hardcoded in the function|detectTypeOfSite" -- kb-altloader` at `6962812` finds no other stale site. The same search over hpe-altloader `docs/` at `53f7052` finds none.
+**R10 (Orchestrator-Owned).** In hpe-website-optimization, `kb-altloader/reference/loader-runtime.md` § `Environments` says the valid values are hard-coded and that `init-activities.js` never reads the `environments` block. Once R6 reaches activities-loader `main`, update both statements to the derived list. Make the edit through that KB's own governance. The search `git -C hpe-website-optimization grep -n -I -E "never reads|hardcoded in the function|detectTypeOfSite" -- kb-altloader` at `6962812` finds no other stale site. The same search over hpe-altloader `docs/` at `53f7052` finds none.
 
 ## Verification Design
 
 ### Validation
 
-**Setup.** Put scratch files under `tmp/`, with the run's date prefix. In this environment hpe-altloader is cloned at `/home/user/HPE-altloader`, so the sibling default `../hpe-altloader` does not resolve, and hpe-web-dev has no `activities/` yet. Stage `src/` the way CI does:
+**Setup.** Put scratch files under `tmp/`, with the run's date prefix. In this environment hpe-altloader is cloned at `/home/user/HPE-altloader`, so the sibling default `../hpe-altloader` does not resolve, and hpe-website-optimization has no `activities/` yet. Stage `src/` the way CI does:
 
 1. `node scripts/setup-local.js --source /home/user/HPE-altloader`
 2. `mkdir -p src/activities`, then copy the contents of each of hpe-altloader's `B2C/`, `B2B-Hybris/` and `configurator/` into it.
@@ -216,9 +216,9 @@ Record the hpe-altloader sha used. The pre-change commit is `859e48d`.
    - no parameter shows no indicator;
    - `window.FeActivityLoader.detectTypeOfSite` is `undefined` and `detectSites` is a function.
 10. **Indicator wait (R7).** In the same harness, with the loader in `<head>` and `?FE_LOADER=QA`, the page logs no uncaught `TypeError`, and the indicator is present after `DOMContentLoaded`. A loader built at `859e48d` on the same page logs the `appendChild` `TypeError`. With the loader at the end of `<body>`, the indicator is present as soon as the script runs.
-11. **Source resolution (R8).** Build a fixture tree under `tmp/`. Copy `scripts/setup-local.js` into `<fixture>/activities-loader/scripts/`. Give `<fixture>/hpe-web-dev/activities/`, `<fixture>/hpe-altloader/` and two custom roots each the five config files, every one with marker content naming its root, plus a `libs/` with no `package.json`. Run the copied script from `<fixture>/activities-loader/` and read the marker in `src/activities.json`:
-    - both sibling defaults present, no flag or variable: hpe-web-dev's `activities/`;
-    - `hpe-web-dev/activities/` removed: hpe-altloader;
+11. **Source resolution (R8).** Build a fixture tree under `tmp/`. Copy `scripts/setup-local.js` into `<fixture>/activities-loader/scripts/`. Give `<fixture>/hpe-website-optimization/activities/`, `<fixture>/hpe-altloader/` and two custom roots each the five config files, every one with marker content naming its root, plus a `libs/` with no `package.json`. Run the copied script from `<fixture>/activities-loader/` and read the marker in `src/activities.json`:
+    - both sibling defaults present, no flag or variable: hpe-website-optimization's `activities/`;
+    - `hpe-website-optimization/activities/` removed: hpe-altloader;
     - `ALTLOADER_SRC=<custom-1>`: custom-1;
     - `--source <custom-2>` with `ALTLOADER_SRC` also set: custom-2;
     - `--source` naming a missing path: non-zero exit, no fallback, and the existing `src/` is untouched;
@@ -226,7 +226,7 @@ Record the hpe-altloader sha used. The pre-change commit is `859e48d`.
 
     In each successful case, the log names the chosen root and its rule. `Setup` step 1 covers a real `--source` run against hpe-altloader.
 12. **Local-setup text (R9).** Each R9 site describes R8's resolution order and R3's build. The README `npm run build` row states the CI-style staging and the `yarn install --frozen-lockfile` step, and the `build:local` row names `ALTLOADER_SRC`. `grep -n "npm run build -- --lib" scripts/setup-local.js` prints nothing. The README frontmatter `version` equals its `859e48d` value.
-13. **KB statement (R10).** The orchestrator confirms in hpe-web-dev that `kb-altloader/reference/loader-runtime.md` § `Environments` describes the derived list and no longer says the block is never read.
+13. **KB statement (R10).** The orchestrator confirms in hpe-website-optimization that `kb-altloader/reference/loader-runtime.md` § `Environments` describes the derived list and no longer says the block is never read.
 14. **Post-release rebuild (R1 to R6).** After the release cut lands these fixes on `main`, run hpe-altloader's `rebuild-all-activities.yml` by hand (owner decision, 2026-10-13). It builds each group and then `--lib` against activities-loader `main`, the sequence R3 mirrors. Every build and upload step passes, and the next push-triggered deploy, which installs with `--frozen-lockfile`, passes too. The rebuild deploys every group and the loader to production, so run it when a full redeploy is acceptable.
 
 ## Verification Results
@@ -236,7 +236,7 @@ Record the hpe-altloader sha used. The pre-change commit is `859e48d`.
 14/14 confirmed: 1–12 at QA, 13 and 14 after release. Criteria 1–12 ran at activities-loader `b9de38d` plus the QA fixes, against hpe-altloader `53f7052` (`git -C /home/user/HPE-altloader rev-parse --short HEAD`, 2026-10-13).
 
 - **12 (R9), re-checked** at `a35b879` after the README install-step edit: confirmed.
-- **13 (R10), confirmed after release.** hpe-web-dev PR #6 (`b6e4911`, 2026-10-13) rewrote `kb-altloader/reference/loader-runtime.md` § `Environments` to describe the derived list.
+- **13 (R10), confirmed after release.** hpe-website-optimization PR #6 (`b6e4911`, 2026-10-13) rewrote `kb-altloader/reference/loader-runtime.md` § `Environments` to describe the derived list.
 - **14 (post-release rebuild), confirmed after release.** On 2026-10-13, against activities-loader v1.2.0:
   - The hand-run `rebuild-all-activities.yml` ([run 38412530397](https://github.com/FunnelEnvy/HPE-altloader/actions/runs/38412530397)) passed every build and upload step.
   - The next push deploy, from hpe-altloader PR #657 (`7d7ee1f`), passed. The B2C deploy installed with `--frozen-lockfile`, built and synced, and skipped its build-error alert, so no `build-errors.json` was written. The loader deploy built and uploaded `fe_altloader.js` (`gh run list -R FunnelEnvy/HPE-altloader --commit 7d7ee1f`).
